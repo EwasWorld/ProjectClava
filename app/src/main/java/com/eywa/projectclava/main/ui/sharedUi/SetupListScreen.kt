@@ -1,6 +1,5 @@
 package com.eywa.projectclava.main.ui.sharedUi
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,18 +14,18 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.eywa.projectclava.main.common.generateCourts
-import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.common.generatePlayers
+import com.eywa.projectclava.main.model.MatchState
+import com.eywa.projectclava.main.model.Player
 import com.eywa.projectclava.main.ui.mainScreens.SetupCourtsScreen
-import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.DividerThickness
 import com.eywa.projectclava.ui.theme.Typography
+import java.util.*
 
 interface SetupListItem {
     val name: String
@@ -36,7 +35,9 @@ interface SetupListItem {
 @Composable
 fun <T : SetupListItem> SetupListScreen(
         typeContentDescription: String,
-        listItems: Map<T, Color?>,
+        currentTime: Calendar,
+        items: Iterable<T>?,
+        getMatchState: (T) -> MatchState?,
         itemAddedListener: (String) -> Unit,
         itemNameEditedListener: (T, String) -> Unit,
         itemDeletedListener: (T) -> Unit,
@@ -49,7 +50,9 @@ fun <T : SetupListItem> SetupListScreen(
 
     SetupListScreen(
             typeContentDescription = typeContentDescription,
-            items = listItems,
+            currentTime = currentTime,
+            items = items,
+            getMatchState = getMatchState,
             addItemName = newItemName.value,
             addItemNameChangedListener = { newItemName.value = it },
             itemAddedListener = itemAddedListener,
@@ -70,7 +73,9 @@ fun <T : SetupListItem> SetupListScreen(
 @Composable
 fun <T : SetupListItem> SetupListScreen(
         typeContentDescription: String,
-        items: Map<T, Color?>,
+        currentTime: Calendar,
+        items: Iterable<T>?,
+        getMatchState: (T) -> MatchState?,
         addItemName: String,
         addItemNameChangedListener: (String) -> Unit,
         itemAddedListener: (String) -> Unit,
@@ -85,14 +90,14 @@ fun <T : SetupListItem> SetupListScreen(
 ) {
     EditDialog(
             typeContentDescription = typeContentDescription,
-            items = items.keys,
+            items = items,
             editDialogOpenFor = editDialogOpenFor,
             itemEditedListener = itemNameEditedListener,
             itemEditCancelledListener = itemNameEditCancelledListener,
     )
 
     Column {
-        val isAddNameDuplicate = items.keys.any { it.name == addItemName }
+        val isAddNameDuplicate = items?.any { it.name == addItemName } ?: false
 
         LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -102,12 +107,11 @@ fun <T : SetupListItem> SetupListScreen(
                         .weight(1f)
                         .padding(horizontal = 20.dp)
         ) {
-            items(items.keys.sortedBy { it.name }) { item ->
-                val color = items[item] ?: ClavaColor.ItemBackground
-                Surface(
-                        shape = RoundedCornerShape(5.dp),
-                        color = if (item.enabled) color else ClavaColor.DisabledItemBackground,
-                        border = BorderStroke(1.dp, ClavaColor.GeneralBorder)
+            items(items?.sortedBy { it.name } ?: listOf()) { item ->
+                SelectableListItem(
+                        currentTime = currentTime,
+                        enabled = item.enabled,
+                        matchState = getMatchState(item),
                 ) {
                     Column(
                             modifier = Modifier.clickable { itemClickedListener(item) }
@@ -163,7 +167,7 @@ fun <T : SetupListItem> SetupListScreen(
         ) {
             ListItemNameTextField(
                     typeContentDescription = typeContentDescription,
-                    existingItems = items.keys,
+                    existingItems = items,
                     proposedItemName = addItemName,
                     onValueChangedListener = addItemNameChangedListener,
                     modifier = Modifier.weight(1f),
@@ -192,12 +196,12 @@ fun <T : SetupListItem> SetupListScreen(
 @Composable
 fun <T : SetupListItem> ListItemNameTextField(
         typeContentDescription: String,
-        existingItems: Iterable<T>,
+        existingItems: Iterable<T>?,
         proposedItemName: String,
         onValueChangedListener: (String) -> Unit,
         modifier: Modifier = Modifier
 ) {
-    val isDuplicate = existingItems.any { it.name == proposedItemName }
+    val isDuplicate = existingItems?.any { it.name == proposedItemName } ?: false
 
     Column(
             verticalArrangement = Arrangement.spacedBy(3.dp),
@@ -232,7 +236,7 @@ fun <T : SetupListItem> ListItemNameTextField(
 @Composable
 fun <T : SetupListItem> EditDialog(
         typeContentDescription: String,
-        items: Iterable<T>,
+        items: Iterable<T>?,
         editDialogOpenFor: T?,
         itemEditedListener: (T, String) -> Unit,
         itemEditCancelledListener: () -> Unit,
@@ -240,7 +244,7 @@ fun <T : SetupListItem> EditDialog(
     if (editDialogOpenFor == null) return
 
     val editName = rememberSaveable { mutableStateOf(editDialogOpenFor.name) }
-    val isDuplicate = items.any { it.name == editName.value }
+    val isDuplicate = items?.any { it.name == editName.value } ?: false
 
     Dialog(onDismissRequest = itemEditCancelledListener) {
         Surface(
@@ -289,22 +293,28 @@ fun <T : SetupListItem> EditDialog(
 @Preview(showBackground = true)
 @Composable
 fun SetupListScreen_Preview() {
-    val playersToGenerate = 20
-    val colors = listOf(
-            ClavaColor.MatchFinished, // Disabled
-            ClavaColor.MatchFinished,
+    val playersToGenerate = 15
+    val currentTime = Calendar.getInstance()
+    val players = generatePlayers(playersToGenerate)
+    val states = listOf(
+            MatchState.InProgress(currentTime.apply { add(Calendar.HOUR_OF_DAY, -1) }), // Disabled
+            MatchState.InProgress(currentTime.apply { add(Calendar.HOUR_OF_DAY, -1) }),
             null,
             null, // Disabled
-            ClavaColor.MatchFinishingSoon,
-            ClavaColor.MatchPaused,
-    ).let { defaultColors -> List(playersToGenerate) { defaultColors[it % defaultColors.size] } }
+            MatchState.InProgress(currentTime.apply { add(Calendar.MINUTE, 1) }),
+            MatchState.Paused(5, currentTime)
+    )
 
     Box(modifier = Modifier.fillMaxSize()) {
         SetupListScreen(
                 typeContentDescription = "player",
+                currentTime = currentTime,
                 addItemName = "",
                 addItemNameChangedListener = {},
-                items = generatePlayers(playersToGenerate).sortedBy { it.name }.zip(colors).shuffled().toMap(),
+                items = players.sortedBy { it.name },
+                getMatchState = { player: Player ->
+                    states[players.sortedBy { it.name }.indexOf(player) % states.size]
+                },
                 editDialogOpenFor = null,
                 itemNameEditedListener = { _, _ -> },
                 itemNameEditCancelledListener = {},
@@ -319,14 +329,9 @@ fun SetupListScreen_Preview() {
 @Preview(showBackground = true)
 @Composable
 fun ExtraInfo_SetupListScreen_Preview() {
-    val matches = generateMatches(3)
-    val courts = generateCourts(10).toMutableList()
-    matches.forEachIndexed { index, match ->
-        courts[index] = courts[index].copy(currentMatch = match)
-    }
-
     SetupCourtsScreen(
-            items = courts,
+            currentTime = Calendar.getInstance(),
+            items = generateCourts(3, 7)!!,
             addItemName = "",
             addItemNameChangedListener = {},
             itemAddedListener = {},
@@ -345,10 +350,12 @@ fun Dialog_SetupListScreen_Preview() {
     val players = generatePlayers(20)
     Box(modifier = Modifier.fillMaxSize()) {
         SetupListScreen(
+                currentTime = Calendar.getInstance(),
                 typeContentDescription = "player",
                 addItemName = "",
                 addItemNameChangedListener = {},
-                items = players.associateWith { null },
+                items = players,
+                getMatchState = { null },
                 editDialogOpenFor = players[2],
                 itemNameEditedListener = { _, _ -> },
                 itemNameEditCancelledListener = {},
@@ -366,10 +373,12 @@ fun Error_SetupListScreen_Preview() {
     val generatePlayers = generatePlayers(5)
     Box(modifier = Modifier.fillMaxSize()) {
         SetupListScreen(
+                currentTime = Calendar.getInstance(),
                 typeContentDescription = "player",
                 addItemName = generatePlayers.first().name,
                 addItemNameChangedListener = {},
-                items = generatePlayers.associateWith { null },
+                items = generatePlayers,
+                getMatchState = { null },
                 editDialogOpenFor = null,
                 itemNameEditedListener = { _, _ -> },
                 itemNameEditCancelledListener = {},

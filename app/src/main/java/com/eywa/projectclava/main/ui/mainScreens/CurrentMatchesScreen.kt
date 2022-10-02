@@ -1,14 +1,11 @@
 package com.eywa.projectclava.main.ui.mainScreens
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
-import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -24,15 +21,14 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.R
-import com.eywa.projectclava.main.common.*
+import com.eywa.projectclava.main.common.asString
+import com.eywa.projectclava.main.common.generateCourts
+import com.eywa.projectclava.main.common.generateMatches
+import com.eywa.projectclava.main.common.transformForSorting
 import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.MatchState
-import com.eywa.projectclava.main.ui.sharedUi.AvailableCourtsHeader
-import com.eywa.projectclava.main.ui.sharedUi.SelectedItemAction
-import com.eywa.projectclava.main.ui.sharedUi.SelectedItemActionIcon
-import com.eywa.projectclava.main.ui.sharedUi.SelectedItemActions
-import com.eywa.projectclava.ui.theme.ClavaColor
+import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.DividerThickness
 import com.eywa.projectclava.ui.theme.Typography
 import kotlinx.coroutines.delay
@@ -59,6 +55,7 @@ fun CurrentMatchesScreen(
             rememberSaveable(matches?.map { it.players }) { mutableStateOf(null) }
 
     // TODO Change court popup
+    // TODO Add time popup
 
     CurrentMatchesScreen(
             currentTime = currentTime,
@@ -100,17 +97,13 @@ fun CurrentMatchesScreen(
                         .padding(horizontal = 10.dp)
         ) {
             items(matches?.sortedBy { it.transformForSorting(currentTime).state } ?: listOf()) { match ->
-                val timeLeft = match.state.getTimeLeft(currentTime)
                 val isSelected = selectedMatch == match
                 val court = courts?.find { it.currentMatch == match }
 
-                Surface(
-                        shape = RoundedCornerShape(5.dp),
-                        color = match.state.asColor(currentTime) ?: ClavaColor.ItemBackground,
-                        border = BorderStroke(
-                                width = if (isSelected) 4.dp else 1.dp,
-                                color = if (isSelected) ClavaColor.SelectedBorder else ClavaColor.GeneralBorder
-                        )
+                SelectableListItem(
+                        currentTime = currentTime,
+                        matchState = match.state,
+                        isSelected = isSelected,
                 ) {
                     Column(
                             modifier = Modifier
@@ -131,7 +124,7 @@ fun CurrentMatchesScreen(
                             )
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
-                                    text = timeLeft.asString(),
+                                    text = match.state.getTimeLeft(currentTime).asString(),
                                     style = Typography.h4.copy(fontWeight = FontWeight.Normal),
                             )
                             if (match.isPaused) {

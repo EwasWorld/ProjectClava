@@ -2,23 +2,36 @@ package com.eywa.projectclava.main.ui.mainScreens
 
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.graphics.Color
+import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Player
 import com.eywa.projectclava.main.ui.sharedUi.SetupListScreen
+import kotlinx.coroutines.delay
+import java.util.*
 
 @Composable
 fun SetupPlayersScreen(
-        listItems: Map<Player, Color?>,
+        items: Iterable<Player>?,
+        courts: Iterable<Court>?,
         itemAddedListener: (String) -> Unit,
         itemNameEditedListener: (Player, String) -> Unit,
         itemDeletedListener: (Player) -> Unit,
         itemClickedListener: (Player) -> Unit,
 ) {
+    var currentTime by remember { mutableStateOf(Calendar.getInstance()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(1000)
+            currentTime = Calendar.getInstance()
+        }
+    }
+
     val newItemName = rememberSaveable { mutableStateOf("") }
     var isEditDialogShown: Player? by remember { mutableStateOf(null) }
 
     SetupPlayersScreen(
-            items = listItems,
+            currentTime = currentTime,
+            items = items,
+            courts = courts,
             addItemName = newItemName.value,
             addItemNameChangedListener = { newItemName.value = it },
             itemAddedListener = itemAddedListener,
@@ -36,7 +49,9 @@ fun SetupPlayersScreen(
 
 @Composable
 fun SetupPlayersScreen(
-        items: Map<Player, Color?>,
+        currentTime: Calendar,
+        items: Iterable<Player>?,
+        courts: Iterable<Court>?,
         addItemName: String,
         addItemNameChangedListener: (String) -> Unit,
         itemAddedListener: (String) -> Unit,
@@ -48,8 +63,15 @@ fun SetupPlayersScreen(
         itemClickedListener: (Player) -> Unit,
 ) {
     SetupListScreen(
+            currentTime = currentTime,
             typeContentDescription = "player",
             items = items,
+            getMatchState = { player ->
+                courts
+                        ?.mapNotNull { it.currentMatch }
+                        ?.filter { it.players.contains(player) }
+                        ?.maxOfOrNull { it.state }
+            },
             addItemName = addItemName,
             addItemNameChangedListener = addItemNameChangedListener,
             itemAddedListener = itemAddedListener,

@@ -9,10 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.eywa.projectclava.R
-import com.eywa.projectclava.main.common.asColor
 import com.eywa.projectclava.main.common.asString
 import com.eywa.projectclava.main.common.generateCourts
-import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.ui.sharedUi.SetupListScreen
 import kotlinx.coroutines.delay
@@ -21,16 +19,25 @@ import java.util.*
 
 @Composable
 fun SetupCourtsScreen(
-        listItems: Iterable<Court>,
+        listItems: Iterable<Court>?,
         itemAddedListener: (String) -> Unit,
         itemNameEditedListener: (Court, String) -> Unit,
         itemDeletedListener: (Court) -> Unit,
         itemClickedListener: (Court) -> Unit,
 ) {
+    var currentTime by remember { mutableStateOf(Calendar.getInstance()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(1000)
+            currentTime = Calendar.getInstance()
+        }
+    }
+
     val newItemName = rememberSaveable { mutableStateOf("") }
     var isEditDialogShown: Court? by remember { mutableStateOf(null) }
 
     SetupCourtsScreen(
+            currentTime = currentTime,
             items = listItems,
             addItemName = newItemName.value,
             addItemNameChangedListener = { newItemName.value = it },
@@ -49,7 +56,8 @@ fun SetupCourtsScreen(
 
 @Composable
 fun SetupCourtsScreen(
-        items: Iterable<Court>,
+        currentTime: Calendar,
+        items: Iterable<Court>?,
         addItemName: String,
         addItemNameChangedListener: (String) -> Unit,
         itemAddedListener: (String) -> Unit,
@@ -60,17 +68,11 @@ fun SetupCourtsScreen(
         itemDeletedListener: (Court) -> Unit,
         itemClickedListener: (Court) -> Unit,
 ) {
-    var currentTime by remember { mutableStateOf(Calendar.getInstance()) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(1000)
-            currentTime = Calendar.getInstance()
-        }
-    }
-
     SetupListScreen(
+            currentTime = currentTime,
             typeContentDescription = "court",
-            items = items.associateWith { it.currentMatch?.state?.asColor(currentTime) },
+            items = items,
+            getMatchState = { it.currentMatch?.state },
             addItemName = addItemName,
             addItemNameChangedListener = addItemNameChangedListener,
             itemAddedListener = itemAddedListener,
@@ -109,14 +111,9 @@ fun RowScope.ExtraContent(currentTime: Calendar, court: Court) {
 @Preview(showBackground = true)
 @Composable
 fun SetupCourtsScreen_Preview() {
-    val matches = generateMatches(3)
-    val courts = generateCourts(10).toMutableList()
-    matches.forEachIndexed { index, match ->
-        courts[index] = courts[index].copy(currentMatch = match)
-    }
-
     SetupCourtsScreen(
-            items = courts,
+            currentTime = Calendar.getInstance(),
+            items = generateCourts(3, 7),
             addItemName = "",
             addItemNameChangedListener = {},
             itemAddedListener = {},

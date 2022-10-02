@@ -1,6 +1,5 @@
 package com.eywa.projectclava.main.ui.mainScreens
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,10 +24,7 @@ import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.main.model.getPlayerStates
-import com.eywa.projectclava.main.ui.sharedUi.AvailableCourtsHeader
-import com.eywa.projectclava.main.ui.sharedUi.SelectedItemAction
-import com.eywa.projectclava.main.ui.sharedUi.SelectedItemActionIcon
-import com.eywa.projectclava.main.ui.sharedUi.SelectedItemActions
+import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.DividerThickness
 import com.eywa.projectclava.ui.theme.Typography
@@ -78,15 +74,14 @@ fun UpcomingMatchesScreen(
                         .padding(horizontal = 10.dp)
         ) {
             items(upcomingMatches) { match ->
-                val isSelected = selectedMatch == match
-
-                Surface(
-                        shape = RoundedCornerShape(5.dp),
-                        color = match.state.asColor(currentTime) ?: ClavaColor.ItemBackground,
-                        border = BorderStroke(
-                                width = if (isSelected) 4.dp else 1.dp,
-                                color = if (isSelected) ClavaColor.SelectedBorder else ClavaColor.GeneralBorder
-                        )
+                SelectableListItem(
+                        currentTime = currentTime,
+                        isSelected = selectedMatch == match,
+                        generalInProgressColor = ClavaColor.DisabledItemBackground,
+                        matchState = match.players
+                                .mapNotNull { playerMatchStates[it.name] }
+                                .maxByOrNull { it }
+                                ?.takeIf { !it.isFinished(currentTime) }
                 ) {
                     LazyRow(
                             horizontalArrangement = Arrangement.spacedBy(5.dp),
@@ -103,11 +98,10 @@ fun UpcomingMatchesScreen(
                                             it.second?.transformForSorting(currentTime) ?: MatchState.NoTime
                                         }
                         ) { (player, matchState) ->
-                            Surface(
-                                    shape = RoundedCornerShape(5.dp),
-                                    color = matchState?.asColor(currentTime, ClavaColor.DisabledItemBackground)
-                                            ?: ClavaColor.ItemBackground,
-                                    border = BorderStroke(1.dp, ClavaColor.GeneralBorder)
+                            SelectableListItem(
+                                    currentTime = currentTime,
+                                    matchState = matchState,
+                                    generalInProgressColor = ClavaColor.DisabledItemBackground,
                             ) {
                                 Text(
                                         text = player.name,

@@ -1,14 +1,11 @@
 package com.eywa.projectclava.main.ui.mainScreens
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
-import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -20,10 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.main.common.*
 import com.eywa.projectclava.main.model.*
-import com.eywa.projectclava.main.ui.sharedUi.AvailableCourtsHeader
-import com.eywa.projectclava.main.ui.sharedUi.SelectedItemAction
-import com.eywa.projectclava.main.ui.sharedUi.SelectedItemActionIcon
-import com.eywa.projectclava.main.ui.sharedUi.SelectedItemActions
+import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.DividerThickness
 import kotlinx.coroutines.delay
@@ -41,8 +35,7 @@ fun CreateMatchScreen(
         partiallyCreatedMatch: Iterable<Player>,
         createMatchListener: () -> Unit,
         removeAllFromMatchListener: () -> Unit,
-        addPlayerToPartialListener: (Player) -> Unit,
-        removePlayerFromPartialListener: (Player) -> Unit,
+        playerClickedListener: (Player) -> Unit,
 ) {
     var currentTime by remember { mutableStateOf(Calendar.getInstance()) }
     LaunchedEffect(Unit) {
@@ -76,19 +69,19 @@ fun CreateMatchScreen(
                                 ?.minByOrNull { it.lastPlayedTime!! }
                     }.entries.sortedBy { it.value?.lastPlayedTime }
             ) { (player, match) ->
-                Surface(
-                        shape = RoundedCornerShape(5.dp),
-                        // TODO Colours not showing correctly
-                        // TODO Color if already in an upcoming match
-                        color = match?.state?.asColor(currentTime, ClavaColor.DisabledItemBackground)
-                                ?: ClavaColor.ItemBackground,
-                        border = BorderStroke(1.dp, ClavaColor.GeneralBorder)
+                // TODO Colours not showing correctly
+                // TODO Color if already in an upcoming match
+                SelectableListItem(
+                        currentTime = currentTime,
+                        matchState = match?.state,
+                        generalInProgressColor = ClavaColor.DisabledItemBackground,
+                        isSelected = partiallyCreatedMatch.contains(player),
                 ) {
                     Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                     .padding(10.dp)
-                                    .clickable { addPlayerToPartialListener(player) }
+                                    .clickable { playerClickedListener(player) }
                     ) {
                         Text(
                                 text = player.name,
@@ -141,17 +134,16 @@ fun CreateMatchScreen(
                                         it.second?.transformForSorting(currentTime) ?: MatchState.NoTime
                                     }
                     ) { (player, matchState) ->
-                        Surface(
-                                shape = RoundedCornerShape(5.dp),
-                                color = matchState?.asColor(currentTime, ClavaColor.DisabledItemBackground)
-                                        ?: ClavaColor.ItemBackground,
-                                border = BorderStroke(1.dp, ClavaColor.GeneralBorder)
+                        SelectableListItem(
+                                currentTime = currentTime,
+                                matchState = matchState,
+                                generalInProgressColor = ClavaColor.DisabledItemBackground
                         ) {
                             Text(
                                     text = player.name,
                                     modifier = Modifier
                                             .padding(vertical = 3.dp, horizontal = 5.dp)
-                                            .clickable { removePlayerFromPartialListener(player) }
+                                            .clickable { playerClickedListener(player) }
                             )
                         }
                     }
@@ -177,7 +169,6 @@ fun CreateMatchScreen_Preview() {
             partiallyCreatedMatch = generatePlayers(2),
             createMatchListener = {},
             removeAllFromMatchListener = {},
-            addPlayerToPartialListener = {},
-            removePlayerFromPartialListener = {},
+            playerClickedListener = {},
     )
 }
