@@ -32,6 +32,19 @@ fun generateCourts(count: Int) = List(count) { index ->
     )
 }.shuffled()
 
+fun generateCourts(withMatchCount: Int = 0, availableCount: Int = 0): Iterable<Court>? {
+    val totalToMake = (withMatchCount + availableCount).takeIf { it > 0 } ?: return null
+
+    val courts = generateCourts(totalToMake).toMutableList()
+    if (withMatchCount > 0) {
+        val matches = generateMatches(withMatchCount)
+        matches.forEach {
+            courts.add(courts.removeFirst().copy(currentMatch = it))
+        }
+    }
+    return courts.shuffled()
+}
+
 fun generateMatches(count: Int, finishingSoonThresholdSeconds: Int = 120): List<Match> {
     require(count > 0) { "Count should be > 0" }
 

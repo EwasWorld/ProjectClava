@@ -7,22 +7,25 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material.Divider
+import androidx.compose.material.Surface
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.main.common.*
 import com.eywa.projectclava.main.model.*
+import com.eywa.projectclava.main.ui.sharedUi.AvailableCourtsHeader
+import com.eywa.projectclava.main.ui.sharedUi.SelectedItemAction
+import com.eywa.projectclava.main.ui.sharedUi.SelectedItemActionIcon
+import com.eywa.projectclava.main.ui.sharedUi.SelectedItemActions
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.DividerThickness
-import com.eywa.projectclava.ui.theme.Typography
 import kotlinx.coroutines.delay
 import java.util.*
 
@@ -49,27 +52,11 @@ fun CreateMatchScreen(
         }
     }
 
-    val availableCourts = courts.filterAvailable(currentTime)
-    val availableCourtsString = availableCourts?.joinToString { it.number.toString() }?.let { "Available courts: $it" }
-    val nextAvailableCourt = courts
-            ?.associateWith { it.currentMatch?.state?.getTimeLeft(currentTime) }
-            ?.filter { it.key.canBeUsed && it.value != null }
-            ?.minByOrNull { it.value!! }
-            ?.let { "Next available court: " + it.value.asString() }
     val playerMatchStates = courts?.getPlayerStates() ?: mapOf()
 
 
     Column {
-        Text(
-                text = availableCourtsString ?: nextAvailableCourt ?: "No courts found",
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = Typography.h4,
-                modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp)
-        )
+        AvailableCourtsHeader(currentTime = currentTime, courts = courts)
         Divider(thickness = DividerThickness)
 
         LazyColumn(
@@ -116,8 +103,21 @@ fun CreateMatchScreen(
         }
 
         Divider(thickness = DividerThickness)
-        Row(
-                verticalAlignment = Alignment.CenterVertically
+        SelectedItemActions(
+                buttons = listOf(
+                        SelectedItemAction(
+                                icon = SelectedItemActionIcon.VectorIcon(Icons.Default.Close),
+                                contentDescription = "Remove all",
+                                enabled = partiallyCreatedMatch.any(),
+                                onClick = removeAllFromMatchListener,
+                        ),
+                        SelectedItemAction(
+                                icon = SelectedItemActionIcon.VectorIcon(Icons.Default.Check),
+                                contentDescription = "Create match",
+                                enabled = partiallyCreatedMatch.any(),
+                                onClick = createMatchListener,
+                        ),
+                ),
         ) {
             if (partiallyCreatedMatch.none()) {
                 Text(
@@ -156,24 +156,6 @@ fun CreateMatchScreen(
                         }
                     }
                 }
-            }
-            IconButton(
-                    enabled = partiallyCreatedMatch.any(),
-                    onClick = removeAllFromMatchListener
-            ) {
-                Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Remove all"
-                )
-            }
-            IconButton(
-                    enabled = partiallyCreatedMatch.any(),
-                    onClick = createMatchListener
-            ) {
-                Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "Create match"
-                )
             }
         }
     }

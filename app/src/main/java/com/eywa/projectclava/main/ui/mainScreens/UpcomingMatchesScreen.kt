@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -26,6 +25,10 @@ import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.main.model.getPlayerStates
+import com.eywa.projectclava.main.ui.sharedUi.AvailableCourtsHeader
+import com.eywa.projectclava.main.ui.sharedUi.SelectedItemAction
+import com.eywa.projectclava.main.ui.sharedUi.SelectedItemActionIcon
+import com.eywa.projectclava.main.ui.sharedUi.SelectedItemActions
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.DividerThickness
 import com.eywa.projectclava.ui.theme.Typography
@@ -53,12 +56,6 @@ fun UpcomingMatchesScreen(
     }
 
     val availableCourts = courts.filterAvailable(currentTime)
-    val availableCourtsString = availableCourts?.joinToString { it.number.toString() }?.let { "Available courts: $it" }
-    val nextAvailableCourt = courts
-            ?.associateWith { it.currentMatch?.state?.getTimeLeft(currentTime) }
-            ?.filter { it.key.canBeUsed && it.value != null }
-            ?.minByOrNull { it.value!! }
-            ?.let { "Next available court: " + it.value.asString() }
     val playerMatchStates = courts?.getPlayerStates() ?: mapOf()
 
     StartMatchDialog(
@@ -69,16 +66,7 @@ fun UpcomingMatchesScreen(
     )
 
     Column {
-        Text(
-                text = availableCourtsString ?: nextAvailableCourt ?: "No courts found",
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = Typography.h4,
-                modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp)
-        )
+        AvailableCourtsHeader(currentTime = currentTime, courts = courts)
         Divider(thickness = DividerThickness)
 
         LazyColumn(
@@ -133,40 +121,28 @@ fun UpcomingMatchesScreen(
         }
 
         Divider(thickness = DividerThickness)
-        Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 10.dp)
-        ) {
-            Text(
-                    text = selectedMatch?.players
-                            ?.joinToString { it.name }
-                            ?: "No match selected",
-                    style = Typography.h4,
-                    modifier = Modifier
-                            .weight(1f)
-                            .padding(vertical = 15.dp)
-            )
-            IconButton(
-                    enabled = selectedMatch != null,
-                    onClick = { selectedMatch?.let { removeMatchListener(it) } }
-            ) {
-                Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Remove match"
-                )
-            }
-            IconButton(
-                    enabled = selectedMatch != null && !availableCourts.isNullOrEmpty() && selectedMatch.players.all {
-                        playerMatchStates[it.name]?.isFinished(currentTime) != false
-                    },
-                    onClick = { selectedMatch?.let { openStartMatchDialogListener(it) } }
-            ) {
-                Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = "Start match"
-                )
-            }
-        }
+        // TODO text to say that a player is busy
+        SelectedItemActions(
+                text = selectedMatch?.players?.joinToString { it.name } ?: "No match selected",
+                buttons = listOf(
+                        SelectedItemAction(
+                                icon = SelectedItemActionIcon.VectorIcon(Icons.Default.Close),
+                                contentDescription = "Remove match",
+                                enabled = selectedMatch != null,
+                                onClick = { selectedMatch?.let { removeMatchListener(it) } },
+                        ),
+                        SelectedItemAction(
+                                icon = SelectedItemActionIcon.VectorIcon(Icons.Default.PlayArrow),
+                                contentDescription = "Start match",
+                                enabled = selectedMatch != null
+                                        && !availableCourts.isNullOrEmpty()
+                                        && selectedMatch.players.all {
+                                    playerMatchStates[it.name]?.isFinished(currentTime) != false
+                                },
+                                onClick = { selectedMatch?.let { openStartMatchDialogListener(it) } },
+                        ),
+                ),
+        )
     }
 }
 

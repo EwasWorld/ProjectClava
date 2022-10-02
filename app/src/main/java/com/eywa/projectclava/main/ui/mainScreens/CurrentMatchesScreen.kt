@@ -6,17 +6,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material.Divider
+import androidx.compose.material.Icon
+import androidx.compose.material.Surface
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -27,6 +28,10 @@ import com.eywa.projectclava.main.common.*
 import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.MatchState
+import com.eywa.projectclava.main.ui.sharedUi.AvailableCourtsHeader
+import com.eywa.projectclava.main.ui.sharedUi.SelectedItemAction
+import com.eywa.projectclava.main.ui.sharedUi.SelectedItemActionIcon
+import com.eywa.projectclava.main.ui.sharedUi.SelectedItemActions
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.DividerThickness
 import com.eywa.projectclava.ui.theme.Typography
@@ -83,18 +88,7 @@ fun CurrentMatchesScreen(
         unPauseListener: (Match) -> Unit,
 ) {
     Column {
-        Text(
-                text = "Available courts: " +
-                        (courts.filterAvailable(currentTime)?.joinToString { it.number.toString() }
-                                ?: "none"),
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = Typography.h4,
-                modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp)
-        )
+        AvailableCourtsHeader(currentTime = currentTime, courts = courts)
         Divider(thickness = DividerThickness)
 
         LazyColumn(
@@ -158,69 +152,45 @@ fun CurrentMatchesScreen(
         }
 
         Divider(thickness = DividerThickness)
-        Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 10.dp)
-        ) {
-            Text(
-                    text = courts
-                            ?.find { it.currentMatch == selectedMatch }?.name
-                            ?: "No match selected",
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = Typography.h4,
-                    modifier = Modifier.weight(1f)
-            )
-            IconButton(
-                    enabled = selectedMatch != null,
-                    onClick = { selectedMatch?.let { addTimeListener(it) } }
-            ) {
-                Icon(
-                        painter = painterResource(id = R.drawable.baseline_more_time_24),
-                        contentDescription = "Add time"
-                )
-            }
-            IconButton(
-                    enabled = selectedMatch != null,
-                    onClick = { selectedMatch?.let { changeCourtListener(it) } }
-            ) {
-                Icon(
-                        painter = painterResource(id = R.drawable.baseline_swap_horiz_24),
-                        contentDescription = "Change court"
-                )
-            }
-            if (selectedMatch?.isPaused == true) {
-                IconButton(
-                        enabled = true,
-                        onClick = { unPauseListener(selectedMatch) }
-                ) {
-                    Icon(
-                            imageVector = Icons.Default.PlayArrow,
-                            contentDescription = "Resume match"
-                    )
-                }
-            }
-            else {
-                IconButton(
-                        enabled = selectedMatch != null,
-                        onClick = { selectedMatch?.let { pauseListener(it) } }
-                ) {
-                    Icon(
-                            painter = painterResource(id = R.drawable.baseline_pause_24),
-                            contentDescription = "Pause match"
-                    )
-                }
-            }
-            IconButton(
-                    enabled = selectedMatch != null,
-                    onClick = { selectedMatch?.let { completeMatchListener(it) } }
-            ) {
-                Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "End match"
-                )
-            }
-        }
+        SelectedItemActions(
+                text = courts?.find { it.currentMatch == selectedMatch }?.name ?: "No match selected",
+                buttons = listOf(
+                        SelectedItemAction(
+                                icon = SelectedItemActionIcon.PainterIcon(R.drawable.baseline_more_time_24),
+                                contentDescription = "Add time",
+                                enabled = selectedMatch != null,
+                                onClick = { selectedMatch?.let { addTimeListener(it) } }
+                        ),
+                        SelectedItemAction(
+                                icon = SelectedItemActionIcon.PainterIcon(R.drawable.baseline_swap_horiz_24),
+                                contentDescription = "Change court",
+                                enabled = selectedMatch != null,
+                                onClick = { selectedMatch?.let { changeCourtListener(it) } }
+                        ),
+                        if (selectedMatch?.isPaused == true) {
+                            SelectedItemAction(
+                                    icon = SelectedItemActionIcon.VectorIcon(Icons.Default.PlayArrow),
+                                    contentDescription = "Resume match",
+                                    enabled = true,
+                                    onClick = { unPauseListener(selectedMatch) }
+                            )
+                        }
+                        else {
+                            SelectedItemAction(
+                                    icon = SelectedItemActionIcon.PainterIcon(R.drawable.baseline_pause_24),
+                                    contentDescription = "Pause match",
+                                    enabled = selectedMatch != null,
+                                    onClick = { selectedMatch?.let { pauseListener(it) } }
+                            )
+                        },
+                        SelectedItemAction(
+                                icon = SelectedItemActionIcon.VectorIcon(Icons.Default.Check),
+                                contentDescription = "End match",
+                                enabled = selectedMatch != null,
+                                onClick = { selectedMatch?.let { completeMatchListener(it) } }
+                        ),
+                ),
+        )
     }
 }
 
