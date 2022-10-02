@@ -45,8 +45,7 @@ fun CreateMatchScreen(
         }
     }
 
-    val playerMatchStates = courts?.getPlayerStates() ?: mapOf()
-
+    val playerMatchStates = courts?.getPlayerStatesFromCourts()?.plus(previousMatches.getPlayerStates()) ?: mapOf()
 
     Column {
         AvailableCourtsHeader(currentTime = currentTime, courts = courts)
@@ -61,15 +60,8 @@ fun CreateMatchScreen(
                         .padding(horizontal = 10.dp)
         ) {
             items(
-                    players.associateWith { player ->
-                        courts?.asSequence()
-                                ?.mapNotNull { it.currentMatch }
-                                ?.plus(previousMatches)
-                                ?.filter { it.players.contains(player) && it.lastPlayedTime != null }
-                                ?.minByOrNull { it.lastPlayedTime!! }
-                    }.entries.sortedBy { it.value?.lastPlayedTime }
+                    players.associateWith { playerMatchStates[it.name] }.entries.sortedBy { it.value?.lastPlayedTime }
             ) { (player, match) ->
-                // TODO Colours not showing correctly
                 // TODO Color if already in an upcoming match
                 SelectableListItem(
                         currentTime = currentTime,
@@ -128,7 +120,7 @@ fun CreateMatchScreen(
                 ) {
                     items(
                             partiallyCreatedMatch
-                                    .map { it to playerMatchStates[it.name] }
+                                    .map { it to playerMatchStates[it.name]?.state }
                                     // Show players who are already on court first
                                     .sortedByDescending {
                                         it.second?.transformForSorting(currentTime) ?: MatchState.NoTime

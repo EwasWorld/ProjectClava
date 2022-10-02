@@ -17,8 +17,12 @@ data class Court(
             canBeUsed && (currentMatch == null || currentMatch.state.isFinished(currentTime))
 }
 
-fun Iterable<Court>.getPlayerStates() = this
-        .mapNotNull { it.currentMatch?.players?.map { player -> player to it.currentMatch.state } }
+fun Iterable<Court>.getPlayerStatesFromCourts() = this
+        .mapNotNull { it.currentMatch }
+        .getPlayerStates()
+
+fun Iterable<Match>.getPlayerStates() = this
+        .map { it.players.map { player -> player to it } }
         .flatten()
         .groupBy { it.first }
         .mapNotNull { (player, pairs) ->
@@ -26,7 +30,19 @@ fun Iterable<Court>.getPlayerStates() = this
                 0 -> null
                 1 -> pairs.first().second
                 // Take the value with the largest remaining time
-                else -> pairs.map { it.second }.maxOf { it }
+                else -> pairs.map { it.second }.maxByOrNull { it.state }
             }
         }
         .toMap()
+
+fun Map<String, MatchState?>.plus(other: Map<String, MatchState?>) {
+    val newMap = this.toMutableMap()
+    other.forEach { (key, value) ->
+        if (newMap.containsKey(key)) {
+            newMap[key] = listOf(value, newMap[key]).maxOf { it ?: MatchState.NoTime }
+        }
+        else {
+            newMap[key] = value
+        }
+    }
+}

@@ -23,7 +23,7 @@ import com.eywa.projectclava.main.common.*
 import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.MatchState
-import com.eywa.projectclava.main.model.getPlayerStates
+import com.eywa.projectclava.main.model.getPlayerStatesFromCourts
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.DividerThickness
@@ -52,7 +52,7 @@ fun UpcomingMatchesScreen(
     }
 
     val availableCourts = courts.filterAvailable(currentTime)
-    val playerMatchStates = courts?.getPlayerStates() ?: mapOf()
+    val playerMatchStates = courts?.getPlayerStatesFromCourts() ?: mapOf()
 
     StartMatchDialog(
             availableCourts = availableCourts,
@@ -79,7 +79,7 @@ fun UpcomingMatchesScreen(
                         isSelected = selectedMatch == match,
                         generalInProgressColor = ClavaColor.DisabledItemBackground,
                         matchState = match.players
-                                .mapNotNull { playerMatchStates[it.name] }
+                                .mapNotNull { playerMatchStates[it.name]?.state }
                                 .maxByOrNull { it }
                                 ?.takeIf { !it.isFinished(currentTime) }
                 ) {
@@ -92,7 +92,7 @@ fun UpcomingMatchesScreen(
                     ) {
                         items(
                                 match.players
-                                        .map { it to playerMatchStates[it.name] }
+                                        .map { it to playerMatchStates[it.name]?.state }
                                         // Show players who are already on court first
                                         .sortedByDescending {
                                             it.second?.transformForSorting(currentTime) ?: MatchState.NoTime
@@ -131,7 +131,7 @@ fun UpcomingMatchesScreen(
                                 enabled = selectedMatch != null
                                         && !availableCourts.isNullOrEmpty()
                                         && selectedMatch.players.all {
-                                    playerMatchStates[it.name]?.isFinished(currentTime) != false
+                                    playerMatchStates[it.name]?.state?.isFinished(currentTime) != false
                                 },
                                 onClick = { selectedMatch?.let { openStartMatchDialogListener(it) } },
                         ),

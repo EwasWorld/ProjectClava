@@ -9,7 +9,7 @@ import com.eywa.projectclava.ui.theme.ClavaColor
 import java.text.SimpleDateFormat
 import java.util.*
 
-fun Calendar.asString() = SimpleDateFormat("HH:mm", Locale.getDefault()).format(this)
+fun Calendar.asString(): String = SimpleDateFormat("HH:mm", Locale.getDefault()).format(this.time)
 fun Calendar.isToday() = Calendar.getInstance().apply {
     set(Calendar.HOUR_OF_DAY, 0)
     set(Calendar.MINUTE, 0)
