@@ -58,7 +58,7 @@ fun CreateMatchScreen(
                 val selected = selectedPlayers.map { it.name }
                 match.players.any { selected.contains(it.name) }
             }
-            .flatMap { it.players.map { it.name } }
+            .flatMap { it.players.map { player -> player.name } }
 
     Column {
         AvailableCourtsHeader(currentTime = currentTime, courts = courts, matches = matches)

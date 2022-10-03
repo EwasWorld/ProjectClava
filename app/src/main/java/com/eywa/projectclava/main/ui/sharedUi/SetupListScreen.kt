@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.common.generatePlayers
@@ -242,52 +241,23 @@ fun <T : SetupListItem> EditDialog(
         itemEditedListener: (T, String) -> Unit,
         itemEditCancelledListener: () -> Unit,
 ) {
-    if (editDialogOpenFor == null) return
-
-    val editName = rememberSaveable { mutableStateOf(editDialogOpenFor.name) }
+    val editName = rememberSaveable { mutableStateOf(editDialogOpenFor?.name ?: "") }
     val isDuplicate = items?.any { it.name == editName.value } ?: false
 
-    Dialog(onDismissRequest = itemEditCancelledListener) {
-        Surface(
-                shape = RoundedCornerShape(28.dp),
-                modifier = Modifier.fillMaxWidth(),
-        ) {
-            Column(
-                    modifier = Modifier.padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(
-                        text = "Edit ${editDialogOpenFor.name}",
-                )
-                ListItemNameTextField(
-                        typeContentDescription = typeContentDescription,
-                        existingItems = items,
-                        proposedItemName = editName.value,
-                        onValueChangedListener = { editName.value = it },
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                        modifier = Modifier.align(Alignment.End),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                            onClick = itemEditCancelledListener,
-                    ) {
-                        Text("Cancel")
-                    }
-                    Button(
-                            enabled = !isDuplicate,
-                            onClick = {
-                                itemEditCancelledListener()
-                                itemEditedListener(editDialogOpenFor, editName.value)
-                            },
-                    ) {
-                        Text("Edit")
-                    }
-                }
-            }
-        }
+    ClavaDialog(
+            isShown = editDialogOpenFor != null,
+            title = "Edit ${editDialogOpenFor?.name}",
+            okButtonText = "Edit",
+            okButtonEnabled = !isDuplicate,
+            onCancelListener = itemEditCancelledListener,
+            onOkListener = { itemEditedListener(editDialogOpenFor!!, editName.value) }
+    ) {
+        ListItemNameTextField(
+                typeContentDescription = typeContentDescription,
+                existingItems = items,
+                proposedItemName = editName.value,
+                onValueChangedListener = { editName.value = it },
+        )
     }
 }
 

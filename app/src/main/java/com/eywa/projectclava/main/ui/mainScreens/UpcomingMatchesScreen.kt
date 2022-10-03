@@ -5,26 +5,24 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material.Checkbox
+import androidx.compose.material.Divider
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import com.eywa.projectclava.main.common.*
 import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.DividerThickness
-import com.eywa.projectclava.ui.theme.Typography
 import kotlinx.coroutines.delay
 import java.util.*
 
@@ -34,13 +32,13 @@ fun UpcomingMatchesScreen(
         matches: Iterable<Match> = listOf(),
         openStartMatchDialogListener: (Match) -> Unit,
         startMatchDialogOpenFor: Match?,
-        startMatchOkListener: (Match, Court) -> Unit,
+        startMatchOkListener: (Match, Court, totalTimeSeconds: Int, useAsDefaultTime: Boolean) -> Unit,
         startMatchCancelListener: () -> Unit,
         removeMatchListener: (Match) -> Unit,
         selectedMatch: Match?,
+        defaultTimeSeconds: Int,
         selectedMatchListener: (Match) -> Unit,
 ) {
-    // TODO Set time popup
     var currentTime by remember { mutableStateOf(Calendar.getInstance()) }
     LaunchedEffect(Unit) {
         while (true) {
@@ -58,6 +56,7 @@ fun UpcomingMatchesScreen(
             startMatchDialogOpenFor = startMatchDialogOpenFor,
             startMatchOkListener = startMatchOkListener,
             startMatchCancelListener = startMatchCancelListener,
+            defaultTimeSeconds = defaultTimeSeconds,
     )
 
     Column {
@@ -185,66 +184,46 @@ fun UpcomingMatchesScreen(
 fun StartMatchDialog(
         availableCourts: Iterable<Court>?,
         startMatchDialogOpenFor: Match?,
-        startMatchOkListener: (Match, Court) -> Unit,
+        startMatchOkListener: (Match, Court, totalTimeSeconds: Int, useAsDefaultTime: Boolean) -> Unit,
         startMatchCancelListener: () -> Unit,
+        defaultTimeSeconds: Int,
 ) {
-    if (startMatchDialogOpenFor == null || availableCourts?.takeIf { it.any() } == null) return
-    var selectedCourt: Court by remember { mutableStateOf(availableCourts.minByOrNull { it.name }!!) }
+    var selectedCourt by remember { mutableStateOf(availableCourts?.minByOrNull { it.name }) }
+    var timeSeconds by remember { mutableStateOf(defaultTimeSeconds) }
+    var defaultTimeChecked by remember { mutableStateOf(true) }
 
-    Dialog(onDismissRequest = startMatchCancelListener) {
-        Surface(
-                shape = RoundedCornerShape(28.dp),
-                modifier = Modifier.fillMaxWidth(),
-        ) {
-            Column(
-                    modifier = Modifier.padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+    ClavaDialog(
+            isShown = startMatchDialogOpenFor != null,
+            title = "Choose a duration and court",
+            okButtonText = "Start",
+            okButtonEnabled = selectedCourt != null,
+            onCancelListener = startMatchCancelListener,
+            onOkListener = {
+                startMatchOkListener(startMatchDialogOpenFor!!, selectedCourt!!, timeSeconds, defaultTimeChecked)
+            },
+    ) {
+        Column {
+            TimePicker(
+                    totalSeconds = timeSeconds,
+                    timeChangedListener = { timeSeconds = it },
+            )
+            Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable { defaultTimeChecked = !defaultTimeChecked }
             ) {
+                Checkbox(checked = defaultTimeChecked, onCheckedChange = { defaultTimeChecked = !defaultTimeChecked })
                 Text(
-                        text = "Choose a court",
-                        style = Typography.h4,
+                        text = "Use this as the default time",
+                        modifier = Modifier.padding(end = 20.dp)
                 )
-
-                LazyColumn {
-                    items(availableCourts.sortedBy { it.name }) { court ->
-                        Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.clickable { selectedCourt = court }
-                        ) {
-                            RadioButton(
-                                    selected = selectedCourt == court,
-                                    onClick = { selectedCourt = court }
-                            )
-                            Text(
-                                    text = court.name,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                        modifier = Modifier.align(Alignment.End),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                            onClick = startMatchCancelListener,
-                    ) {
-                        Text("Cancel")
-                    }
-                    Button(
-                            onClick = {
-                                startMatchCancelListener()
-                                startMatchOkListener(startMatchDialogOpenFor, selectedCourt)
-                            },
-                    ) {
-                        Text("Start")
-                    }
-                }
             }
         }
+        Divider(thickness = DividerThickness)
+        SelectCourtRadioButtons(
+                availableCourts = availableCourts,
+                selectedCourt = selectedCourt,
+                onCourtSelected = { selectedCourt = it },
+        )
     }
 }
 
@@ -266,8 +245,9 @@ fun UpcomingMatchesScreen_Preview(
             selectedMatchListener = {},
             openStartMatchDialogListener = {},
             startMatchDialogOpenFor = if (params.startMatchDialogOpen) matches[0] else null,
-            startMatchOkListener = { _, _ -> },
+            startMatchOkListener = { _, _, _, _ -> },
             startMatchCancelListener = {},
+            defaultTimeSeconds = 15 * 60,
     )
 }
 
