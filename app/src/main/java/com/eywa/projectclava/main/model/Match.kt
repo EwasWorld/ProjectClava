@@ -6,9 +6,9 @@ import java.util.concurrent.TimeUnit
 fun Iterable<Match>.getPlayerStates() =
         map { it.players.map { player -> player to it } }
                 .flatten()
-                .groupBy { it.first }
-                .mapNotNull { (player, pairs) ->
-                    player.name to when (pairs.size) {
+                .groupBy { it.first.name }
+                .mapNotNull { (_, pairs) ->
+                    pairs.first().first.name to when (pairs.size) {
                         0 -> null
                         1 -> pairs.first().second
                         // Take the value with the largest remaining time
@@ -34,8 +34,6 @@ class Match(
      * true if the match is paused or in progress
      */
     fun isCurrent(currentTime: Calendar) = isPaused || isInProgress(currentTime)
-
-    fun isCourtAvailable(currentTime: Calendar) = state is MatchState.Paused || state.isFinished(currentTime)
 
     val lastPlayedTime
         get() = when (state) {

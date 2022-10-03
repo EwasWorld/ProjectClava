@@ -6,25 +6,27 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Divider
+import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
 import androidx.compose.ui.unit.dp
+import com.eywa.projectclava.R
 import com.eywa.projectclava.main.common.*
-import com.eywa.projectclava.main.model.Court
-import com.eywa.projectclava.main.model.Match
-import com.eywa.projectclava.main.model.Player
-import com.eywa.projectclava.main.model.getPlayerStates
+import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.DividerThickness
+import com.eywa.projectclava.ui.theme.Typography
 import kotlinx.coroutines.delay
 import java.util.*
 
@@ -41,9 +43,6 @@ fun CreateMatchScreen(
         removeAllFromMatchListener: () -> Unit,
         playerClickedListener: (Player) -> Unit,
 ) {
-    // TODO Change to time left
-    // TODO Add pause icon
-    // TODO Icon/color if they've already played tonight?
     var currentTime by remember { mutableStateOf(Calendar.getInstance()) }
     LaunchedEffect(Unit) {
         while (true) {
@@ -53,6 +52,13 @@ fun CreateMatchScreen(
     }
 
     val playerMatchStates = matches.getPlayerStates()
+    val previouslyPlayed = matches
+            .filter { match ->
+                if (match.state is MatchState.NotStarted) return@filter false
+                val selected = selectedPlayers.map { it.name }
+                match.players.any { selected.contains(it.name) }
+            }
+            .flatMap { it.players.map { it.name } }
 
     Column {
         AvailableCourtsHeader(currentTime = currentTime, courts = courts, matches = matches)
@@ -73,7 +79,7 @@ fun CreateMatchScreen(
                         currentTime = currentTime,
                         matchState = match?.state,
                         generalInProgressColor = ClavaColor.DisabledItemBackground,
-                        isSelected = selectedPlayers.contains(player),
+                        isSelected = selectedPlayers.map { it.name }.contains(player.name),
                 ) {
                     Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -83,10 +89,26 @@ fun CreateMatchScreen(
                     ) {
                         Text(
                                 text = player.name,
-                                modifier = Modifier.weight(1f)
                         )
+                        if (
+                            !selectedPlayers.map { it.name }.contains(player.name)
+                            && previouslyPlayed.contains(player.name)
+                        ) {
+                            Icon(
+                                    imageVector = Icons.Outlined.FavoriteBorder,
+                                    contentDescription = "Played tonight",
+                                    modifier = Modifier.padding(horizontal = 5.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.weight(1f))
+                        if (match?.isPaused == true) {
+                            Icon(
+                                    painter = painterResource(id = R.drawable.baseline_pause_24),
+                                    contentDescription = "Match paused"
+                            )
+                        }
                         Text(
-                                text = match?.lastPlayedTime?.asString() ?: "Not played"
+                                text = match?.state?.getTimeLeft(currentTime)?.asString() ?: "Not played"
                         )
                     }
                 }
@@ -113,6 +135,7 @@ fun CreateMatchScreen(
             if (selectedPlayers.none()) {
                 Text(
                         text = "No players selected",
+                        style = Typography.h4,
                         modifier = Modifier
                                 .weight(1f)
                                 .padding(horizontal = 10.dp)
@@ -120,7 +143,7 @@ fun CreateMatchScreen(
             }
             else {
                 LazyRow(
-                        contentPadding = PaddingValues(horizontal = 10.dp),
+                        contentPadding = PaddingValues(vertical = 10.dp),
                         horizontalArrangement = Arrangement.spacedBy(5.dp),
                         modifier = Modifier.weight(1f)
                 ) {
@@ -135,10 +158,12 @@ fun CreateMatchScreen(
                                 matchState = matchState,
                                 generalInProgressColor = ClavaColor.DisabledItemBackground
                         ) {
+                            // TODO Mark if anyone has played each other already tonight
                             Text(
                                     text = player.name,
+                                    style = Typography.h4,
                                     modifier = Modifier
-                                            .padding(vertical = 3.dp, horizontal = 5.dp)
+                                            .padding(vertical = 5.dp, horizontal = 10.dp)
                                             .clickable { playerClickedListener(player) }
                             )
                         }

@@ -18,7 +18,7 @@ import com.eywa.projectclava.ui.theme.ProjectClavaTheme
 import java.util.*
 
 /*
- * Time spent: 13.5 hrs
+ * Time spent: 16 hrs
  */
 
 class MainActivity : ComponentActivity() {

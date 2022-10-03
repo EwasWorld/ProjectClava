@@ -150,7 +150,7 @@ fun CurrentMatchesScreen(
                 text = when {
                     selectedMatch == null -> "No match selected"
                     selectedMatch.court != null -> selectedMatch.court!!.name
-                    selectedMatch.isPaused -> selectedMatch.players.joinToString()
+                    selectedMatch.isPaused -> selectedMatch.players.joinToString { it.name }
                     else -> "No court"
                 },
                 buttons = listOf(
@@ -226,6 +226,9 @@ private class CurrentMatchesScreenPreviewParamProvider :
         CollectionPreviewParameterProvider<CurrentMatchesScreenPreviewParam>(
                 listOf(
                         CurrentMatchesScreenPreviewParam(),
+                        CurrentMatchesScreenPreviewParam(
+                                selectedIndex = 0
+                        ),
                         CurrentMatchesScreenPreviewParam(
                                 matchCount = 20,
                                 availableCourtsCount = 0,

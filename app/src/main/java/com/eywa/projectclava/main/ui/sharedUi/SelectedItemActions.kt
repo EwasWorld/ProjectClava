@@ -1,6 +1,8 @@
 package com.eywa.projectclava.main.ui.sharedUi
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
@@ -10,6 +12,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -31,31 +34,45 @@ sealed class SelectedItemActionIcon {
 @Composable
 fun SelectedItemActions(
         text: String,
+        extraText: String? = null,
+        color: Color? = null,
         buttons: List<SelectedItemAction>,
 ) {
     SelectedItemActions(
+            color = color,
             buttons = buttons,
     ) {
-        Text(
-                text = text,
-                style = Typography.h4,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+        Column(
                 modifier = Modifier
                         .weight(1f)
                         .padding(vertical = 15.dp)
-        )
+        ) {
+            Text(
+                    text = text,
+                    style = Typography.h4,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+            )
+            if (extraText != null) {
+                Text(
+                        text = extraText,
+                        style = Typography.body1,
+                )
+            }
+        }
     }
 }
 
 @Composable
 fun SelectedItemActions(
         buttons: List<SelectedItemAction>,
+        color: Color? = null,
         content: @Composable RowScope.() -> Unit
 ) {
     Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 10.dp)
+            modifier = (if (color != null) Modifier.background(color) else Modifier)
+                    .padding(horizontal = 10.dp)
     ) {
         content()
 
