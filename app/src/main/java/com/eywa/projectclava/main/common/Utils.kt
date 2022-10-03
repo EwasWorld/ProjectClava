@@ -1,8 +1,6 @@
 package com.eywa.projectclava.main.common
 
 import androidx.compose.ui.graphics.Color
-import com.eywa.projectclava.main.model.Court
-import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.main.model.TimeRemaining
 import com.eywa.projectclava.ui.theme.ClavaColor
@@ -20,27 +18,22 @@ fun Calendar.isToday() = Calendar.getInstance().apply {
  */
 fun MatchState.asColor(currentTime: Calendar, generalInProgressColor: Color? = null): Color? {
     if (this is MatchState.Paused) return ClavaColor.MatchPaused
-    if (this !is MatchState.InProgress) return null
+    if (this is MatchState.NotStarted) return ClavaColor.MatchQueued
+    if (this !is MatchState.InProgressOrComplete) return null
 
-    val timeLeft = getTimeLeft(currentTime)
-            ?: return ClavaColor.MatchFinished
-    return if (timeLeft.isEndingSoon()) ClavaColor.MatchFinished else generalInProgressColor
+    val timeLeft = getTimeLeft(currentTime) ?: return null
+    return if (timeLeft.isEndingSoon()) ClavaColor.MatchFinishingSoon else generalInProgressColor
 }
 
 fun TimeRemaining?.asString() = this?.let { "$minutes:" + seconds.toString().padStart(2, '0') } ?: "--:--"
 
-fun Iterable<Court>?.filterAvailable(currentTime: Calendar) = this?.takeIf { !it.none() }
-        ?.filter { it.isAvailable(currentTime) }
-        ?.takeIf { it.isNotEmpty() }
-        ?.sortedBy { it.name }
-
-/**
- * @see MatchState.transformForSorting
- */
-fun Match.transformForSorting(currentTime: Calendar) = copy(state = state.transformForSorting(currentTime))
-
 /**
  * For the purposes of sorting, treat (InProgress && isFinished) == NoTime
  */
-fun MatchState.transformForSorting(currentTime: Calendar) =
-        if (this is MatchState.InProgress && isFinished(currentTime)) MatchState.NoTime else this
+fun MatchState?.transformForSorting(currentTime: Calendar) =
+        if (this == null || this is MatchState.InProgressOrComplete && isFinished(currentTime)) {
+            MatchState.NotStarted(currentTime)
+        }
+        else {
+            this
+        }

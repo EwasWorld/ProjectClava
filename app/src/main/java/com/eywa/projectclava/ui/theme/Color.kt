@@ -10,6 +10,7 @@ val Teal200 = Color(0xFF03DAC5)
 object ClavaColor {
     val ItemBackground = Color.White
     val DisabledItemBackground = Color(0xFFAAA4B4)
+    val MatchQueued = Color(0xFF4CAF50)
     val MatchPaused = Color(0xFF4FC3F7)
     val MatchFinished = Color(0xFFF44336)
     val MatchFinishingSoon = Color(0xFFFFC107)

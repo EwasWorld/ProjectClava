@@ -25,51 +25,63 @@ fun generatePlayers(count: Int): List<Player> {
             .shuffled()
 }
 
-fun generateCourts(count: Int) = List(count) { index ->
-    Court(
-            number = index + 1,
-            canBeUsed = index % 3 != 2
-    )
-}.shuffled()
+fun generateCourt(courtNumber: Int, courtEnabled: Boolean = true) = Court(courtNumber, courtEnabled)
 
-fun generateCourts(withMatchCount: Int = 0, availableCount: Int = 0): Iterable<Court>? {
-    val totalToMake = (withMatchCount + availableCount).takeIf { it > 0 } ?: return null
+fun generateCourts(count: Int) = List(count) { generateCourt(it + 1, it % 6 != 5) }.shuffled()
 
-    val courts = generateCourts(totalToMake).toMutableList()
-    if (withMatchCount > 0) {
-        val matches = generateMatches(withMatchCount)
-        matches.forEach {
-            courts.add(courts.removeFirst().copy(currentMatch = it))
-        }
-    }
-    return courts.shuffled()
-}
-
-fun generateMatches(count: Int, finishingSoonThresholdSeconds: Int = 120): List<Match> {
+fun generateMatches(
+        count: Int,
+        currentTime: Calendar,
+        forceState: GeneratableMatchState? = null,
+        finishingSoonThresholdSeconds: Int = 120
+): List<Match> {
     require(count > 0) { "Count should be > 0" }
 
-    var allPlayers = generatePlayers(2 * (1 + count + count / 7))
+    val states = GeneratableMatchState.values().plus(GeneratableMatchState.NOT_STARTED)
+    var allPlayers = generatePlayers(2 * (count + count / 7 + if (count % 7 >= 2) 1 else 0))
+    var courtNumber = 1
     return List(count) { index ->
-        val rollSeconds = when (index % 5) {
-            // Finished
-            1 -> -5
-            // Finishing soon
-            3 -> 20 + Random().nextInt(finishingSoonThresholdSeconds - 25)
-            // Ongoing
-            else -> finishingSoonThresholdSeconds + 1 + Random().nextInt(100)
-        }
-        val isPaused = index % 6 == 2
-
-        val time = when {
-            isPaused -> MatchState.Paused(Random().nextInt(600).toLong() + 20, Calendar.getInstance())
-            else -> MatchState.InProgress(Calendar.getInstance().apply { add(Calendar.SECOND, rollSeconds) })
-        }
-
         val players = allPlayers.take(if (index % 7 == 2) 4 else 2)
         allPlayers = allPlayers.drop(players.size)
+        val state = forceState ?: states[index % states.size]
+
+        val court = if (state.needsCourt) generateCourt(courtNumber++) else null
         Match(
                 players = players,
-                state = time
+                state = generateMatchState(
+                        type = state,
+                        court = court,
+                        currentTime = currentTime,
+                        finishingSoonThresholdSeconds = finishingSoonThresholdSeconds
+                )
         )
     }
+}
+
+fun generateMatchState(
+        type: GeneratableMatchState,
+        court: Court?,
+        currentTime: Calendar,
+        finishingSoonThresholdSeconds: Int = 120,
+) =
+        when (type) {
+            GeneratableMatchState.NOT_STARTED -> MatchState.NotStarted(currentTime)
+            GeneratableMatchState.PAUSED -> MatchState.Paused(Random().nextInt(60 * 10).toLong() + 20, currentTime)
+            else -> {
+                val rollSeconds = when (type) {
+                    GeneratableMatchState.COMPLETE -> -5
+                    GeneratableMatchState.FINISHING_SOON -> (20 + Random().nextInt(finishingSoonThresholdSeconds - 25))
+                            .coerceIn(20 until finishingSoonThresholdSeconds)
+                    GeneratableMatchState.IN_PROGRESS -> finishingSoonThresholdSeconds + 1 + Random().nextInt(100)
+                    else -> throw IllegalStateException("Invalid GeneratableMatchState")
+                }
+                MatchState.InProgressOrComplete(
+                        matchEndTime = (currentTime.clone() as Calendar).apply { add(Calendar.SECOND, rollSeconds) },
+                        court = court!!
+                )
+            }
+        }
+
+enum class GeneratableMatchState(val needsCourt: Boolean = true) {
+    NOT_STARTED(false), IN_PROGRESS, FINISHING_SOON, COMPLETE, PAUSED(false)
 }

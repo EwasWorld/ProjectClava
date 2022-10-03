@@ -2,7 +2,7 @@ package com.eywa.projectclava.main.ui.mainScreens
 
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import com.eywa.projectclava.main.model.Court
+import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.Player
 import com.eywa.projectclava.main.ui.sharedUi.SetupListScreen
 import kotlinx.coroutines.delay
@@ -11,7 +11,7 @@ import java.util.*
 @Composable
 fun SetupPlayersScreen(
         items: Iterable<Player>?,
-        courts: Iterable<Court>?,
+        matches: Iterable<Match>?,
         itemAddedListener: (String) -> Unit,
         itemNameEditedListener: (Player, String) -> Unit,
         itemDeletedListener: (Player) -> Unit,
@@ -31,7 +31,7 @@ fun SetupPlayersScreen(
     SetupPlayersScreen(
             currentTime = currentTime,
             items = items,
-            courts = courts,
+            matches = matches,
             addItemName = newItemName.value,
             addItemNameChangedListener = { newItemName.value = it },
             itemAddedListener = itemAddedListener,
@@ -51,7 +51,7 @@ fun SetupPlayersScreen(
 fun SetupPlayersScreen(
         currentTime: Calendar,
         items: Iterable<Player>?,
-        courts: Iterable<Court>?,
+        matches: Iterable<Match>?,
         addItemName: String,
         addItemNameChangedListener: (String) -> Unit,
         itemAddedListener: (String) -> Unit,
@@ -67,9 +67,8 @@ fun SetupPlayersScreen(
             typeContentDescription = "player",
             items = items,
             getMatchState = { player ->
-                courts
-                        ?.mapNotNull { it.currentMatch }
-                        ?.filter { it.players.contains(player) }
+                matches
+                        ?.filter { it.isCurrent(currentTime) && it.players.contains(player) }
                         ?.maxOfOrNull { it.state }
             },
             addItemName = addItemName,

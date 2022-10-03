@@ -19,11 +19,10 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.eywa.projectclava.main.common.*
-import com.eywa.projectclava.main.model.Court
-import com.eywa.projectclava.main.model.Match
-import com.eywa.projectclava.main.model.MatchState
-import com.eywa.projectclava.main.model.getPlayerStatesFromCourts
+import com.eywa.projectclava.main.common.GeneratableMatchState
+import com.eywa.projectclava.main.common.generateCourts
+import com.eywa.projectclava.main.common.generateMatches
+import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.DividerThickness
@@ -34,7 +33,7 @@ import java.util.*
 @Composable
 fun UpcomingMatchesScreen(
         courts: Iterable<Court>?,
-        upcomingMatches: List<Match> = listOf(),
+        matches: Iterable<Match> = listOf(),
         openStartMatchDialogListener: (Match) -> Unit,
         startMatchDialogOpenFor: Match?,
         startMatchOkListener: (Match, Court) -> Unit,
@@ -51,8 +50,9 @@ fun UpcomingMatchesScreen(
         }
     }
 
-    val availableCourts = courts.filterAvailable(currentTime)
-    val playerMatchStates = courts?.getPlayerStatesFromCourts() ?: mapOf()
+    // TODO Color only if they're in an earlier group
+    val availableCourts = courts?.minus(matches.getCourtsInUse(currentTime).toSet())
+    val playerMatchStates = matches.getPlayerStates()
 
     StartMatchDialog(
             availableCourts = availableCourts,
@@ -62,7 +62,7 @@ fun UpcomingMatchesScreen(
     )
 
     Column {
-        AvailableCourtsHeader(currentTime = currentTime, courts = courts)
+        AvailableCourtsHeader(currentTime = currentTime, courts = courts, matches = matches)
         Divider(thickness = DividerThickness)
 
         LazyColumn(
@@ -73,7 +73,9 @@ fun UpcomingMatchesScreen(
                         .weight(1f)
                         .padding(horizontal = 10.dp)
         ) {
-            items(upcomingMatches) { match ->
+            items(
+                    matches.filter { it.state is MatchState.NotStarted }.sortedBy { it.state }
+            ) { match ->
                 SelectableListItem(
                         currentTime = currentTime,
                         isSelected = selectedMatch == match,
@@ -92,15 +94,19 @@ fun UpcomingMatchesScreen(
                     ) {
                         items(
                                 match.players
-                                        .map { it to playerMatchStates[it.name]?.state }
-                                        // Show players who are already on court first
-                                        .sortedByDescending {
-                                            it.second?.transformForSorting(currentTime) ?: MatchState.NoTime
+                                        .map { it to playerMatchStates[it.name] }
+                                        .partition {
+                                            it.second?.isCurrent(currentTime) != true || it.second?.state?.isFinished(
+                                                    currentTime
+                                            ) != true
                                         }
-                        ) { (player, matchState) ->
+                                        .let { (noMatch, match) ->
+                                            match.sortedBy { it.second?.state } + noMatch.sortedBy { it.first.name }
+                                        }
+                        ) { (player, match) ->
                             SelectableListItem(
                                     currentTime = currentTime,
-                                    matchState = matchState,
+                                    matchState = match?.state,
                                     generalInProgressColor = ClavaColor.DisabledItemBackground,
                             ) {
                                 Text(
@@ -212,28 +218,17 @@ fun StartMatchDialog(
 fun UpcomingMatchesScreen_Preview(
         @PreviewParameter(UpcomingMatchesScreenPreviewParamProvider::class) params: UpcomingMatchesScreenPreviewParam
 ) {
-    var courts: MutableList<Court>? = null
-    if (params.matchCount + (params.availableCourtsCount ?: 0) > 0) {
-        courts = generateCourts(params.matchCount + (params.availableCourtsCount ?: 0)).toMutableList()
-    }
-    if (params.matchCount > 0) {
-        val matches = generateMatches(params.matchCount)
-        matches.forEach {
-            courts!!.add(courts.removeFirst().copy(currentMatch = it))
-        }
-    }
-    val upcoming = generatePlayers(params.totalRows * params.playersPerRow)
-            .chunked(params.playersPerRow)
-            .map { Match(it) }
+    val currentTime = Calendar.getInstance()
+    val matches = generateMatches(5, currentTime) + generateMatches(4, currentTime, GeneratableMatchState.NOT_STARTED)
 
     UpcomingMatchesScreen(
-            courts = courts,
-            upcomingMatches = upcoming,
+            courts = generateCourts(params.matchCount + params.availableCourtsCount),
+            matches = matches,
             removeMatchListener = {},
-            selectedMatch = params.selectedIndex?.let { upcoming[it] },
+            selectedMatch = params.selectedIndex?.let { matches[it] },
             selectedMatchListener = {},
             openStartMatchDialogListener = {},
-            startMatchDialogOpenFor = if (params.startMatchDialogOpen) upcoming[0] else null,
+            startMatchDialogOpenFor = if (params.startMatchDialogOpen) matches[0] else null,
             startMatchOkListener = { _, _ -> },
             startMatchCancelListener = {},
     )
@@ -243,7 +238,7 @@ data class UpcomingMatchesScreenPreviewParam(
         val totalRows: Int = 10,
         val playersPerRow: Int = 2,
         val matchCount: Int = 5,
-        val availableCourtsCount: Int? = 4,
+        val availableCourtsCount: Int = 4,
         val selectedIndex: Int? = 3,
         val startMatchDialogOpen: Boolean = false,
 )

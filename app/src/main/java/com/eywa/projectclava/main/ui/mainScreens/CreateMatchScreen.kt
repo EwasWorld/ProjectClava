@@ -14,9 +14,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.main.common.*
-import com.eywa.projectclava.main.model.*
+import com.eywa.projectclava.main.model.Court
+import com.eywa.projectclava.main.model.Match
+import com.eywa.projectclava.main.model.Player
+import com.eywa.projectclava.main.model.getPlayerStates
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.DividerThickness
@@ -24,19 +29,21 @@ import kotlinx.coroutines.delay
 import java.util.*
 
 /**
- * @param partiallyCreatedMatch the people added to the match currently being created
+ * @param selectedPlayers the people selected to form the next match
  */
 @Composable
 fun CreateMatchScreen(
         players: Iterable<Player>,
-        previousMatches: Iterable<Match> = listOf(),
+        matches: Iterable<Match> = listOf(),
         courts: Iterable<Court>? = listOf(),
-        upcomingMatches: List<Match> = listOf(),
-        partiallyCreatedMatch: Iterable<Player>,
+        selectedPlayers: Iterable<Player>,
         createMatchListener: () -> Unit,
         removeAllFromMatchListener: () -> Unit,
         playerClickedListener: (Player) -> Unit,
 ) {
+    // TODO Change to time left
+    // TODO Add pause icon
+    // TODO Icon/color if they've already played tonight?
     var currentTime by remember { mutableStateOf(Calendar.getInstance()) }
     LaunchedEffect(Unit) {
         while (true) {
@@ -45,10 +52,10 @@ fun CreateMatchScreen(
         }
     }
 
-    val playerMatchStates = courts?.getPlayerStatesFromCourts()?.plus(previousMatches.getPlayerStates()) ?: mapOf()
+    val playerMatchStates = matches.getPlayerStates()
 
     Column {
-        AvailableCourtsHeader(currentTime = currentTime, courts = courts)
+        AvailableCourtsHeader(currentTime = currentTime, courts = courts, matches = matches)
         Divider(thickness = DividerThickness)
 
         LazyColumn(
@@ -62,12 +69,11 @@ fun CreateMatchScreen(
             items(
                     players.associateWith { playerMatchStates[it.name] }.entries.sortedBy { it.value?.lastPlayedTime }
             ) { (player, match) ->
-                // TODO Color if already in an upcoming match
                 SelectableListItem(
                         currentTime = currentTime,
                         matchState = match?.state,
                         generalInProgressColor = ClavaColor.DisabledItemBackground,
-                        isSelected = partiallyCreatedMatch.contains(player),
+                        isSelected = selectedPlayers.contains(player),
                 ) {
                     Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -93,18 +99,18 @@ fun CreateMatchScreen(
                         SelectedItemAction(
                                 icon = SelectedItemActionIcon.VectorIcon(Icons.Default.Close),
                                 contentDescription = "Remove all",
-                                enabled = partiallyCreatedMatch.any(),
+                                enabled = selectedPlayers.any(),
                                 onClick = removeAllFromMatchListener,
                         ),
                         SelectedItemAction(
                                 icon = SelectedItemActionIcon.VectorIcon(Icons.Default.Check),
                                 contentDescription = "Create match",
-                                enabled = partiallyCreatedMatch.any(),
+                                enabled = selectedPlayers.any(),
                                 onClick = createMatchListener,
                         ),
                 ),
         ) {
-            if (partiallyCreatedMatch.none()) {
+            if (selectedPlayers.none()) {
                 Text(
                         text = "No players selected",
                         modifier = Modifier
@@ -119,12 +125,10 @@ fun CreateMatchScreen(
                         modifier = Modifier.weight(1f)
                 ) {
                     items(
-                            partiallyCreatedMatch
+                            selectedPlayers
                                     .map { it to playerMatchStates[it.name]?.state }
                                     // Show players who are already on court first
-                                    .sortedByDescending {
-                                        it.second?.transformForSorting(currentTime) ?: MatchState.NoTime
-                                    }
+                                    .sortedByDescending { it.second.transformForSorting(currentTime) }
                     ) { (player, matchState) ->
                         SelectableListItem(
                                 currentTime = currentTime,
@@ -148,19 +152,40 @@ fun CreateMatchScreen(
 @Preview(showBackground = true)
 @Composable
 fun CreateMatchScreen_Preview() {
-    val courts = generateCourts(5).toMutableList()
-    val matches = generateMatches(3)
-    matches.forEach {
-        courts.add(courts.removeFirst().copy(currentMatch = it))
-    }
     CreateMatchScreen(
-            players = generatePlayers(10),
-            previousMatches = listOf(),
-            courts = courts,
-            upcomingMatches = listOf(),
-            partiallyCreatedMatch = generatePlayers(2),
+            players = generatePlayers(15),
+            matches = generateMatches(5, Calendar.getInstance()),
+            courts = generateCourts(5),
+            selectedPlayers = generatePlayers(2),
             createMatchListener = {},
             removeAllFromMatchListener = {},
             playerClickedListener = {},
     )
 }
+
+@Preview(showBackground = true)
+@Composable
+fun Individual_CreateMatchScreen_Preview(
+        @PreviewParameter(CreateMatchScreenPreviewParamProvider::class) params: CreateMatchScreenPreviewParam
+) {
+    val players = generatePlayers(2)
+    val match = generateMatches(1, Calendar.getInstance(), params.matchType)
+    CreateMatchScreen(
+            players = players,
+            matches = match,
+            courts = generateCourts(1),
+            selectedPlayers = listOf(),
+            createMatchListener = {},
+            removeAllFromMatchListener = {},
+            playerClickedListener = {},
+    )
+}
+
+data class CreateMatchScreenPreviewParam(
+        val matchType: GeneratableMatchState
+)
+
+private class CreateMatchScreenPreviewParamProvider :
+        CollectionPreviewParameterProvider<CreateMatchScreenPreviewParam>(
+                GeneratableMatchState.values().map { CreateMatchScreenPreviewParam(it) }
+        )

@@ -11,7 +11,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.eywa.projectclava.R
 import com.eywa.projectclava.main.common.asString
 import com.eywa.projectclava.main.common.generateCourts
+import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.model.Court
+import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.ui.sharedUi.SetupListScreen
 import kotlinx.coroutines.delay
 import java.util.*
@@ -19,7 +21,8 @@ import java.util.*
 
 @Composable
 fun SetupCourtsScreen(
-        listItems: Iterable<Court>?,
+        courts: Iterable<Court>?,
+        matches: Iterable<Match>?,
         itemAddedListener: (String) -> Unit,
         itemNameEditedListener: (Court, String) -> Unit,
         itemDeletedListener: (Court) -> Unit,
@@ -38,7 +41,8 @@ fun SetupCourtsScreen(
 
     SetupCourtsScreen(
             currentTime = currentTime,
-            items = listItems,
+            matches = matches,
+            courts = courts,
             addItemName = newItemName.value,
             addItemNameChangedListener = { newItemName.value = it },
             itemAddedListener = itemAddedListener,
@@ -57,7 +61,8 @@ fun SetupCourtsScreen(
 @Composable
 fun SetupCourtsScreen(
         currentTime: Calendar,
-        items: Iterable<Court>?,
+        matches: Iterable<Match>?,
+        courts: Iterable<Court>?,
         addItemName: String,
         addItemNameChangedListener: (String) -> Unit,
         itemAddedListener: (String) -> Unit,
@@ -71,8 +76,8 @@ fun SetupCourtsScreen(
     SetupListScreen(
             currentTime = currentTime,
             typeContentDescription = "court",
-            items = items,
-            getMatchState = { it.currentMatch?.state },
+            items = courts,
+            getMatchState = { matches?.findCourt(it)?.state },
             addItemName = addItemName,
             addItemNameChangedListener = addItemNameChangedListener,
             itemAddedListener = itemAddedListener,
@@ -82,25 +87,27 @@ fun SetupCourtsScreen(
             itemNameEditStartedListener = itemNameEditStartedListener,
             itemDeletedListener = { itemDeletedListener(it) },
             itemClickedListener = itemClickedListener,
-            hasExtraContent = { it.canBeUsed && it.currentMatch != null },
+            hasExtraContent = { it.canBeUsed && matches?.findCourt(it)?.isCurrent(currentTime) == true },
             extraContent = {
-                ExtraContent(currentTime = currentTime, court = it)
+                ExtraContent(currentTime = currentTime, match = matches?.findCourt(it)!!)
             }
     )
 }
 
+fun Iterable<Match>.findCourt(court: Court) = find { it.court?.name == court.name }
+
 @Composable
-fun RowScope.ExtraContent(currentTime: Calendar, court: Court) {
-    if (!court.canBeUsed || court.currentMatch == null) return
+fun RowScope.ExtraContent(currentTime: Calendar, match: Match) {
+    if (match.court == null || match.court?.canBeUsed == false) return
 
     Text(
-            text = court.currentMatch.players.joinToString { it.name },
+            text = match.players.joinToString { it.name },
             modifier = Modifier.weight(1f)
     )
     Text(
-            text = court.currentMatch.state.getTimeLeft(currentTime).asString()
+            text = match.state.getTimeLeft(currentTime).asString()
     )
-    if (court.currentMatch.isPaused) {
+    if (match.isPaused) {
         Icon(
                 painter = painterResource(id = R.drawable.baseline_pause_24),
                 contentDescription = "Match paused"
@@ -111,9 +118,11 @@ fun RowScope.ExtraContent(currentTime: Calendar, court: Court) {
 @Preview(showBackground = true)
 @Composable
 fun SetupCourtsScreen_Preview() {
+    val currentTime = Calendar.getInstance()
     SetupCourtsScreen(
-            currentTime = Calendar.getInstance(),
-            items = generateCourts(3, 7),
+            currentTime = currentTime,
+            courts = generateCourts(10),
+            matches = generateMatches(5, currentTime),
             addItemName = "",
             addItemNameChangedListener = {},
             itemAddedListener = {},

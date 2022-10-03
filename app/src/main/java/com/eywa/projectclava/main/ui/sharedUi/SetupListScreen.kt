@@ -19,6 +19,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.eywa.projectclava.main.common.generateCourts
+import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.common.generatePlayers
 import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.main.model.Player
@@ -296,12 +297,13 @@ fun SetupListScreen_Preview() {
     val playersToGenerate = 15
     val currentTime = Calendar.getInstance()
     val players = generatePlayers(playersToGenerate)
+    val courts = generateCourts(6)
     val states = listOf(
-            MatchState.InProgress(currentTime.apply { add(Calendar.HOUR_OF_DAY, -1) }), // Disabled
-            MatchState.InProgress(currentTime.apply { add(Calendar.HOUR_OF_DAY, -1) }),
+            MatchState.InProgressOrComplete(currentTime.apply { add(Calendar.HOUR_OF_DAY, -1) }, courts[0]), // Disabled
+            MatchState.InProgressOrComplete(currentTime.apply { add(Calendar.HOUR_OF_DAY, -1) }, courts[1]),
             null,
             null, // Disabled
-            MatchState.InProgress(currentTime.apply { add(Calendar.MINUTE, 1) }),
+            MatchState.InProgressOrComplete(currentTime.apply { add(Calendar.MINUTE, 1) }, courts[2]),
             MatchState.Paused(5, currentTime)
     )
 
@@ -329,9 +331,11 @@ fun SetupListScreen_Preview() {
 @Preview(showBackground = true)
 @Composable
 fun ExtraInfo_SetupListScreen_Preview() {
+    val currentTime = Calendar.getInstance()
     SetupCourtsScreen(
-            currentTime = Calendar.getInstance(),
-            items = generateCourts(3, 7)!!,
+            currentTime = currentTime,
+            courts = generateCourts(10),
+            matches = generateMatches(5, currentTime),
             addItemName = "",
             addItemNameChangedListener = {},
             itemAddedListener = {},

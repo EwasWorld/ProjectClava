@@ -11,10 +11,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
 import androidx.compose.ui.unit.dp
+import com.eywa.projectclava.main.common.GeneratableMatchState
 import com.eywa.projectclava.main.common.asString
-import com.eywa.projectclava.main.common.filterAvailable
 import com.eywa.projectclava.main.common.generateCourts
+import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.model.Court
+import com.eywa.projectclava.main.model.Match
+import com.eywa.projectclava.main.model.getCourtsInUse
 import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
 
@@ -22,16 +25,16 @@ import java.util.*
 fun AvailableCourtsHeader(
         currentTime: Calendar,
         courts: Iterable<Court>?,
+        matches: Iterable<Match>?,
 ) {
     val availableCourtsString = courts
-            .filterAvailable(currentTime)
+            ?.minus((matches?.getCourtsInUse(currentTime) ?: listOf()).toSet())
+            ?.takeIf { it.isNotEmpty() }
             ?.joinToString { it.number.toString() }
             ?.let { "Available courts: $it" }
-    val nextAvailableCourt = courts
-            ?.associateWith { it.currentMatch?.state?.getTimeLeft(currentTime) }
-            ?.filter { it.key.canBeUsed && it.value != null }
-            ?.minByOrNull { it.value!! }
-            ?.let { "Next available court: " + it.value.asString() }
+    val nextAvailableCourt = matches?.filter { it.isInProgress(currentTime) }
+            ?.minByOrNull { it.state }
+            ?.let { "Next available court: " + it.state.getTimeLeft(currentTime).asString() }
 
     Text(
             text = availableCourtsString ?: nextAvailableCourt ?: "No courts found",
@@ -50,16 +53,21 @@ fun AvailableCourtsHeader(
 fun AvailableCourtsHeader_Preview(
         @PreviewParameter(AvailableCourtsHeaderPreviewParamProvider::class) params: AvailableCourtsHeaderPreviewParam
 ) {
+    val currentTime = Calendar.getInstance()
     AvailableCourtsHeader(
-            currentTime = Calendar.getInstance(),
-            courts = generateCourts(params.matchCount, params.availableCourtsCount),
+            currentTime = currentTime,
+            courts = generateCourts(params.courtCount),
+            matches = if (params.matchesCount > 0)
+                generateMatches(params.matchesCount, currentTime, forceState = params.matchesType)
+            else
+                null
     )
 }
 
-
 data class AvailableCourtsHeaderPreviewParam(
-        val matchCount: Int = 4,
-        val availableCourtsCount: Int = 4,
+        val courtCount: Int = 4,
+        val matchesCount: Int = 2,
+        val matchesType: GeneratableMatchState? = GeneratableMatchState.IN_PROGRESS,
 )
 
 private class AvailableCourtsHeaderPreviewParamProvider :
@@ -67,16 +75,18 @@ private class AvailableCourtsHeaderPreviewParamProvider :
                 listOf(
                         AvailableCourtsHeaderPreviewParam(),
                         AvailableCourtsHeaderPreviewParam(
-                                matchCount = 1,
-                                availableCourtsCount = 0,
+                                matchesCount = 0,
                         ),
                         AvailableCourtsHeaderPreviewParam(
-                                matchCount = 0,
-                                availableCourtsCount = 1,
+                                matchesCount = 4,
                         ),
                         AvailableCourtsHeaderPreviewParam(
-                                matchCount = 0,
-                                availableCourtsCount = 0,
+                                matchesCount = 4,
+                                matchesType = GeneratableMatchState.NOT_STARTED,
+                        ),
+                        AvailableCourtsHeaderPreviewParam(
+                                courtCount = 0,
+                                matchesCount = 0,
                         ),
                 )
         )

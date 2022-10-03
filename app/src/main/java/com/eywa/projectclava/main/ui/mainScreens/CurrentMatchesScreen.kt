@@ -24,10 +24,8 @@ import com.eywa.projectclava.R
 import com.eywa.projectclava.main.common.asString
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
-import com.eywa.projectclava.main.common.transformForSorting
 import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
-import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.DividerThickness
 import com.eywa.projectclava.ui.theme.Typography
@@ -85,7 +83,7 @@ fun CurrentMatchesScreen(
         unPauseListener: (Match) -> Unit,
 ) {
     Column {
-        AvailableCourtsHeader(currentTime = currentTime, courts = courts)
+        AvailableCourtsHeader(currentTime = currentTime, courts = courts, matches = matches)
         Divider(thickness = DividerThickness)
 
         LazyColumn(
@@ -96,9 +94,12 @@ fun CurrentMatchesScreen(
                         .weight(1f)
                         .padding(horizontal = 10.dp)
         ) {
-            items(matches?.sortedBy { it.transformForSorting(currentTime).state } ?: listOf()) { match ->
+            items(matches
+                    ?.filter { it.isCurrent(currentTime) }
+                    ?.sortedBy { it.state }
+                    ?: listOf()
+            ) { match ->
                 val isSelected = selectedMatch == match
-                val court = courts?.find { it.currentMatch == match }
 
                 SelectableListItem(
                         currentTime = currentTime,
@@ -116,7 +117,7 @@ fun CurrentMatchesScreen(
                     ) {
                         Row {
                             Text(
-                                    text = court?.let { court.name } ?: "No court",
+                                    text = match.court?.name ?: if (match.isPaused) "Paused" else "No court",
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                     style = Typography.h4,
@@ -146,7 +147,12 @@ fun CurrentMatchesScreen(
 
         Divider(thickness = DividerThickness)
         SelectedItemActions(
-                text = courts?.find { it.currentMatch == selectedMatch }?.name ?: "No match selected",
+                text = when {
+                    selectedMatch == null -> "No match selected"
+                    selectedMatch.court != null -> selectedMatch.court!!.name
+                    selectedMatch.isPaused -> selectedMatch.players.joinToString()
+                    else -> "No court"
+                },
                 buttons = listOf(
                         SelectedItemAction(
                                 icon = SelectedItemActionIcon.PainterIcon(R.drawable.baseline_more_time_24),
@@ -192,24 +198,15 @@ fun CurrentMatchesScreen(
 fun CurrentMatchesScreen_Preview(
         @PreviewParameter(CurrentMatchesScreenPreviewParamProvider::class) params: CurrentMatchesScreenPreviewParam
 ) {
-    val courts = generateCourts(params.matchCount + (params.availableCourtsCount ?: 0)).toMutableList()
-    val matches = generateMatches(params.matchCount)
-    matches.forEach {
-        courts.add(courts.removeFirst().copy(currentMatch = it))
-    }
     val currentTime = Calendar.getInstance()
+    val matches = generateMatches(params.matchCount, currentTime)
     CurrentMatchesScreen(
             currentTime = currentTime,
-            courts = courts,
+            courts = generateCourts(params.matchCount + params.availableCourtsCount),
             matches = matches,
-            selectedMatch = params.selectedIndex
-                    ?.let { index ->
-                        matches.map {
-                            it.takeIf { it.state is MatchState.InProgress && it.state.isFinished(currentTime) }
-                                    ?.copy(state = MatchState.NoTime)
-                                    ?: it
-                        }.sortedBy { it.state }[index]
-                    },
+            selectedMatch = params.selectedIndex?.let { index ->
+                matches.filter { it.isCurrent(currentTime) }.sortedBy { it.state }[index]
+            },
             selectedMatchListener = {},
             addTimeListener = {},
             completeMatchListener = {},
@@ -221,8 +218,8 @@ fun CurrentMatchesScreen_Preview(
 
 data class CurrentMatchesScreenPreviewParam(
         val matchCount: Int = 5,
-        val availableCourtsCount: Int? = 4,
-        val selectedIndex: Int? = 3,
+        val availableCourtsCount: Int = 4,
+        val selectedIndex: Int? = 1,
 )
 
 private class CurrentMatchesScreenPreviewParamProvider :
@@ -234,6 +231,5 @@ private class CurrentMatchesScreenPreviewParamProvider :
                                 availableCourtsCount = 0,
                                 selectedIndex = null
                         ),
-                        CurrentMatchesScreenPreviewParam(selectedIndex = 1),
                 )
         )
