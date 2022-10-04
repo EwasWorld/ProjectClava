@@ -26,7 +26,7 @@ fun SetupCourtsScreen(
         itemAddedListener: (String) -> Unit,
         itemNameEditedListener: (Court, String) -> Unit,
         itemDeletedListener: (Court) -> Unit,
-        itemClickedListener: (Court) -> Unit,
+        toggleIsPresentListener: (Court) -> Unit,
 ) {
     var currentTime by remember { mutableStateOf(Calendar.getInstance()) }
     LaunchedEffect(Unit) {
@@ -54,7 +54,7 @@ fun SetupCourtsScreen(
             itemNameEditCancelledListener = { isEditDialogShown = null },
             itemNameEditStartedListener = { isEditDialogShown = it },
             itemDeletedListener = { itemDeletedListener(it) },
-            itemClickedListener = itemClickedListener,
+            toggleIsPresentListener = toggleIsPresentListener,
     )
 }
 
@@ -71,7 +71,7 @@ fun SetupCourtsScreen(
         itemNameEditCancelledListener: () -> Unit,
         itemNameEditStartedListener: (Court) -> Unit,
         itemDeletedListener: (Court) -> Unit,
-        itemClickedListener: (Court) -> Unit,
+        toggleIsPresentListener: (Court) -> Unit,
 ) {
     SetupListScreen(
             currentTime = currentTime,
@@ -86,7 +86,7 @@ fun SetupCourtsScreen(
             itemNameEditCancelledListener = itemNameEditCancelledListener,
             itemNameEditStartedListener = itemNameEditStartedListener,
             itemDeletedListener = { itemDeletedListener(it) },
-            itemClickedListener = itemClickedListener,
+            itemClickedListener = toggleIsPresentListener,
             hasExtraContent = { it.canBeUsed && matches?.findCourt(it)?.isCurrent(currentTime) == true },
             extraContent = {
                 ExtraContent(currentTime = currentTime, match = matches?.findCourt(it)!!)
@@ -131,6 +131,6 @@ fun SetupCourtsScreen_Preview() {
             itemNameEditCancelledListener = {},
             itemNameEditStartedListener = {},
             itemDeletedListener = {},
-            itemClickedListener = {},
+            toggleIsPresentListener = {},
     )
 }

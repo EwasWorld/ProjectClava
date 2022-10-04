@@ -1,5 +1,6 @@
 package com.eywa.projectclava.main.model
 
+import com.eywa.projectclava.main.database.match.DatabaseMatch
 import com.eywa.projectclava.main.database.match.DatabaseMatchFull
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -40,8 +41,7 @@ fun DatabaseMatchFull.asMatch() = Match(
         }
 )
 
-
-class Match(
+data class Match(
         val id: Int,
         val players: Iterable<Player>,
         val state: MatchState = MatchState.NotStarted(Calendar.getInstance()),
@@ -66,6 +66,40 @@ class Match(
 
     val court
         get() = if (state is MatchState.InProgressOrComplete) state.court else null
+
+    fun asDatabaseMatch() = DatabaseMatch(
+            id = id,
+            stateType = state::class.simpleName!!,
+            stateDate = when (state) {
+                is MatchState.NotStarted -> state.createdAt
+                is MatchState.InProgressOrComplete -> state.matchEndTime
+                is MatchState.Paused -> state.matchPausedAt
+            },
+            stateSecondsLeft = state
+                    .takeIf { it is MatchState.Paused }
+                    ?.let { (it as MatchState.Paused).remainingTimeSeconds },
+            courtId = state
+                    .takeIf { it is MatchState.InProgressOrComplete }
+                    ?.let { (it as MatchState.InProgressOrComplete).court.id },
+    )
+
+    fun startMatch(currentTime: Calendar, court: Court, duration: Int? = null): Match {
+        check(state is MatchState.NotStarted || state is MatchState.Paused) {
+            "Match cannot be started - incorrect state"
+        }
+        require(state is MatchState.Paused || duration != null) {
+            "Match cannot be started - no duration given"
+        }
+
+        return copy(
+                state = MatchState.InProgressOrComplete(
+                        matchEndTime = (currentTime.clone() as Calendar).apply {
+                            add(Calendar.SECOND, duration ?: (state as MatchState.Paused).remainingTimeSeconds.toInt())
+                        },
+                        court = court,
+                )
+        )
+    }
 }
 
 data class TimeRemaining(

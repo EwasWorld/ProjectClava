@@ -30,18 +30,12 @@ import com.eywa.projectclava.ui.theme.Typography
 import kotlinx.coroutines.delay
 import java.util.*
 
-/**
- * @param selectedPlayers the people selected to form the next match
- */
 @Composable
 fun CreateMatchScreen(
         players: Iterable<Player>,
         matches: Iterable<Match> = listOf(),
         courts: Iterable<Court>? = listOf(),
-        selectedPlayers: Iterable<Player>,
-        createMatchListener: () -> Unit,
-        removeAllFromMatchListener: () -> Unit,
-        playerClickedListener: (Player) -> Unit,
+        createMatchListener: (Iterable<Player>) -> Unit,
 ) {
     var currentTime by remember { mutableStateOf(Calendar.getInstance()) }
     LaunchedEffect(Unit) {
@@ -50,6 +44,45 @@ fun CreateMatchScreen(
             currentTime = Calendar.getInstance()
         }
     }
+
+    var selectedPlayers: Set<Player> by remember { mutableStateOf(setOf()) }
+
+    CreateMatchScreen(
+            currentTime = currentTime,
+            players = players,
+            matches = matches,
+            courts = courts,
+            selectedPlayers = selectedPlayers,
+            createMatchListener = {
+                createMatchListener(selectedPlayers)
+                selectedPlayers = setOf()
+            },
+            removeAllFromMatchListener = { selectedPlayers = setOf() },
+            playerClickedListener = {
+                selectedPlayers = if (selectedPlayers.contains(it)) {
+                    selectedPlayers.minus(it)
+                }
+                else {
+                    selectedPlayers.plus(it)
+                }
+            }
+    )
+}
+
+/**
+ * @param selectedPlayers the people selected to form the next match
+ */
+@Composable
+fun CreateMatchScreen(
+        currentTime: Calendar,
+        players: Iterable<Player>,
+        matches: Iterable<Match> = listOf(),
+        courts: Iterable<Court>? = listOf(),
+        selectedPlayers: Iterable<Player>,
+        createMatchListener: () -> Unit,
+        removeAllFromMatchListener: () -> Unit,
+        playerClickedListener: (Player) -> Unit,
+) {
 
     val playerMatchStates = matches.getPlayerStates()
     val previouslyPlayed = matches
@@ -84,8 +117,8 @@ fun CreateMatchScreen(
                     Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
-                                    .padding(10.dp)
                                     .clickable { playerClickedListener(player) }
+                                    .padding(10.dp)
                     ) {
                         Text(
                                 text = player.name,
@@ -178,6 +211,7 @@ fun CreateMatchScreen(
 @Composable
 fun CreateMatchScreen_Preview() {
     CreateMatchScreen(
+            currentTime = Calendar.getInstance(),
             players = generatePlayers(15),
             matches = generateMatches(5, Calendar.getInstance()),
             courts = generateCourts(5),
@@ -196,6 +230,7 @@ fun Individual_CreateMatchScreen_Preview(
     val players = generatePlayers(2)
     val match = generateMatches(1, Calendar.getInstance(), params.matchType)
     CreateMatchScreen(
+            currentTime = Calendar.getInstance(),
             players = players,
             matches = match,
             courts = generateCourts(1),

@@ -51,7 +51,7 @@ data class DatabaseMatchFull(
         @Embedded val match: DatabaseMatch,
         @Relation(
                 parentColumn = "id",
-                entityColumn = "name",
+                entityColumn = "id",
                 associateBy = Junction(
                         value = DatabaseMatchPlayer::class,
                         parentColumn = "matchId",

@@ -10,7 +10,7 @@ interface MatchDao {
     fun getAll(): Flow<List<DatabaseMatchFull>>
 
     @Insert
-    suspend fun insertAll(vararg matches: DatabaseMatch)
+    suspend fun insert(match: DatabaseMatch): Long
 
     @Delete
     suspend fun delete(match: DatabaseMatch)

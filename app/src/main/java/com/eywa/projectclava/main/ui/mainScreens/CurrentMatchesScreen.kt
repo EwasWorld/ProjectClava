@@ -11,7 +11,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -49,8 +48,7 @@ fun CurrentMatchesScreen(
             currentTime = Calendar.getInstance()
         }
     }
-    val selectedMatch: MutableState<Match?> =
-            rememberSaveable(matches?.map { it.players }) { mutableStateOf(null) }
+    var selectedMatch: Match? by remember { mutableStateOf(null) }
 
     // TODO Change court popup
     // TODO Add time popup
@@ -59,8 +57,10 @@ fun CurrentMatchesScreen(
             currentTime = currentTime,
             courts = courts,
             matches = matches,
-            selectedMatch = selectedMatch.value,
-            selectedMatchListener = { selectedMatch.value = it },
+            selectedMatch = selectedMatch,
+            selectedMatchListener = { newSelection ->
+                selectedMatch = newSelection.takeIf { selectedMatch?.id != it.id }
+            },
             addTimeListener = addTimeListener,
             completeMatchListener = setCompletedListener,
             changeCourtListener = changeCourtListener,

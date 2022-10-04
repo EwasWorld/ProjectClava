@@ -5,7 +5,7 @@ class MatchRepo(
         private val matchPlayerDao: MatchPlayerDao
 ) {
     fun getAll() = matchDao.getAll()
-    suspend fun insert(vararg match: DatabaseMatch) = matchDao.insertAll(*match)
+    suspend fun insert(match: DatabaseMatch) = matchDao.insert(match)
     suspend fun insert(vararg matchPlayers: DatabaseMatchPlayer) = matchPlayerDao.insertAll(*matchPlayers)
     suspend fun delete(match: DatabaseMatch) = matchDao.delete(match)
     suspend fun delete(matchPlayer: DatabaseMatchPlayer) = matchPlayerDao.delete(matchPlayer)

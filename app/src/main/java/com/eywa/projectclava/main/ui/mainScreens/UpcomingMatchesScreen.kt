@@ -30,14 +30,9 @@ import java.util.*
 fun UpcomingMatchesScreen(
         courts: Iterable<Court>?,
         matches: Iterable<Match> = listOf(),
-        openStartMatchDialogListener: (Match) -> Unit,
-        startMatchDialogOpenFor: Match?,
         startMatchOkListener: (Match, Court, totalTimeSeconds: Int, useAsDefaultTime: Boolean) -> Unit,
-        startMatchCancelListener: () -> Unit,
         removeMatchListener: (Match) -> Unit,
-        selectedMatch: Match?,
         defaultTimeSeconds: Int,
-        selectedMatchListener: (Match) -> Unit,
 ) {
     var currentTime by remember { mutableStateOf(Calendar.getInstance()) }
     LaunchedEffect(Unit) {
@@ -47,6 +42,42 @@ fun UpcomingMatchesScreen(
         }
     }
 
+    var startMatchDialogOpenFor: Match? by remember { mutableStateOf(null) }
+    var selectedMatch: Match? by remember { mutableStateOf(null) }
+    UpcomingMatchesScreen(
+            currentTime = currentTime,
+            courts = courts,
+            matches = matches,
+            openStartMatchDialogListener = { startMatchDialogOpenFor = it },
+            startMatchDialogOpenFor = startMatchDialogOpenFor,
+            startMatchOkListener = { match, court, totalTimeSeconds, useAsDefaultTime ->
+                selectedMatch = null
+                startMatchOkListener(match, court, totalTimeSeconds, useAsDefaultTime)
+            },
+            startMatchCancelListener = { startMatchDialogOpenFor = null },
+            removeMatchListener = removeMatchListener,
+            selectedMatch = selectedMatch,
+            defaultTimeSeconds = defaultTimeSeconds,
+            selectMatchListener = { newSelection ->
+                selectedMatch = newSelection.takeIf { selectedMatch?.id != newSelection.id }
+            },
+    )
+}
+
+@Composable
+fun UpcomingMatchesScreen(
+        currentTime: Calendar,
+        courts: Iterable<Court>?,
+        matches: Iterable<Match> = listOf(),
+        openStartMatchDialogListener: (Match) -> Unit,
+        startMatchDialogOpenFor: Match?,
+        startMatchOkListener: (Match, Court, totalTimeSeconds: Int, useAsDefaultTime: Boolean) -> Unit,
+        startMatchCancelListener: () -> Unit,
+        removeMatchListener: (Match) -> Unit,
+        selectedMatch: Match?,
+        defaultTimeSeconds: Int,
+        selectMatchListener: (Match) -> Unit,
+) {
     val availableCourts = courts?.minus(matches.getCourtsInUse(currentTime).toSet())
     val playerMatchStates = matches.getPlayerStates()
     val sortedMatches = matches.filter { it.state is MatchState.NotStarted }.sortedBy { it.state }
@@ -97,7 +128,7 @@ fun UpcomingMatchesScreen(
                             contentPadding = PaddingValues(10.dp),
                             modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable(onClick = { selectedMatchListener(match) })
+                                    .clickable(onClick = { selectMatchListener(match) })
                     ) {
                         items(
                                 match.players
@@ -236,13 +267,14 @@ fun UpcomingMatchesScreen_Preview(
     val matches = generateMatches(5, currentTime) + generateMatches(4, currentTime, GeneratableMatchState.NOT_STARTED)
 
     UpcomingMatchesScreen(
+            currentTime = currentTime,
             courts = generateCourts(4),
             matches = matches,
             removeMatchListener = {},
             selectedMatch = params.selectedIndex?.let {
                 matches.filter { match -> match.state is MatchState.NotStarted }[it]
             },
-            selectedMatchListener = {},
+            selectMatchListener = {},
             openStartMatchDialogListener = {},
             startMatchDialogOpenFor = if (params.startMatchDialogOpen) matches[0] else null,
             startMatchOkListener = { _, _, _, _ -> },

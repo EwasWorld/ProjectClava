@@ -8,7 +8,7 @@ import androidx.room.Update
 @Dao
 interface MatchPlayerDao {
     @Insert
-    fun insertAll(vararg matchPlayers: DatabaseMatchPlayer)
+    suspend fun insertAll(vararg matchPlayers: DatabaseMatchPlayer)
 
     @Delete
     suspend fun delete(matchPlayer: DatabaseMatchPlayer)

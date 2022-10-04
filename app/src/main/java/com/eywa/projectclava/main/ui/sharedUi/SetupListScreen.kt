@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -14,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -96,63 +99,76 @@ fun <T : SetupListItem> SetupListScreen(
             itemEditCancelledListener = itemNameEditCancelledListener,
     )
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxSize()
+    ) {
         val isAddNameDuplicate = items?.any { it.name == addItemName } ?: false
 
-        LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(vertical = 20.dp),
-                modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = 20.dp)
-        ) {
-            items(items?.sortedBy { it.name } ?: listOf()) { item ->
-                SelectableListItem(
-                        currentTime = currentTime,
-                        enabled = item.enabled,
-                        matchState = getMatchState(item),
-                ) {
-                    Column(
-                            modifier = Modifier.clickable { itemClickedListener(item) }
+        if (items?.any() != true) {
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                    text = "No ${typeContentDescription}s to show",
+                    style = Typography.h4
+            )
+            Spacer(modifier = Modifier.weight(1f))
+        }
+        else {
+            LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = PaddingValues(vertical = 20.dp),
+                    modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .padding(horizontal = 20.dp)
+            ) {
+                items(items.sortedBy { it.name }) { item ->
+                    SelectableListItem(
+                            currentTime = currentTime,
+                            enabled = item.enabled,
+                            matchState = getMatchState(item),
                     ) {
-                        Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(start = 15.dp)
+                        Column(
+                                modifier = Modifier.clickable { itemClickedListener(item) }
                         ) {
-                            val decoration = if (item.enabled) TextDecoration.None else TextDecoration.LineThrough
-                            Text(
-                                    text = item.name,
-                                    style = Typography.h4.copy(textDecoration = decoration),
-                                    modifier = Modifier.weight(1f)
-                            )
-                            IconButton(
-                                    enabled = item.enabled,
-                                    onClick = { itemNameEditStartedListener(item) }
-                            ) {
-                                Icon(
-                                        imageVector = Icons.Default.Edit,
-                                        contentDescription = "Edit ${item.name}"
-                                )
-                            }
-                            IconButton(
-                                    enabled = item.enabled,
-                                    onClick = { itemDeletedListener(item) }
-                            ) {
-                                Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "Delete ${item.name}"
-                                )
-                            }
-                        }
-                        if (hasExtraContent(item)) {
                             Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                            .padding(horizontal = 15.dp)
-                                            .padding(bottom = 10.dp)
+                                    modifier = Modifier.padding(start = 15.dp)
                             ) {
-                                extraContent(item)
+                                val decoration = if (item.enabled) TextDecoration.None else TextDecoration.LineThrough
+                                Text(
+                                        text = item.name,
+                                        style = Typography.h4.copy(textDecoration = decoration),
+                                        modifier = Modifier.weight(1f)
+                                )
+                                IconButton(
+                                        enabled = item.enabled,
+                                        onClick = { itemNameEditStartedListener(item) }
+                                ) {
+                                    Icon(
+                                            imageVector = Icons.Default.Edit,
+                                            contentDescription = "Edit ${item.name}"
+                                    )
+                                }
+                                IconButton(
+                                        enabled = item.enabled,
+                                        onClick = { itemDeletedListener(item) }
+                                ) {
+                                    Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = "Delete ${item.name}"
+                                    )
+                                }
+                            }
+                            if (hasExtraContent(item)) {
+                                Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                                .padding(horizontal = 15.dp)
+                                                .padding(bottom = 10.dp)
+                                ) {
+                                    extraContent(item)
+                                }
                             }
                         }
                     }
@@ -165,11 +181,22 @@ fun <T : SetupListItem> SetupListScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(20.dp)
         ) {
+            val onAddPressed = {
+                if (addItemName.isBlank()) {
+                    // TODO Toast
+                }
+                else {
+                    itemAddedListener(addItemName)
+                    addItemNameChangedListener("")
+                }
+            }
+
             ListItemNameTextField(
                     typeContentDescription = typeContentDescription,
                     existingItems = items,
                     proposedItemName = addItemName,
                     onValueChangedListener = addItemNameChangedListener,
+                    onDoneListener = onAddPressed,
                     modifier = Modifier.weight(1f),
             )
             Surface(
@@ -178,10 +205,7 @@ fun <T : SetupListItem> SetupListScreen(
             ) {
                 IconButton(
                         enabled = !isAddNameDuplicate && addItemName.isNotBlank(),
-                        onClick = {
-                            itemAddedListener(addItemName)
-                            addItemNameChangedListener("")
-                        },
+                        onClick = onAddPressed,
                 ) {
                     Icon(
                             imageVector = Icons.Default.Add,
@@ -199,6 +223,7 @@ fun <T : SetupListItem> ListItemNameTextField(
         existingItems: Iterable<T>?,
         proposedItemName: String,
         onValueChangedListener: (String) -> Unit,
+        onDoneListener: () -> Unit,
         modifier: Modifier = Modifier
 ) {
     val isDuplicate = existingItems?.any { it.name == proposedItemName } ?: false
@@ -222,6 +247,10 @@ fun <T : SetupListItem> ListItemNameTextField(
                     }
                 },
                 isError = isDuplicate,
+                keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(onDone = { onDoneListener() }),
         )
         if (isDuplicate) {
             Text(
@@ -243,6 +272,15 @@ fun <T : SetupListItem> EditDialog(
 ) {
     val editName = rememberSaveable { mutableStateOf(editDialogOpenFor?.name ?: "") }
     val isDuplicate = items?.any { it.name == editName.value } ?: false
+    val okListener = {
+
+        if (editName.value.isBlank()) {
+            // TODO Toast
+        }
+        else {
+            itemEditedListener(editDialogOpenFor!!, editName.value)
+        }
+    }
 
     ClavaDialog(
             isShown = editDialogOpenFor != null,
@@ -250,13 +288,14 @@ fun <T : SetupListItem> EditDialog(
             okButtonText = "Edit",
             okButtonEnabled = !isDuplicate,
             onCancelListener = itemEditCancelledListener,
-            onOkListener = { itemEditedListener(editDialogOpenFor!!, editName.value) }
+            onOkListener = okListener
     ) {
         ListItemNameTextField(
                 typeContentDescription = typeContentDescription,
                 existingItems = items,
                 proposedItemName = editName.value,
                 onValueChangedListener = { editName.value = it },
+                onDoneListener = okListener
         )
     }
 }
@@ -314,7 +353,7 @@ fun ExtraInfo_SetupListScreen_Preview() {
             itemNameEditCancelledListener = {},
             itemNameEditStartedListener = {},
             itemDeletedListener = {},
-            itemClickedListener = {},
+            toggleIsPresentListener = {},
     )
 }
 

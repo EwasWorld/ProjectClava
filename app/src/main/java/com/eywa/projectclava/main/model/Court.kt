@@ -14,4 +14,6 @@ data class Court(
         get() = "Court $number"
     override val enabled: Boolean
         get() = canBeUsed
+
+    fun asDatabaseCourt() = DatabaseCourt(id, number, canBeUsed)
 }
