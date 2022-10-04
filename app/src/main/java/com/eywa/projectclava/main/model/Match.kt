@@ -1,5 +1,6 @@
 package com.eywa.projectclava.main.model
 
+import com.eywa.projectclava.main.database.match.DatabaseMatchFull
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -20,7 +21,28 @@ fun Iterable<Match>.getPlayerStates() =
 fun Iterable<Match>.getCourtsInUse(currentTime: Calendar) =
         filter { it.isInProgress(currentTime) }.mapNotNull { it.court }
 
+fun DatabaseMatchFull.asMatch() = Match(
+        id = match.id,
+        players = players.map { it.asPlayer() },
+        state = when (match.stateType) {
+            MatchState.Paused::class.simpleName -> MatchState.Paused(
+                    remainingTimeSeconds = match.stateSecondsLeft!!,
+                    matchPausedAt = match.stateDate
+            )
+            MatchState.InProgressOrComplete::class.simpleName -> MatchState.InProgressOrComplete(
+                    matchEndTime = match.stateDate,
+                    court = court!!.asCourt()
+            )
+            MatchState.NotStarted::class.simpleName -> MatchState.NotStarted(
+                    match.stateDate
+            )
+            else -> throw IllegalStateException("Couldn't convert database match to match state")
+        }
+)
+
+
 class Match(
+        val id: Int,
         val players: Iterable<Player>,
         val state: MatchState = MatchState.NotStarted(Calendar.getInstance()),
 ) {
@@ -107,7 +129,10 @@ sealed class MatchState : Comparable<MatchState> {
         override fun isFinished(currentTime: Calendar): Boolean = matchEndTime.before(currentTime)
     }
 
-    data class Paused(val remainingTimeSeconds: Long, val matchPausedAt: Calendar) : MatchState() {
+    data class Paused(
+            val remainingTimeSeconds: Long,
+            val matchPausedAt: Calendar
+    ) : MatchState() {
         override fun getTimeLeft(currentTime: Calendar): TimeRemaining = TimeRemaining(remainingTimeSeconds)
 
         override fun compareTo(other: MatchState): Int {

@@ -15,7 +15,7 @@ fun SetupPlayersScreen(
         itemAddedListener: (String) -> Unit,
         itemNameEditedListener: (Player, String) -> Unit,
         itemDeletedListener: (Player) -> Unit,
-        itemClickedListener: (Player) -> Unit,
+        toggleIsPresentListener: (Player) -> Unit,
 ) {
     var currentTime by remember { mutableStateOf(Calendar.getInstance()) }
     LaunchedEffect(Unit) {
@@ -43,7 +43,7 @@ fun SetupPlayersScreen(
             itemNameEditCancelledListener = { isEditDialogShown = null },
             itemNameEditStartedListener = { isEditDialogShown = it },
             itemDeletedListener = { itemDeletedListener(it) },
-            itemClickedListener = itemClickedListener,
+            toggleIsPresentListener = toggleIsPresentListener,
     )
 }
 
@@ -60,7 +60,7 @@ fun SetupPlayersScreen(
         itemNameEditCancelledListener: () -> Unit,
         itemNameEditStartedListener: (Player) -> Unit,
         itemDeletedListener: (Player) -> Unit,
-        itemClickedListener: (Player) -> Unit,
+        toggleIsPresentListener: (Player) -> Unit,
 ) {
     SetupListScreen(
             currentTime = currentTime,
@@ -79,6 +79,6 @@ fun SetupPlayersScreen(
             itemNameEditCancelledListener = itemNameEditCancelledListener,
             itemNameEditStartedListener = itemNameEditStartedListener,
             itemDeletedListener = { itemDeletedListener(it) },
-            itemClickedListener = itemClickedListener,
+            itemClickedListener = toggleIsPresentListener,
     )
 }

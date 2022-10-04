@@ -3,60 +3,57 @@ package com.eywa.projectclava.main
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.*
-import androidx.compose.ui.tooling.preview.Preview
-import com.eywa.projectclava.main.common.generateCourt
-import com.eywa.projectclava.main.common.generateCourts
-import com.eywa.projectclava.main.common.generateMatches
-import com.eywa.projectclava.main.common.generatePlayers
-import com.eywa.projectclava.main.model.MainState
-import com.eywa.projectclava.main.model.Match
-import com.eywa.projectclava.main.model.MatchState
-import com.eywa.projectclava.main.ui.mainScreens.CurrentMatchesScreen
-import com.eywa.projectclava.main.ui.mainScreens.CurrentMatchesScreenPreviewParam
+import androidx.activity.viewModels
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.eywa.projectclava.main.ui.mainScreens.SetupPlayersScreen
 import com.eywa.projectclava.ui.theme.ProjectClavaTheme
-import java.util.*
 
 /*
- * Time spent: 16 hrs
+ * Time spent: 18 hrs
  */
 
 class MainActivity : ComponentActivity() {
+    val viewModel: MainViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             ProjectClavaTheme {
-                var state by remember { mutableStateOf(MainState()) }
-
-                val currentTime = Calendar.getInstance()
-                val newAmount = (currentTime.clone() as Calendar).apply { add(Calendar.SECOND, 5) }
-
-                val m = Match(generatePlayers(2), MatchState.InProgressOrComplete(newAmount, generateCourt(1)))
-
-                val params = CurrentMatchesScreenPreviewParam()
-                val matches = generateMatches(params.matchCount, currentTime)
-                CurrentMatchesScreen(
-                        currentTime = currentTime,
-                        courts = generateCourts(params.matchCount + params.availableCourtsCount),
-                        matches = matches,
-                        selectedMatch = params.selectedIndex?.let { index ->
-                            matches.filter { it.isCurrent(currentTime) }.sortedBy { it.state }[index]
-                        },
-                        selectedMatchListener = {},
-                        addTimeListener = {},
-                        completeMatchListener = {},
-                        changeCourtListener = {},
-                        pauseListener = {},
-                        unPauseListener = {},
-                )
+                Navigation(viewModel)
             }
         }
     }
 }
 
-@Preview(showBackground = true)
 @Composable
-fun DefaultPreview() {
-    ProjectClavaTheme {
+fun Navigation(viewModel: MainViewModel) {
+    val navController = rememberNavController()
+
+    val players by viewModel.players.collectAsState(initial = listOf())
+    val matches by viewModel.matches.collectAsState(initial = listOf())
+    val courts by viewModel.courts.collectAsState(initial = listOf())
+
+    NavHost(navController = navController, startDestination = NavRoute.AddPlayer.route) {
+        composable(NavRoute.AddPlayer.route) {
+            SetupPlayersScreen(
+                    items = players,
+                    matches = matches,
+                    itemAddedListener = { viewModel.addPlayer(it) },
+                    itemNameEditedListener = { player, newName ->
+                        viewModel.updatePlayer(player.copy(name = newName))
+                    },
+                    itemDeletedListener = { viewModel.deletePlayer(it) },
+                    toggleIsPresentListener = { viewModel.updatePlayer(it.copy(isPresent = !it.isPresent)) },
+            )
+        }
     }
+}
+
+sealed class NavRoute(val route: String) {
+    object AddPlayer : NavRoute("add_player")
 }

@@ -14,18 +14,15 @@ fun generatePlayers(count: Int): List<Player> {
     return names
             .mapIndexed { index, name ->
                 Player(
+                        id = 1,
                         name = name + " " + (index / defaultNames.size),
                         isPresent = index % 3 != 1,
-                        lastPlayed = Calendar.getInstance().apply {
-                            set(Calendar.HOUR_OF_DAY, 18)
-                            set(Calendar.MINUTE, names.lastIndex - index)
-                        },
                 )
             }
             .shuffled()
 }
 
-fun generateCourt(courtNumber: Int, courtEnabled: Boolean = true) = Court(courtNumber, courtEnabled)
+fun generateCourt(courtNumber: Int, courtEnabled: Boolean = true) = Court(1, courtNumber.toString(), courtEnabled)
 
 fun generateCourts(count: Int) = List(count) { generateCourt(it + 1, it % 6 != 5) }.shuffled()
 
@@ -47,6 +44,7 @@ fun generateMatches(
 
         val court = if (state.needsCourt) generateCourt(courtNumber++) else null
         Match(
+                id = 1,
                 players = players,
                 state = generateMatchState(
                         type = state,

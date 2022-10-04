@@ -96,7 +96,7 @@ fun <T : SetupListItem> SetupListScreen(
             itemEditCancelledListener = itemNameEditCancelledListener,
     )
 
-    Column {
+    Column(modifier = Modifier.fillMaxSize()) {
         val isAddNameDuplicate = items?.any { it.name == addItemName } ?: false
 
         LazyColumn(
@@ -177,7 +177,7 @@ fun <T : SetupListItem> SetupListScreen(
                     color = MaterialTheme.colors.primary,
             ) {
                 IconButton(
-                        enabled = !isAddNameDuplicate,
+                        enabled = !isAddNameDuplicate && addItemName.isNotBlank(),
                         onClick = {
                             itemAddedListener(addItemName)
                             addItemNameChangedListener("")
