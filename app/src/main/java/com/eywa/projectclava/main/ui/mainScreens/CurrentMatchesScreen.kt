@@ -25,6 +25,7 @@ import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
+import com.eywa.projectclava.main.model.getCourtsInUse
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.DividerThickness
 import com.eywa.projectclava.ui.theme.Typography
@@ -35,11 +36,11 @@ import java.util.*
 fun CurrentMatchesScreen(
         courts: Iterable<Court>?,
         matches: Iterable<Match>?,
-        addTimeListener: (Match) -> Unit,
+        addTimeListener: (Match, timeToAdd: Int) -> Unit,
         setCompletedListener: (Match) -> Unit,
-        changeCourtListener: (Match) -> Unit,
+        changeCourtListener: (Match, Court) -> Unit,
         pauseListener: (Match) -> Unit,
-        unPauseListener: (Match) -> Unit,
+        resumeListener: (Match, Court) -> Unit,
 ) {
     var currentTime by remember { mutableStateOf(Calendar.getInstance()) }
     LaunchedEffect(Unit) {
@@ -48,10 +49,10 @@ fun CurrentMatchesScreen(
             currentTime = Calendar.getInstance()
         }
     }
-    var selectedMatch: Match? by remember { mutableStateOf(null) }
-
-    // TODO Change court popup
-    // TODO Add time popup
+    var selectedMatch: Match? by remember(matches) { mutableStateOf(null) }
+    var addTimeDialogOpenFor: Match? by remember(matches) { mutableStateOf(null) }
+    var changeCourtDialogOpenFor: Match? by remember(matches) { mutableStateOf(null) }
+    var resumeDialogOpenFor: Match? by remember(matches) { mutableStateOf(null) }
 
     CurrentMatchesScreen(
             currentTime = currentTime,
@@ -61,11 +62,20 @@ fun CurrentMatchesScreen(
             selectedMatchListener = { newSelection ->
                 selectedMatch = newSelection.takeIf { selectedMatch?.id != it.id }
             },
-            addTimeListener = addTimeListener,
             completeMatchListener = setCompletedListener,
-            changeCourtListener = changeCourtListener,
             pauseListener = pauseListener,
-            unPauseListener = unPauseListener,
+            addTimeListener = addTimeListener,
+            changeCourtListener = changeCourtListener,
+            addTimeDialogOpenFor = addTimeDialogOpenFor,
+            openAddTimeDialogListener = { addTimeDialogOpenFor = it },
+            closeAddTimeDialogListener = { addTimeDialogOpenFor = null },
+            changeCourtDialogOpenFor = changeCourtDialogOpenFor,
+            openChangeCourtDialogListener = { changeCourtDialogOpenFor = it },
+            closeChangeCourtDialogListener = { changeCourtDialogOpenFor = null },
+            resumeDialogOpenFor = resumeDialogOpenFor,
+            openResumeDialogListener = { resumeDialogOpenFor = it },
+            closeResumeDialogListener = { resumeDialogOpenFor = null },
+            resumeListener = resumeListener,
     )
 }
 
@@ -76,12 +86,34 @@ fun CurrentMatchesScreen(
         matches: Iterable<Match>?,
         selectedMatch: Match?,
         selectedMatchListener: (Match) -> Unit,
-        addTimeListener: (Match) -> Unit,
         completeMatchListener: (Match) -> Unit,
-        changeCourtListener: (Match) -> Unit,
         pauseListener: (Match) -> Unit,
-        unPauseListener: (Match) -> Unit,
+        addTimeDialogOpenFor: Match?,
+        openAddTimeDialogListener: (Match) -> Unit,
+        closeAddTimeDialogListener: () -> Unit,
+        addTimeListener: (Match, timeToAdd: Int) -> Unit,
+        changeCourtDialogOpenFor: Match?,
+        openChangeCourtDialogListener: (Match) -> Unit,
+        closeChangeCourtDialogListener: () -> Unit,
+        changeCourtListener: (Match, Court) -> Unit,
+        resumeDialogOpenFor: Match?,
+        openResumeDialogListener: (Match) -> Unit,
+        closeResumeDialogListener: () -> Unit,
+        resumeListener: (Match, Court) -> Unit,
 ) {
+    CurrentMatchesScreenDialogs(
+            availableCourts = courts?.minus((matches?.getCourtsInUse(currentTime) ?: listOf()).toSet()),
+            addTimeDialogOpenFor = addTimeDialogOpenFor,
+            closeAddTimeDialogListener = closeAddTimeDialogListener,
+            changeCourtDialogOpenFor = changeCourtDialogOpenFor,
+            addTimeListener = addTimeListener,
+            closeChangeCourtDialogListener = closeChangeCourtDialogListener,
+            changeCourtListener = changeCourtListener,
+            resumeDialogOpenFor = resumeDialogOpenFor,
+            closeResumeDialogListener = closeResumeDialogListener,
+            resumeListener = resumeListener,
+    )
+
     Column {
         AvailableCourtsHeader(currentTime = currentTime, courts = courts, matches = matches)
         Divider(thickness = DividerThickness)
@@ -99,7 +131,7 @@ fun CurrentMatchesScreen(
                     ?.sortedBy { it.state }
                     ?: listOf()
             ) { match ->
-                val isSelected = selectedMatch == match
+                val isSelected = selectedMatch?.id == match.id
 
                 SelectableListItem(
                         currentTime = currentTime,
@@ -158,20 +190,20 @@ fun CurrentMatchesScreen(
                                 icon = SelectedItemActionIcon.PainterIcon(R.drawable.baseline_more_time_24),
                                 contentDescription = "Add time",
                                 enabled = selectedMatch != null,
-                                onClick = { selectedMatch?.let { addTimeListener(it) } }
+                                onClick = { selectedMatch?.let { openAddTimeDialogListener(it) } }
                         ),
                         SelectedItemAction(
                                 icon = SelectedItemActionIcon.PainterIcon(R.drawable.baseline_swap_horiz_24),
                                 contentDescription = "Change court",
                                 enabled = selectedMatch != null,
-                                onClick = { selectedMatch?.let { changeCourtListener(it) } }
+                                onClick = { selectedMatch?.let { openChangeCourtDialogListener(it) } }
                         ),
                         if (selectedMatch?.isPaused == true) {
                             SelectedItemAction(
                                     icon = SelectedItemActionIcon.VectorIcon(Icons.Default.PlayArrow),
                                     contentDescription = "Resume match",
                                     enabled = true,
-                                    onClick = { unPauseListener(selectedMatch) }
+                                    onClick = { openResumeDialogListener(selectedMatch) }
                             )
                         }
                         else {
@@ -193,6 +225,63 @@ fun CurrentMatchesScreen(
     }
 }
 
+@Composable
+fun CurrentMatchesScreenDialogs(
+        availableCourts: Iterable<Court>?,
+        addTimeDialogOpenFor: Match?,
+        closeAddTimeDialogListener: () -> Unit,
+        changeCourtDialogOpenFor: Match?,
+        addTimeListener: (Match, timeToAdd: Int) -> Unit,
+        closeChangeCourtDialogListener: () -> Unit,
+        changeCourtListener: (Match, Court) -> Unit,
+        resumeDialogOpenFor: Match?,
+        closeResumeDialogListener: () -> Unit,
+        resumeListener: (Match, Court) -> Unit,
+) {
+    var timeToAdd: Int by remember { mutableStateOf(2 * 60) }
+    var selectedCourt by remember { mutableStateOf(availableCourts?.minByOrNull { it.name }) }
+
+    ClavaDialog(
+            isShown = addTimeDialogOpenFor != null,
+            title = "Add time",
+            okButtonText = "Add",
+            onCancelListener = closeAddTimeDialogListener,
+            onOkListener = { addTimeListener(addTimeDialogOpenFor!!, timeToAdd) }
+    ) {
+        TimePicker(
+                totalSeconds = timeToAdd,
+                timeChangedListener = { timeToAdd = it }
+        )
+    }
+    ClavaDialog(
+            isShown = addTimeDialogOpenFor == null && changeCourtDialogOpenFor != null && selectedCourt != null,
+            title = "Change court",
+            okButtonText = "Change",
+            onCancelListener = closeChangeCourtDialogListener,
+            onOkListener = { changeCourtListener(changeCourtDialogOpenFor!!, selectedCourt!!) }
+    ) {
+        SelectCourtRadioButtons(
+                availableCourts = availableCourts,
+                selectedCourt = selectedCourt,
+                onCourtSelected = { selectedCourt = it }
+        )
+    }
+    ClavaDialog(
+            isShown = addTimeDialogOpenFor == null && changeCourtDialogOpenFor == null
+                    && resumeDialogOpenFor != null && selectedCourt != null,
+            title = "Resume match",
+            okButtonText = "Resume",
+            onCancelListener = closeResumeDialogListener,
+            onOkListener = { resumeListener(resumeDialogOpenFor!!, selectedCourt!!) }
+    ) {
+        SelectCourtRadioButtons(
+                availableCourts = availableCourts,
+                selectedCourt = selectedCourt,
+                onCourtSelected = { selectedCourt = it }
+        )
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun CurrentMatchesScreen_Preview(
@@ -208,11 +297,20 @@ fun CurrentMatchesScreen_Preview(
                 matches.filter { it.isCurrent(currentTime) }.sortedBy { it.state }[index]
             },
             selectedMatchListener = {},
-            addTimeListener = {},
             completeMatchListener = {},
-            changeCourtListener = {},
             pauseListener = {},
-            unPauseListener = {},
+            addTimeDialogOpenFor = null,
+            openAddTimeDialogListener = {},
+            closeAddTimeDialogListener = {},
+            addTimeListener = { _, _ -> },
+            changeCourtDialogOpenFor = null,
+            openChangeCourtDialogListener = {},
+            closeChangeCourtDialogListener = {},
+            changeCourtListener = { _, _ -> },
+            resumeDialogOpenFor = null,
+            openResumeDialogListener = {},
+            closeResumeDialogListener = {},
+            resumeListener = { _, _ -> },
     )
 }
 

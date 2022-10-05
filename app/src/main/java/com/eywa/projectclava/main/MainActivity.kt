@@ -19,6 +19,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.eywa.projectclava.main.model.Player
 import com.eywa.projectclava.main.ui.mainScreens.*
 import com.eywa.projectclava.ui.theme.DividerThickness
 import com.eywa.projectclava.ui.theme.ProjectClavaTheme
@@ -27,7 +28,7 @@ import kotlinx.coroutines.launch
 import java.util.*
 
 /*
- * Time spent: 20 hrs
+ * Time spent: 21 hrs
  */
 
 class MainActivity : ComponentActivity() {
@@ -60,6 +61,8 @@ fun Navigation(viewModel: MainViewModel) {
             drawerContent = {
                 Drawer(
                         navController = navController,
+                        viewModel = viewModel,
+                        players = players,
                         closeDrawer = {
                             scope.launch {
                                 drawerState.animateTo(
@@ -79,10 +82,10 @@ fun Navigation(viewModel: MainViewModel) {
                         matches = matches,
                         itemAddedListener = { viewModel.addPlayer(it) },
                         itemNameEditedListener = { player, newName ->
-                            viewModel.updatePlayer(player.copy(name = newName))
+                            viewModel.updatePlayers(player.copy(name = newName))
                         },
                         itemDeletedListener = { viewModel.deletePlayer(it) },
-                        toggleIsPresentListener = { viewModel.updatePlayer(it.copy(isPresent = !it.isPresent)) },
+                        toggleIsPresentListener = { viewModel.updatePlayers(it.copy(isPresent = !it.isPresent)) },
                 )
             }
             composable(NavRoute.ADD_COURT.route) {
@@ -123,11 +126,17 @@ fun Navigation(viewModel: MainViewModel) {
                 CurrentMatchesScreen(
                         courts = courts,
                         matches = matches,
-                        addTimeListener = {}, // TODO
-                        setCompletedListener = {}, // TODO
-                        changeCourtListener = {}, // TODO
-                        pauseListener = {}, // TODO
-                        unPauseListener = {}, // TODO
+                        addTimeListener = { match, timeToAdd ->
+                            viewModel.updateMatch(match.addTime(Calendar.getInstance(), timeToAdd))
+                        },
+                        setCompletedListener = { viewModel.updateMatch(it.completeMatch(Calendar.getInstance())) },
+                        changeCourtListener = { match, court ->
+                            viewModel.updateMatch(match.changeCourt(court))
+                        },
+                        pauseListener = { viewModel.updateMatch(it.pauseMatch(Calendar.getInstance())) },
+                        resumeListener = { match, court ->
+                            viewModel.updateMatch(match.resumeMatch(Calendar.getInstance(), court))
+                        },
                 )
             }
             composable(NavRoute.PREVIOUS_MATCHES.route) {
@@ -140,22 +149,41 @@ fun Navigation(viewModel: MainViewModel) {
 @Composable
 fun Drawer(
         navController: NavController,
+        viewModel: MainViewModel,
+        players: Iterable<Player>,
         closeDrawer: () -> Unit,
 ) {
     @Composable
-    fun TextNavButton(text: String, destination: String) {
+    fun DrawerTextButton(text: String, onClick: () -> Unit) {
         Text(
                 text = text,
                 style = Typography.h4,
                 modifier = Modifier
                         .fillMaxWidth()
-                        .clickable {
-                            navController.navigate(destination)
-                            closeDrawer()
-                        }
+                        .clickable(onClick = onClick)
                         .padding(horizontal = 25.dp, vertical = 10.dp)
         )
     }
+
+    @Composable
+    fun TextNavButton(text: String, destination: String) {
+        DrawerTextButton(
+                text = text,
+        ) {
+            navController.navigate(destination)
+            closeDrawer()
+        }
+    }
+
+    @Composable
+    fun DrawerDivider() {
+        Divider(
+                thickness = DividerThickness,
+                modifier = Modifier.padding(vertical = 5.dp)
+        )
+    }
+
+    var isExpanded by remember { mutableStateOf(false) }
 
     Column(
             modifier = Modifier.padding(vertical = 15.dp)
@@ -163,15 +191,23 @@ fun Drawer(
         NavRoute.values().forEach {
             TextNavButton(text = it.drawerText, destination = it.route)
             if (it.dividerAfter) {
-                Divider(
-                        thickness = DividerThickness,
-                        modifier = Modifier.padding(vertical = 5.dp)
-                )
+                DrawerDivider()
             }
         }
 
-        // TODO Button to clear all matches
-        // TODO Button to set all players to not present
+        DrawerDivider()
+        DrawerTextButton(text = "Mark all players as not present") {
+            viewModel.updatePlayers(*players.map { it.copy(isPresent = false) }.toTypedArray())
+        }
+
+        DrawerDivider()
+        DrawerTextButton(text = "Extra options") { isExpanded = !isExpanded }
+        if (isExpanded) {
+            Column(modifier = Modifier.padding(start = 20.dp)) {
+                DrawerTextButton(text = "Delete all matches") { viewModel.deleteAllMatches() }
+            }
+        }
+        // TODO Button to complete all matches
     }
 }
 

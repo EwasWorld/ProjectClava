@@ -4,6 +4,7 @@ import com.eywa.projectclava.main.database.match.DatabaseMatch
 import com.eywa.projectclava.main.database.match.DatabaseMatchFull
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.math.abs
 
 fun Iterable<Match>.getPlayerStates() =
         map { it.players.map { player -> player to it } }
@@ -34,9 +35,8 @@ fun DatabaseMatchFull.asMatch() = Match(
                     matchEndTime = match.stateDate,
                     court = court!!.asCourt()
             )
-            MatchState.NotStarted::class.simpleName -> MatchState.NotStarted(
-                    match.stateDate
-            )
+            MatchState.NotStarted::class.simpleName -> MatchState.NotStarted(match.stateDate)
+            MatchState.Completed::class.simpleName -> MatchState.Completed(match.stateDate)
             else -> throw IllegalStateException("Couldn't convert database match to match state")
         }
 )
@@ -61,6 +61,7 @@ data class Match(
         get() = when (state) {
             is MatchState.NotStarted -> null
             is MatchState.InProgressOrComplete -> state.matchEndTime
+            is MatchState.Completed -> state.matchEndTime
             is MatchState.Paused -> state.matchPausedAt
         }
 
@@ -73,6 +74,7 @@ data class Match(
             stateDate = when (state) {
                 is MatchState.NotStarted -> state.createdAt
                 is MatchState.InProgressOrComplete -> state.matchEndTime
+                is MatchState.Completed -> state.matchEndTime
                 is MatchState.Paused -> state.matchPausedAt
             },
             stateSecondsLeft = state
@@ -99,6 +101,68 @@ data class Match(
                         court = court,
                 )
         )
+    }
+
+    fun completeMatch(currentTime: Calendar) = copy(
+            state = MatchState.Completed(
+                    matchEndTime = if (state is MatchState.Paused) state.matchPausedAt else currentTime,
+            )
+    )
+
+    fun pauseMatch(currentTime: Calendar): Match {
+        if (isPaused) return this
+
+        check(state is MatchState.InProgressOrComplete && !state.isFinished(currentTime)) {
+            "Match is not in progress"
+        }
+
+        return copy(
+                state = MatchState.Paused(
+                        remainingTimeSeconds = TimeUnit.MILLISECONDS.toSeconds(
+                                abs(currentTime.timeInMillis - state.matchEndTime.timeInMillis)
+                        ),
+                        matchPausedAt = currentTime,
+                )
+        )
+    }
+
+    fun resumeMatch(currentTime: Calendar, court: Court): Match {
+        if (!isPaused) return this
+
+        state as MatchState.Paused
+        return copy(
+                state = MatchState.InProgressOrComplete(
+                        matchEndTime = (currentTime.clone() as Calendar)
+                                .apply { add(Calendar.SECOND, state.remainingTimeSeconds.toInt()) },
+                        court = court,
+                )
+        )
+    }
+
+    fun addTime(currentTime: Calendar, timeToAdd: Int) = when (state) {
+        is MatchState.Paused -> copy(
+                state = state.copy(remainingTimeSeconds = state.remainingTimeSeconds + timeToAdd)
+        )
+        is MatchState.InProgressOrComplete -> {
+            val time = if (state.isFinished(currentTime)) currentTime else state.matchEndTime
+            copy(
+                    state = state.copy(
+                            matchEndTime = (time.clone() as Calendar).apply { add(Calendar.SECOND, timeToAdd) }
+                    )
+            )
+        }
+        is MatchState.Completed -> copy(
+                state = state.copy(
+                        matchEndTime = (state.matchEndTime.clone() as Calendar)
+                                .apply { add(Calendar.SECOND, timeToAdd) }
+                )
+        )
+        else -> this
+    }
+
+    fun changeCourt(court: Court): Match {
+        if (state !is MatchState.InProgressOrComplete) return this
+        return copy(state = state.copy(court = court))
     }
 }
 
@@ -178,5 +242,21 @@ sealed class MatchState : Comparable<MatchState> {
         }
 
         override fun isFinished(currentTime: Calendar): Boolean = false
+    }
+
+    data class Completed(
+            val matchEndTime: Calendar,
+    ) : MatchState() {
+        override fun getTimeLeft(currentTime: Calendar): TimeRemaining? = null
+
+        override fun compareTo(other: MatchState) =
+                when (other) {
+                    is Completed -> other.matchEndTime
+                    is InProgressOrComplete -> other.matchEndTime
+                    else -> null
+                }?.let { matchEndTime.compareTo(it) }
+                        ?: compareClass(other)
+
+        override fun isFinished(currentTime: Calendar): Boolean = true
     }
 }

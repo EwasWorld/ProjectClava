@@ -15,6 +15,9 @@ interface MatchDao {
     @Delete
     suspend fun delete(match: DatabaseMatch)
 
+    @Query("DELETE FROM ${DatabaseMatch.TABLE_NAME}")
+    suspend fun deleteAll()
+
     @Update
     suspend fun update(vararg matches: DatabaseMatch)
 }

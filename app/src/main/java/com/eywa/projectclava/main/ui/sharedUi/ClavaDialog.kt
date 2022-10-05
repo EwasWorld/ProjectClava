@@ -52,8 +52,8 @@ fun ClavaDialog(
                     Button(
                             enabled = okButtonEnabled,
                             onClick = {
-                                onCancelListener()
                                 onOkListener()
+                                onCancelListener()
                             },
                     ) {
                         Text(okButtonText)

@@ -33,8 +33,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         playerRepo.insertAll(Player(0, playerName).asDatabasePlayer())
     }
 
-    fun updatePlayer(player: Player) = viewModelScope.launch {
-        playerRepo.update(player.asDatabasePlayer())
+    fun updatePlayers(vararg player: Player) = viewModelScope.launch {
+        playerRepo.update(*player.map { it.asDatabasePlayer() }.toTypedArray())
     }
 
     fun deletePlayer(player: Player) = viewModelScope.launch {
@@ -66,4 +66,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun deleteMatch(match: Match) = viewModelScope.launch {
         matchRepo.delete(match.asDatabaseMatch())
     }
+
+    fun deleteAllMatches() = viewModelScope.launch { matchRepo.deleteAll() }
 }

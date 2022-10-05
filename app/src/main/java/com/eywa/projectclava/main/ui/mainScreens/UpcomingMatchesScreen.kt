@@ -173,6 +173,7 @@ fun UpcomingMatchesScreen(
                 extraText = when (selectedMatchState?.value) {
                     null,
                     is MatchState.NotStarted,
+                    is MatchState.Completed,
                     is MatchState.Paused -> null
                     is MatchState.InProgressOrComplete -> {
                         val playerName = selectedMatchState.key.name
