@@ -18,6 +18,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -67,7 +68,10 @@ fun <T : SetupListItem> SetupListScreen(
                 itemNameEditedListener(item, newName)
             },
             itemNameEditCancelledListener = { isEditDialogShown = null },
-            itemNameEditStartedListener = { isEditDialogShown = it },
+            itemNameEditStartedListener = {
+                isEditDialogShown = it
+                newItemName.value = it.name
+            },
             itemDeletedListener = itemDeletedListener,
             itemClickedListener = itemClickedListener,
             hasExtraContent = hasExtraContent,
@@ -204,8 +208,9 @@ fun <T : SetupListItem> SetupListScreen(
                     modifier = Modifier.weight(1f),
             )
             Surface(
-                    shape = RoundedCornerShape(4.dp),
+                    shape = RoundedCornerShape(100),
                     color = MaterialTheme.colors.primary,
+                    modifier = Modifier.padding(start = 10.dp)
             ) {
                 IconButton(
                         enabled = !isAddNameDuplicate && addItemName.isNotBlank(),
@@ -230,6 +235,7 @@ fun <T : SetupListItem> ListItemNameTextField(
         onDoneListener: () -> Unit,
         modifier: Modifier = Modifier
 ) {
+    // TODO Edit: not duplicate if it's the name of the player being edited
     val isDuplicate = existingItems?.any { it.name == proposedItemName } ?: false
 
     Column(
@@ -240,6 +246,7 @@ fun <T : SetupListItem> ListItemNameTextField(
                 value = proposedItemName,
                 onValueChange = onValueChangedListener,
                 label = {
+                    // TODO Change text to edit when editing
                     Text("Add $typeContentDescription")
                 },
                 trailingIcon = {
@@ -252,7 +259,8 @@ fun <T : SetupListItem> ListItemNameTextField(
                 },
                 isError = isDuplicate,
                 keyboardOptions = KeyboardOptions.Default.copy(
-                        imeAction = ImeAction.Done
+                        imeAction = ImeAction.Done,
+                        capitalization = KeyboardCapitalization.Words,
                 ),
                 keyboardActions = KeyboardActions(onDone = { onDoneListener() }),
         )

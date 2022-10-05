@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.eywa.projectclava.main.model.Player
 import com.eywa.projectclava.main.ui.mainScreens.*
@@ -31,7 +32,7 @@ import kotlinx.coroutines.launch
 import java.util.*
 
 /*
- * Time spent: 22 hrs
+ * Time spent: 23 hrs
  */
 
 class MainActivity : ComponentActivity() {
@@ -187,12 +188,14 @@ fun Drawer(
         players: Iterable<Player>,
         closeDrawer: () -> Unit,
 ) {
+    val current by navController.currentBackStackEntryAsState()
+
     @Composable
-    fun DrawerTextButton(text: String, onClick: () -> Unit) {
+    fun DrawerTextButton(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
         Text(
                 text = text,
                 style = Typography.h4,
-                modifier = Modifier
+                modifier = modifier
                         .fillMaxWidth()
                         .clickable(onClick = onClick)
                         .padding(horizontal = 25.dp, vertical = 10.dp)
@@ -203,6 +206,12 @@ fun Drawer(
     fun TextNavButton(text: String, destination: String) {
         DrawerTextButton(
                 text = text,
+                modifier = if (current?.destination?.route == destination) {
+                    Modifier.background(ClavaColor.DrawerCurrentDestination)
+                }
+                else {
+                    Modifier
+                }
         ) {
             navController.navigate(destination)
             closeDrawer()
@@ -232,6 +241,8 @@ fun Drawer(
         DrawerDivider()
         DrawerTextButton(text = "Mark all players as not present") {
             viewModel.updatePlayers(*players.map { it.copy(isPresent = false) }.toTypedArray())
+            navController.navigate(NavRoute.ADD_PLAYER.route)
+            closeDrawer()
         }
 
         DrawerDivider()
