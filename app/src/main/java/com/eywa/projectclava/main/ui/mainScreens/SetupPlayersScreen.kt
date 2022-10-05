@@ -17,11 +17,11 @@ fun SetupPlayersScreen(
         itemDeletedListener: (Player) -> Unit,
         toggleIsPresentListener: (Player) -> Unit,
 ) {
-    var currentTime by remember { mutableStateOf(Calendar.getInstance()) }
+    var currentTime by remember { mutableStateOf(Calendar.getInstance(Locale.getDefault())) }
     LaunchedEffect(Unit) {
         while (true) {
             delay(1000)
-            currentTime = Calendar.getInstance()
+            currentTime = Calendar.getInstance(Locale.getDefault())
         }
     }
 

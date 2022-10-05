@@ -42,11 +42,11 @@ fun CurrentMatchesScreen(
         pauseListener: (Match) -> Unit,
         resumeListener: (Match, Court) -> Unit,
 ) {
-    var currentTime by remember { mutableStateOf(Calendar.getInstance()) }
+    var currentTime by remember { mutableStateOf(Calendar.getInstance(Locale.getDefault())) }
     LaunchedEffect(Unit) {
         while (true) {
             delay(1000)
-            currentTime = Calendar.getInstance()
+            currentTime = Calendar.getInstance(Locale.getDefault())
         }
     }
     var selectedMatch: Match? by remember(matches) { mutableStateOf(null) }
@@ -287,7 +287,7 @@ fun CurrentMatchesScreenDialogs(
 fun CurrentMatchesScreen_Preview(
         @PreviewParameter(CurrentMatchesScreenPreviewParamProvider::class) params: CurrentMatchesScreenPreviewParam
 ) {
-    val currentTime = Calendar.getInstance()
+    val currentTime = Calendar.getInstance(Locale.getDefault())
     val matches = generateMatches(params.matchCount, currentTime)
     CurrentMatchesScreen(
             currentTime = currentTime,

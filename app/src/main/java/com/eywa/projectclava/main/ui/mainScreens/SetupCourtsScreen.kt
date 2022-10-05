@@ -28,11 +28,11 @@ fun SetupCourtsScreen(
         itemDeletedListener: (Court) -> Unit,
         toggleIsPresentListener: (Court) -> Unit,
 ) {
-    var currentTime by remember { mutableStateOf(Calendar.getInstance()) }
+    var currentTime by remember { mutableStateOf(Calendar.getInstance(Locale.getDefault())) }
     LaunchedEffect(Unit) {
         while (true) {
             delay(1000)
-            currentTime = Calendar.getInstance()
+            currentTime = Calendar.getInstance(Locale.getDefault())
         }
     }
 
@@ -118,7 +118,7 @@ fun RowScope.ExtraContent(currentTime: Calendar, match: Match) {
 @Preview(showBackground = true)
 @Composable
 fun SetupCourtsScreen_Preview() {
-    val currentTime = Calendar.getInstance()
+    val currentTime = Calendar.getInstance(Locale.getDefault())
     SetupCourtsScreen(
             currentTime = currentTime,
             courts = generateCourts(10),

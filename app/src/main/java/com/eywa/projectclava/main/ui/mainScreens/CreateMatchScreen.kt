@@ -37,11 +37,11 @@ fun CreateMatchScreen(
         courts: Iterable<Court>? = listOf(),
         createMatchListener: (Iterable<Player>) -> Unit,
 ) {
-    var currentTime by remember { mutableStateOf(Calendar.getInstance()) }
+    var currentTime by remember { mutableStateOf(Calendar.getInstance(Locale.getDefault())) }
     LaunchedEffect(Unit) {
         while (true) {
             delay(1000)
-            currentTime = Calendar.getInstance()
+            currentTime = Calendar.getInstance(Locale.getDefault())
         }
     }
 
@@ -134,15 +134,15 @@ fun CreateMatchScreen(
                             )
                         }
                         Spacer(modifier = Modifier.weight(1f))
+                        Text(
+                                text = match?.state?.getTimeLeft(currentTime)?.asString() ?: "Not played"
+                        )
                         if (match?.isPaused == true) {
                             Icon(
                                     painter = painterResource(id = R.drawable.baseline_pause_24),
                                     contentDescription = "Match paused"
                             )
                         }
-                        Text(
-                                text = match?.state?.getTimeLeft(currentTime)?.asString() ?: "Not played"
-                        )
                     }
                 }
             }
@@ -211,9 +211,9 @@ fun CreateMatchScreen(
 @Composable
 fun CreateMatchScreen_Preview() {
     CreateMatchScreen(
-            currentTime = Calendar.getInstance(),
+            currentTime = Calendar.getInstance(Locale.getDefault()),
             players = generatePlayers(15),
-            matches = generateMatches(5, Calendar.getInstance()),
+            matches = generateMatches(5, Calendar.getInstance(Locale.getDefault())),
             courts = generateCourts(5),
             selectedPlayers = generatePlayers(2),
             createMatchListener = {},
@@ -228,9 +228,9 @@ fun Individual_CreateMatchScreen_Preview(
         @PreviewParameter(CreateMatchScreenPreviewParamProvider::class) params: CreateMatchScreenPreviewParam
 ) {
     val players = generatePlayers(2)
-    val match = generateMatches(1, Calendar.getInstance(), params.matchType)
+    val match = generateMatches(1, Calendar.getInstance(Locale.getDefault()), params.matchType)
     CreateMatchScreen(
-            currentTime = Calendar.getInstance(),
+            currentTime = Calendar.getInstance(Locale.getDefault()),
             players = players,
             matches = match,
             courts = generateCourts(1),

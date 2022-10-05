@@ -44,7 +44,7 @@ fun DatabaseMatchFull.asMatch() = Match(
 data class Match(
         val id: Int,
         val players: Iterable<Player>,
-        val state: MatchState = MatchState.NotStarted(Calendar.getInstance()),
+        val state: MatchState = MatchState.NotStarted(Calendar.getInstance(Locale.getDefault())),
 ) {
     val isPaused
         get() = state is MatchState.Paused
@@ -56,6 +56,14 @@ data class Match(
      * true if the match is paused or in progress
      */
     fun isCurrent(currentTime: Calendar) = isPaused || isInProgress(currentTime)
+
+    fun isFinished(currentTime: Calendar) = state.isFinished(currentTime)
+
+    fun getFinishTime() = when (state) {
+        is MatchState.Completed -> state.matchEndTime
+        is MatchState.InProgressOrComplete -> state.matchEndTime
+        else -> null
+    }
 
     val lastPlayedTime
         get() = when (state) {
@@ -139,22 +147,33 @@ data class Match(
         )
     }
 
+    /**
+     * If the match is finished, will transform to a paused state with [timeToAdd] remaining
+     */
     fun addTime(currentTime: Calendar, timeToAdd: Int) = when (state) {
         is MatchState.Paused -> copy(
                 state = state.copy(remainingTimeSeconds = state.remainingTimeSeconds + timeToAdd)
         )
         is MatchState.InProgressOrComplete -> {
-            val time = if (state.isFinished(currentTime)) currentTime else state.matchEndTime
             copy(
-                    state = state.copy(
-                            matchEndTime = (time.clone() as Calendar).apply { add(Calendar.SECOND, timeToAdd) }
-                    )
+                    state = if (!state.isFinished(currentTime)) {
+                        state.copy(
+                                matchEndTime = (state.matchEndTime.clone() as Calendar)
+                                        .apply { add(Calendar.SECOND, timeToAdd) }
+                        )
+                    }
+                    else {
+                        MatchState.Paused(
+                                matchPausedAt = state.matchEndTime,
+                                remainingTimeSeconds = timeToAdd.toLong(),
+                        )
+                    }
             )
         }
         is MatchState.Completed -> copy(
-                state = state.copy(
-                        matchEndTime = (state.matchEndTime.clone() as Calendar)
-                                .apply { add(Calendar.SECOND, timeToAdd) }
+                state = MatchState.Paused(
+                        matchPausedAt = state.matchEndTime,
+                        remainingTimeSeconds = timeToAdd.toLong(),
                 )
         )
         else -> this

@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.Typography
 
 data class SelectedItemAction(
@@ -71,7 +72,8 @@ fun SelectedItemActions(
 ) {
     Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = (if (color != null) Modifier.background(color) else Modifier)
+            modifier = Modifier
+                    .background(color ?: ClavaColor.HeaderFooterBackground)
                     .padding(horizontal = 10.dp)
     ) {
         content()

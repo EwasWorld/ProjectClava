@@ -12,12 +12,13 @@ import com.eywa.projectclava.ui.theme.ClavaColor
 import java.util.*
 
 /**
+ * @param currentTime required if [enabled] and [matchState] != null
  * @param matchState used to decide the color of the component
  * @param enabled changes the colour of the component to a disabled color and ignores [matchState]
  */
 @Composable
 fun SelectableListItem(
-        currentTime: Calendar,
+        currentTime: Calendar? = null,
         enabled: Boolean = true,
         matchState: MatchState? = null,
         generalInProgressColor: Color? = null,
@@ -26,7 +27,7 @@ fun SelectableListItem(
 ) = Surface(
         shape = RoundedCornerShape(5.dp),
         color = if (enabled)
-            matchState?.asColor(currentTime, generalInProgressColor) ?: ClavaColor.ItemBackground
+            matchState?.asColor(currentTime!!, generalInProgressColor) ?: ClavaColor.ItemBackground
         else
             ClavaColor.DisabledItemBackground,
         border = BorderStroke(

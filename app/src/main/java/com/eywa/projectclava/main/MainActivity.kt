@@ -6,7 +6,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -21,6 +23,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.eywa.projectclava.main.model.Player
 import com.eywa.projectclava.main.ui.mainScreens.*
+import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.DividerThickness
 import com.eywa.projectclava.ui.theme.ProjectClavaTheme
 import com.eywa.projectclava.ui.theme.Typography
@@ -28,7 +31,7 @@ import kotlinx.coroutines.launch
 import java.util.*
 
 /*
- * Time spent: 21 hrs
+ * Time spent: 22 hrs
  */
 
 class MainActivity : ComponentActivity() {
@@ -75,72 +78,103 @@ fun Navigation(viewModel: MainViewModel) {
             },
             drawerState = drawerState,
     ) {
-        NavHost(navController = navController, startDestination = NavRoute.ADD_PLAYER.route) {
-            composable(NavRoute.ADD_PLAYER.route) {
-                SetupPlayersScreen(
-                        items = players,
-                        matches = matches,
-                        itemAddedListener = { viewModel.addPlayer(it) },
-                        itemNameEditedListener = { player, newName ->
-                            viewModel.updatePlayers(player.copy(name = newName))
-                        },
-                        itemDeletedListener = { viewModel.deletePlayer(it) },
-                        toggleIsPresentListener = { viewModel.updatePlayers(it.copy(isPresent = !it.isPresent)) },
-                )
-            }
-            composable(NavRoute.ADD_COURT.route) {
-                SetupCourtsScreen(
-                        courts = courts,
-                        matches = matches,
-                        itemAddedListener = { viewModel.addCourt(it) },
-                        itemNameEditedListener = { court, newName ->
-                            viewModel.updateCourt(court.copy(number = newName))
-                        },
-                        itemDeletedListener = { viewModel.deleteCourt(it) },
-                        toggleIsPresentListener = { viewModel.updateCourt(it.copy(canBeUsed = !it.canBeUsed)) },
-                )
-            }
-            composable(NavRoute.CREATE_MATCH.route) {
-                CreateMatchScreen(
-                        players = players,
-                        matches = matches,
-                        courts = courts,
-                        createMatchListener = { viewModel.addMatch(it, Calendar.getInstance()) }
-                )
-            }
-            composable(NavRoute.UPCOMING_MATCHES.route) {
-                UpcomingMatchesScreen(
-                        courts = courts,
-                        matches = matches,
-                        startMatchOkListener = { match, court, totalTimeSeconds, useAsDefaultTime ->
-                            if (useAsDefaultTime) {
-                                defaultTimer.value = totalTimeSeconds
-                            }
-                            viewModel.updateMatch(match.startMatch(Calendar.getInstance(), court, totalTimeSeconds))
-                        },
-                        removeMatchListener = { viewModel.deleteMatch(it) },
-                        defaultTimeSeconds = defaultTimer.value,
-                )
-            }
-            composable(NavRoute.CURRENT_MATCHES.route) {
-                CurrentMatchesScreen(
-                        courts = courts,
-                        matches = matches,
-                        addTimeListener = { match, timeToAdd ->
-                            viewModel.updateMatch(match.addTime(Calendar.getInstance(), timeToAdd))
-                        },
-                        setCompletedListener = { viewModel.updateMatch(it.completeMatch(Calendar.getInstance())) },
-                        changeCourtListener = { match, court ->
-                            viewModel.updateMatch(match.changeCourt(court))
-                        },
-                        pauseListener = { viewModel.updateMatch(it.pauseMatch(Calendar.getInstance())) },
-                        resumeListener = { match, court ->
-                            viewModel.updateMatch(match.resumeMatch(Calendar.getInstance(), court))
-                        },
-                )
-            }
-            composable(NavRoute.PREVIOUS_MATCHES.route) {
-                PreviousMatchesScreen()
+        Box(
+                modifier = Modifier.background(ClavaColor.Background)
+        ) {
+            NavHost(navController = navController, startDestination = NavRoute.ADD_PLAYER.route) {
+                composable(NavRoute.ADD_PLAYER.route) {
+                    SetupPlayersScreen(
+                            items = players,
+                            matches = matches,
+                            itemAddedListener = { viewModel.addPlayer(it) },
+                            itemNameEditedListener = { player, newName ->
+                                viewModel.updatePlayers(player.copy(name = newName))
+                            },
+                            itemDeletedListener = { viewModel.deletePlayer(it) },
+                            toggleIsPresentListener = { viewModel.updatePlayers(it.copy(isPresent = !it.isPresent)) },
+                    )
+                }
+                composable(NavRoute.ADD_COURT.route) {
+                    SetupCourtsScreen(
+                            courts = courts,
+                            matches = matches,
+                            itemAddedListener = { viewModel.addCourt(it) },
+                            itemNameEditedListener = { court, newName ->
+                                viewModel.updateCourt(court.copy(number = newName))
+                            },
+                            itemDeletedListener = { viewModel.deleteCourt(it) },
+                            toggleIsPresentListener = { viewModel.updateCourt(it.copy(canBeUsed = !it.canBeUsed)) },
+                    )
+                }
+                composable(NavRoute.CREATE_MATCH.route) {
+                    CreateMatchScreen(
+                            players = players,
+                            matches = matches,
+                            courts = courts,
+                            createMatchListener = { viewModel.addMatch(it, Calendar.getInstance(Locale.getDefault())) }
+                    )
+                }
+                composable(NavRoute.UPCOMING_MATCHES.route) {
+                    UpcomingMatchesScreen(
+                            courts = courts,
+                            matches = matches,
+                            startMatchOkListener = { match, court, totalTimeSeconds, useAsDefaultTime ->
+                                if (useAsDefaultTime) {
+                                    defaultTimer.value = totalTimeSeconds
+                                }
+                                viewModel.updateMatch(
+                                        match.startMatch(
+                                                Calendar.getInstance(Locale.getDefault()),
+                                                court,
+                                                totalTimeSeconds
+                                        )
+                                )
+                            },
+                            removeMatchListener = { viewModel.deleteMatch(it) },
+                            defaultTimeSeconds = defaultTimer.value,
+                    )
+                }
+                composable(NavRoute.CURRENT_MATCHES.route) {
+                    CurrentMatchesScreen(
+                            courts = courts,
+                            matches = matches,
+                            addTimeListener = { match, timeToAdd ->
+                                viewModel.updateMatch(
+                                        match.addTime(
+                                                Calendar.getInstance(Locale.getDefault()),
+                                                timeToAdd
+                                        )
+                                )
+                            },
+                            setCompletedListener = { viewModel.updateMatch(it.completeMatch(Calendar.getInstance(Locale.getDefault()))) },
+                            changeCourtListener = { match, court ->
+                                viewModel.updateMatch(match.changeCourt(court))
+                            },
+                            pauseListener = { viewModel.updateMatch(it.pauseMatch(Calendar.getInstance(Locale.getDefault()))) },
+                            resumeListener = { match, court ->
+                                viewModel.updateMatch(
+                                        match.resumeMatch(
+                                                Calendar.getInstance(Locale.getDefault()),
+                                                court
+                                        )
+                                )
+                            },
+                    )
+                }
+                composable(NavRoute.PREVIOUS_MATCHES.route) {
+                    PreviousMatchesScreen(
+                            matches = matches,
+                            addTimeListener = { match, timeToAdd ->
+                                viewModel.updateMatch(
+                                        match.addTime(
+                                                Calendar.getInstance(Locale.getDefault()),
+                                                timeToAdd
+                                        )
+                                )
+                            },
+                            deleteMatchListener = { viewModel.deleteMatch(it) }
+                    )
+                }
             }
         }
     }

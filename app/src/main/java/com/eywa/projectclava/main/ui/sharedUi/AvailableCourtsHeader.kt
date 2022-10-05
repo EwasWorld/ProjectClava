@@ -1,5 +1,6 @@
 package com.eywa.projectclava.main.ui.sharedUi
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
@@ -18,6 +19,7 @@ import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.getCourtsInUse
+import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
 
@@ -43,6 +45,7 @@ fun AvailableCourtsHeader(
             overflow = TextOverflow.Ellipsis,
             style = Typography.h4,
             modifier = Modifier
+                    .background(ClavaColor.HeaderFooterBackground)
                     .fillMaxWidth()
                     .padding(10.dp)
     )
@@ -53,7 +56,7 @@ fun AvailableCourtsHeader(
 fun AvailableCourtsHeader_Preview(
         @PreviewParameter(AvailableCourtsHeaderPreviewParamProvider::class) params: AvailableCourtsHeaderPreviewParam
 ) {
-    val currentTime = Calendar.getInstance()
+    val currentTime = Calendar.getInstance(Locale.getDefault())
     AvailableCourtsHeader(
             currentTime = currentTime,
             courts = generateCourts(params.courtCount),

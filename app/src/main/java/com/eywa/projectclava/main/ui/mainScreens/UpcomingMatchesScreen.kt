@@ -34,11 +34,11 @@ fun UpcomingMatchesScreen(
         removeMatchListener: (Match) -> Unit,
         defaultTimeSeconds: Int,
 ) {
-    var currentTime by remember { mutableStateOf(Calendar.getInstance()) }
+    var currentTime by remember { mutableStateOf(Calendar.getInstance(Locale.getDefault())) }
     LaunchedEffect(Unit) {
         while (true) {
             delay(1000)
-            currentTime = Calendar.getInstance()
+            currentTime = Calendar.getInstance(Locale.getDefault())
         }
     }
 
@@ -264,7 +264,7 @@ fun StartMatchDialog(
 fun UpcomingMatchesScreen_Preview(
         @PreviewParameter(UpcomingMatchesScreenPreviewParamProvider::class) params: UpcomingMatchesScreenPreviewParam
 ) {
-    val currentTime = Calendar.getInstance()
+    val currentTime = Calendar.getInstance(Locale.getDefault())
     val matches = generateMatches(5, currentTime) + generateMatches(4, currentTime, GeneratableMatchState.NOT_STARTED)
 
     UpcomingMatchesScreen(

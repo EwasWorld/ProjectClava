@@ -8,7 +8,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 fun Calendar.asString(): String = SimpleDateFormat("HH:mm", Locale.getDefault()).format(this.time)
-fun Calendar.isToday() = Calendar.getInstance().apply {
+fun Calendar.isToday() = Calendar.getInstance(Locale.getDefault()).apply {
     set(Calendar.HOUR_OF_DAY, 0)
     set(Calendar.MINUTE, 0)
 }.before(this)

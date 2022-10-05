@@ -1,5 +1,6 @@
 package com.eywa.projectclava.main.ui.sharedUi
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -26,6 +27,7 @@ import com.eywa.projectclava.main.common.generatePlayers
 import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.main.model.Player
 import com.eywa.projectclava.main.ui.mainScreens.SetupCourtsScreen
+import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.DividerThickness
 import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
@@ -179,7 +181,9 @@ fun <T : SetupListItem> SetupListScreen(
         Divider(thickness = DividerThickness)
         Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(20.dp)
+                modifier = Modifier
+                        .background(ClavaColor.HeaderFooterBackground)
+                        .padding(20.dp)
         ) {
             val onAddPressed = {
                 if (addItemName.isBlank()) {
@@ -304,7 +308,7 @@ fun <T : SetupListItem> EditDialog(
 @Composable
 fun SetupListScreen_Preview() {
     val playersToGenerate = 15
-    val currentTime = Calendar.getInstance()
+    val currentTime = Calendar.getInstance(Locale.getDefault())
     val players = generatePlayers(playersToGenerate)
     val courts = generateCourts(6)
     val states = listOf(
@@ -340,7 +344,7 @@ fun SetupListScreen_Preview() {
 @Preview(showBackground = true)
 @Composable
 fun ExtraInfo_SetupListScreen_Preview() {
-    val currentTime = Calendar.getInstance()
+    val currentTime = Calendar.getInstance(Locale.getDefault())
     SetupCourtsScreen(
             currentTime = currentTime,
             courts = generateCourts(10),
@@ -363,7 +367,7 @@ fun Dialog_SetupListScreen_Preview() {
     val players = generatePlayers(20)
     Box(modifier = Modifier.fillMaxSize()) {
         SetupListScreen(
-                currentTime = Calendar.getInstance(),
+                currentTime = Calendar.getInstance(Locale.getDefault()),
                 typeContentDescription = "player",
                 addItemName = "",
                 addItemNameChangedListener = {},
@@ -386,7 +390,7 @@ fun Error_SetupListScreen_Preview() {
     val generatePlayers = generatePlayers(5)
     Box(modifier = Modifier.fillMaxSize()) {
         SetupListScreen(
-                currentTime = Calendar.getInstance(),
+                currentTime = Calendar.getInstance(Locale.getDefault()),
                 typeContentDescription = "player",
                 addItemName = generatePlayers.first().name,
                 addItemNameChangedListener = {},

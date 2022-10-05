@@ -43,7 +43,7 @@ abstract class ClavaDatabase : RoomDatabase() {
                 }
                 else {
                     val date = Date(it)
-                    Calendar.getInstance().apply {
+                    Calendar.getInstance(Locale.getDefault()).apply {
                         set(
                                 date.year,
                                 date.month,

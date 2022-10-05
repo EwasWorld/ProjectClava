@@ -8,6 +8,9 @@ val Purple700 = Color(0xFF3700B3)
 val Teal200 = Color(0xFF03DAC5)
 
 object ClavaColor {
+    val Background = Color(0xAAD1C4E9)
+    val HeaderFooterBackground = Color.White
+
     val ItemBackground = Color.White
     val DisabledItemBackground = Color(0xFFAAA4B4)
     val MatchQueued = Color(0xFF4CAF50)

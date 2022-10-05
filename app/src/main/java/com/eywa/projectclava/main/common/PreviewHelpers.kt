@@ -61,24 +61,27 @@ fun generateMatchState(
         court: Court?,
         currentTime: Calendar,
         finishingSoonThresholdSeconds: Int = 120,
-) =
-        when (type) {
-            GeneratableMatchState.NOT_STARTED -> MatchState.NotStarted(currentTime)
-            GeneratableMatchState.PAUSED -> MatchState.Paused(Random().nextInt(60 * 10).toLong() + 20, currentTime)
-            else -> {
-                val rollSeconds = when (type) {
-                    GeneratableMatchState.COMPLETE -> -5
-                    GeneratableMatchState.FINISHING_SOON -> (20 + Random().nextInt(finishingSoonThresholdSeconds - 25))
-                            .coerceIn(20 until finishingSoonThresholdSeconds)
-                    GeneratableMatchState.IN_PROGRESS -> finishingSoonThresholdSeconds + 1 + Random().nextInt(100)
-                    else -> throw IllegalStateException("Invalid GeneratableMatchState")
-                }
-                MatchState.InProgressOrComplete(
-                        matchEndTime = (currentTime.clone() as Calendar).apply { add(Calendar.SECOND, rollSeconds) },
-                        court = court!!
-                )
-            }
+): MatchState {
+    val time = when (type) {
+        GeneratableMatchState.COMPLETE -> -5
+        GeneratableMatchState.FINISHING_SOON -> (20 + Random().nextInt(finishingSoonThresholdSeconds - 25))
+                .coerceIn(20 until finishingSoonThresholdSeconds)
+        GeneratableMatchState.IN_PROGRESS -> finishingSoonThresholdSeconds + 1 + Random().nextInt(100)
+        else -> null
+    }?.let { (currentTime.clone() as Calendar).apply { add(Calendar.SECOND, it) } }
+
+    return when (type) {
+        GeneratableMatchState.NOT_STARTED -> MatchState.NotStarted(currentTime)
+        GeneratableMatchState.PAUSED -> MatchState.Paused(Random().nextInt(60 * 10).toLong() + 20, currentTime)
+        GeneratableMatchState.COMPLETE -> MatchState.Completed(time!!)
+        else -> {
+            MatchState.InProgressOrComplete(
+                    matchEndTime = time!!,
+                    court = court!!
+            )
         }
+    }
+}
 
 enum class GeneratableMatchState(val needsCourt: Boolean = true) {
     NOT_STARTED(false), IN_PROGRESS, FINISHING_SOON, COMPLETE, PAUSED(false)
