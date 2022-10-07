@@ -2,7 +2,6 @@ package com.eywa.projectclava.main.ui.mainScreens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Checkbox
@@ -90,130 +89,141 @@ fun UpcomingMatchesScreen(
             defaultTimeSeconds = defaultTimeSeconds,
     )
 
-    Column {
-        AvailableCourtsHeader(currentTime = currentTime, courts = courts, matches = matches)
-        Divider(thickness = DividerThickness)
-
-        LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(vertical = 10.dp),
-                modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = 10.dp)
-        ) {
-            items(sortedMatches) { match ->
-                val matchingPlayersInEarlierUpcoming = sortedMatches
-                        .takeWhile { it != match }
-                        .flatMap { it.players }
-                        .distinct()
-                        .filter { match.players.find { player -> it.name == player.name } != null }
-                        .takeIf { it.isNotEmpty() }
-
-                SelectableListItem(
+    ClavaScreen(
+            noContentText = "No matches planned",
+            hasContent = sortedMatches.isNotEmpty(),
+            headerContent = { AvailableCourtsHeader(currentTime = currentTime, courts = courts, matches = matches) },
+            footerContent = {
+                UpcomingMatchesScreenFooter(
                         currentTime = currentTime,
-                        isSelected = selectedMatch == match,
-                        generalInProgressColor = ClavaColor.DisabledItemBackground,
-                        matchState = match.players
-                                .mapNotNull { playerMatchStates[it.name]?.state }
-                                .maxByOrNull { it }
-                                ?.takeIf { !it.isFinished(currentTime) }
-                                ?.let { matchState ->
-                                    if (matchState !is MatchState.NotStarted) return@let matchState
-                                    matchingPlayersInEarlierUpcoming?.let { matchState }
-                                }
-                ) {
-                    LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(5.dp),
-                            contentPadding = PaddingValues(10.dp),
-                            modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable(onClick = { selectMatchListener(match) })
-                    ) {
-                        items(
-                                match.players
-                                        .map { it to playerMatchStates[it.name] }
-                                        .partition {
-                                            it.second?.isCurrent != true || it.second?.state?.isFinished(
-                                                    currentTime
-                                            ) != true
-                                        }
-                                        .let { (noMatch, match) ->
-                                            match.sortedBy { it.second?.state } + noMatch.sortedBy { it.first.name }
-                                        }
-                        ) { (player, match) ->
-                            SelectableListItem(
-                                    currentTime = currentTime,
-                                    matchState = match?.state?.let { matchState ->
-                                        if (matchState !is MatchState.NotStarted) return@let matchState
-                                        matchingPlayersInEarlierUpcoming
-                                                ?.takeIf { it.find { p -> p.name == player.name } != null }
-                                                ?.let { matchState }
-                                    },
-                                    generalInProgressColor = ClavaColor.DisabledItemBackground,
-                            ) {
-                                Text(
-                                        text = player.name,
-                                        modifier = Modifier.padding(vertical = 3.dp, horizontal = 5.dp)
-                                )
+                        openStartMatchDialogListener = openStartMatchDialogListener,
+                        removeMatchListener = removeMatchListener,
+                        selectedMatch = selectedMatch,
+                        playerMatchStates = playerMatchStates,
+                        hasAvailableCourts = !availableCourts.isNullOrEmpty(),
+                )
+            },
+    ) {
+        items(sortedMatches) { match ->
+            val matchingPlayersInEarlierUpcoming = sortedMatches
+                    .takeWhile { it != match }
+                    .flatMap { it.players }
+                    .distinct()
+                    .filter { match.players.find { player -> it.name == player.name } != null }
+                    .takeIf { it.isNotEmpty() }
+
+            SelectableListItem(
+                    currentTime = currentTime,
+                    isSelected = selectedMatch == match,
+                    generalInProgressColor = ClavaColor.DisabledItemBackground,
+                    matchState = match.players
+                            .mapNotNull { playerMatchStates[it.name]?.state }
+                            .maxByOrNull { it }
+                            ?.takeIf { !it.isFinished(currentTime) }
+                            ?.let { matchState ->
+                                if (matchState !is MatchState.NotStarted) return@let matchState
+                                matchingPlayersInEarlierUpcoming?.let { matchState }
                             }
+            ) {
+                LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(5.dp),
+                        contentPadding = PaddingValues(10.dp),
+                        modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(onClick = { selectMatchListener(match) })
+                ) {
+                    items(
+                            match.players
+                                    .map { it to playerMatchStates[it.name] }
+                                    .partition {
+                                        it.second?.isCurrent != true || it.second?.state?.isFinished(
+                                                currentTime
+                                        ) != true
+                                    }
+                                    .let { (noMatch, match) ->
+                                        match.sortedBy { it.second?.state } + noMatch.sortedBy { it.first.name }
+                                    }
+                    ) { (player, match) ->
+                        SelectableListItem(
+                                currentTime = currentTime,
+                                matchState = match?.state?.let { matchState ->
+                                    if (matchState !is MatchState.NotStarted) return@let matchState
+                                    matchingPlayersInEarlierUpcoming
+                                            ?.takeIf { it.find { p -> p.name == player.name } != null }
+                                            ?.let { matchState }
+                                },
+                                generalInProgressColor = ClavaColor.DisabledItemBackground,
+                        ) {
+                            Text(
+                                    text = player.name,
+                                    modifier = Modifier.padding(vertical = 3.dp, horizontal = 5.dp)
+                            )
                         }
                     }
                 }
             }
         }
-
-        Divider(thickness = DividerThickness)
-        val selectedMatchState = selectedMatch?.players
-                ?.associateWith { playerMatchStates[it.name]?.state }
-                ?.filter { it.value?.isFinished(currentTime) == false }
-                ?.maxByOrNull { it.value!! }
-        SelectedItemActions(
-                text = selectedMatch?.players?.joinToString { it.name } ?: "No match selected",
-                extraText = when (selectedMatchState?.value) {
-                    null,
-                    is MatchState.NotStarted,
-                    is MatchState.Completed,
-                    is MatchState.Paused -> null
-                    is MatchState.InProgressOrComplete -> {
-                        val playerName = selectedMatchState.key.name
-                        val matchState = (selectedMatchState.value!! as MatchState.InProgressOrComplete)
-                        "$playerName is on ${matchState.court.name}\nTime remaining: ${
-                            matchState.getTimeLeft(
-                                    currentTime
-                            ).asString()
-                        }"
-                    }
-                },
-                color = selectedMatchState?.value?.takeIf { it !is MatchState.NotStarted }?.asColor(
-                        currentTime = currentTime,
-                        generalInProgressColor = ClavaColor.DisabledItemBackground
-                ),
-                buttons = listOf(
-                        SelectedItemAction(
-                                icon = SelectedItemActionIcon.VectorIcon(Icons.Default.Close),
-                                contentDescription = "Remove match",
-                                enabled = selectedMatch != null,
-                                onClick = { selectedMatch?.let { removeMatchListener(it) } },
-                        ),
-                        SelectedItemAction(
-                                icon = SelectedItemActionIcon.VectorIcon(Icons.Default.PlayArrow),
-                                contentDescription = "Start match",
-                                enabled = selectedMatch != null
-                                        && !availableCourts.isNullOrEmpty()
-                                        && selectedMatch.players
-                                        .all {
-                                            playerMatchStates[it.name]?.isInProgress(currentTime)?.not() ?: true
-                                        },
-                                onClick = { selectedMatch?.let { openStartMatchDialogListener(it) } },
-                        ),
-                ),
-        )
     }
 }
 
 @Composable
-fun StartMatchDialog(
+private fun UpcomingMatchesScreenFooter(
+        currentTime: Calendar,
+        openStartMatchDialogListener: (Match) -> Unit,
+        removeMatchListener: (Match) -> Unit,
+        selectedMatch: Match?,
+        playerMatchStates: Map<String, Match?>,
+        hasAvailableCourts: Boolean,
+) {
+    val selectedMatchState = selectedMatch?.players
+            ?.associateWith { playerMatchStates[it.name]?.state }
+            ?.filter { it.value?.isFinished(currentTime) == false }
+            ?.maxByOrNull { it.value!! }
+    SelectedItemActions(
+            text = selectedMatch?.players?.joinToString { it.name } ?: "No match selected",
+            extraText = when (selectedMatchState?.value) {
+                null,
+                is MatchState.NotStarted,
+                is MatchState.Completed,
+                is MatchState.Paused -> null
+                is MatchState.InProgressOrComplete -> {
+                    val playerName = selectedMatchState.key.name
+                    val matchState = (selectedMatchState.value!! as MatchState.InProgressOrComplete)
+                    "$playerName is on ${matchState.court.name}\nTime remaining: ${
+                        matchState.getTimeLeft(
+                                currentTime
+                        ).asString()
+                    }"
+                }
+            },
+            color = selectedMatchState?.value?.takeIf { it !is MatchState.NotStarted }?.asColor(
+                    currentTime = currentTime,
+                    generalInProgressColor = ClavaColor.DisabledItemBackground
+            ),
+            buttons = listOf(
+                    SelectedItemAction(
+                            icon = SelectedItemActionIcon.VectorIcon(Icons.Default.Close),
+                            contentDescription = "Remove match",
+                            enabled = selectedMatch != null,
+                            onClick = { selectedMatch?.let { removeMatchListener(it) } },
+                    ),
+                    SelectedItemAction(
+                            icon = SelectedItemActionIcon.VectorIcon(Icons.Default.PlayArrow),
+                            contentDescription = "Start match",
+                            enabled = selectedMatch != null
+                                    && hasAvailableCourts
+                                    && selectedMatch.players
+                                    .all {
+                                        playerMatchStates[it.name]?.isInProgress(currentTime)?.not() ?: true
+                                    },
+                            onClick = { selectedMatch?.let { openStartMatchDialogListener(it) } },
+                    ),
+            ),
+    )
+}
+
+@Composable
+private fun StartMatchDialog(
         availableCourts: Iterable<Court>?,
         startMatchDialogOpenFor: Match?,
         startMatchOkListener: (Match, Court, totalTimeSeconds: Int, useAsDefaultTime: Boolean) -> Unit,

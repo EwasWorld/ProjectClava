@@ -1,10 +1,8 @@
 package com.eywa.projectclava.main.ui.mainScreens
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -21,7 +19,6 @@ import com.eywa.projectclava.main.common.asString
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.ui.sharedUi.*
-import com.eywa.projectclava.ui.theme.DividerThickness
 import com.eywa.projectclava.ui.theme.Typography
 import kotlinx.coroutines.delay
 import java.util.*
@@ -75,79 +72,82 @@ fun PreviousMatchesScreen(
             addTimeListener = addTimeListener,
     )
 
-    Column {
-        LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(vertical = 10.dp),
-                modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = 10.dp)
-        ) {
-            items(
-                    matches
-                            ?.filter { it.isFinished(currentTime) }
-                            ?.sortedBy { it.state }
-                            ?: listOf()
-            ) { match ->
-                val isSelected = selectedMatch?.id == match.id
+    val finishedMatches = matches?.filter { it.isFinished(currentTime) }
+    ClavaScreen(
+            noContentText = "No matches have been completed",
+            hasContent = !finishedMatches.isNullOrEmpty(),
+            footerContent = {
+                PreviousMatchesScreenFooter(
+                        selectedMatch = selectedMatch,
+                        openAddTimeDialogListener = openAddTimeDialogListener,
+                        deleteMatchListener = deleteMatchListener
+                )
+            }
+    ) {
+        items(finishedMatches?.sortedBy { it.state } ?: listOf()) { match ->
+            val isSelected = selectedMatch?.id == match.id
 
-                SelectableListItem(isSelected = isSelected) {
-                    Column(
-                            modifier = Modifier
-                                    .fillMaxWidth()
-                                    .selectable(
-                                            selected = isSelected,
-                                            onClick = { selectedMatchListener(match) }
-                                    )
-                                    .padding(10.dp)
-                    ) {
-                        Row {
-                            Text(
-                                    text = match.players.sortedBy { it.name }.joinToString(limit = 10) { it.name },
-                                    style = Typography.h4,
-                                    modifier = Modifier.weight(1f)
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                    text = match.getFinishTime()?.asString()!!,
-                                    style = Typography.h4.copy(fontWeight = FontWeight.Normal),
-                            )
-                            if (match.isPaused) {
-                                Icon(
-                                        painter = painterResource(id = R.drawable.baseline_pause_24),
-                                        contentDescription = "Match paused"
+            SelectableListItem(isSelected = isSelected) {
+                Column(
+                        modifier = Modifier
+                                .fillMaxWidth()
+                                .selectable(
+                                        selected = isSelected,
+                                        onClick = { selectedMatchListener(match) }
                                 )
-                            }
+                                .padding(10.dp)
+                ) {
+                    Row {
+                        Text(
+                                text = match.players.sortedBy { it.name }.joinToString(limit = 10) { it.name },
+                                style = Typography.h4,
+                                modifier = Modifier.weight(1f)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                                text = match.getFinishTime()?.asString()!!,
+                                style = Typography.h4.copy(fontWeight = FontWeight.Normal),
+                        )
+                        if (match.isPaused) {
+                            Icon(
+                                    painter = painterResource(id = R.drawable.baseline_pause_24),
+                                    contentDescription = "Match paused"
+                            )
                         }
                     }
                 }
             }
         }
-
-        Divider(thickness = DividerThickness)
-        SelectedItemActions(
-                text = selectedMatch?.players?.joinToString { it.name } ?: "No match selected",
-                buttons = listOf(
-                        SelectedItemAction(
-                                icon = SelectedItemActionIcon.PainterIcon(R.drawable.baseline_more_time_24),
-                                contentDescription = "Add time",
-                                enabled = selectedMatch != null,
-                                onClick = { selectedMatch?.let { openAddTimeDialogListener(it) } }
-                        ),
-                        SelectedItemAction(
-                                icon = SelectedItemActionIcon.VectorIcon(Icons.Default.Close),
-                                contentDescription = "Delete match",
-                                enabled = selectedMatch != null,
-                                onClick = { selectedMatch?.let { deleteMatchListener(it) } }
-                        ),
-                ),
-        )
     }
 }
 
 @Composable
-fun PreviousMatchesScreenDialogs(
+private fun PreviousMatchesScreenFooter(
+        selectedMatch: Match?,
+        openAddTimeDialogListener: (Match) -> Unit,
+        deleteMatchListener: (Match) -> Unit,
+) {
+    SelectedItemActions(
+            text = selectedMatch?.players?.joinToString { it.name } ?: "No match selected",
+            buttons = listOf(
+                    SelectedItemAction(
+                            icon = SelectedItemActionIcon.PainterIcon(R.drawable.baseline_more_time_24),
+                            contentDescription = "Add time",
+                            enabled = selectedMatch != null,
+                            onClick = { selectedMatch?.let { openAddTimeDialogListener(it) } }
+                    ),
+                    SelectedItemAction(
+                            icon = SelectedItemActionIcon.VectorIcon(Icons.Default.Close),
+                            contentDescription = "Delete match",
+                            enabled = selectedMatch != null,
+                            onClick = { selectedMatch?.let { deleteMatchListener(it) } }
+                    ),
+            ),
+    )
+}
+
+@Composable
+private fun PreviousMatchesScreenDialogs(
         addTimeDialogOpenFor: Match?,
         closeAddTimeDialogListener: () -> Unit,
         addTimeListener: (Match, timeToAdd: Int) -> Unit,

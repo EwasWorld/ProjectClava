@@ -2,10 +2,8 @@ package com.eywa.projectclava.main.ui.mainScreens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -25,7 +23,6 @@ import com.eywa.projectclava.main.common.*
 import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.ClavaColor
-import com.eywa.projectclava.ui.theme.DividerThickness
 import com.eywa.projectclava.ui.theme.Typography
 import kotlinx.coroutines.delay
 import java.util.*
@@ -83,7 +80,6 @@ fun CreateMatchScreen(
         removeAllFromMatchListener: () -> Unit,
         playerClickedListener: (Player) -> Unit,
 ) {
-
     val playerMatchStates = matches.getPlayerStates()
     val previouslyPlayed = matches
             .filter { match ->
@@ -93,28 +89,32 @@ fun CreateMatchScreen(
             }
             .flatMap { it.players.map { player -> player.name } }
 
-    Column {
-        AvailableCourtsHeader(currentTime = currentTime, courts = courts, matches = matches)
-        Divider(thickness = DividerThickness)
-
-        LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(vertical = 10.dp),
-                modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = 10.dp)
-        ) {
-            items(
-                    players.associateWith { playerMatchStates[it.name] }.entries.sortedBy { it.value?.lastPlayedTime }
-            ) { (player, match) ->
-                SelectableListItem(
+    ClavaScreen(
+            noContentText = "No players to match up",
+            hasContent = players.any(),
+            headerContent = { AvailableCourtsHeader(currentTime = currentTime, courts = courts, matches = matches) },
+            footerContent = {
+                CreateMatchScreenFooter(
                         currentTime = currentTime,
-                        matchState = match?.state,
-                        generalInProgressColor = ClavaColor.DisabledItemBackground,
-                        isSelected = selectedPlayers.map { it.name }.contains(player.name),
-                ) {
-                    Row(
+                        selectedPlayers = selectedPlayers,
+                        matches = matches,
+                        playerMatchStates = playerMatchStates,
+                        createMatchListener = createMatchListener,
+                        removeAllFromMatchListener = removeAllFromMatchListener,
+                        playerClickedListener = playerClickedListener,
+                )
+            },
+    ) {
+        items(
+                players.associateWith { playerMatchStates[it.name] }.entries.sortedBy { it.value?.lastPlayedTime }
+        ) { (player, match) ->
+            SelectableListItem(
+                    currentTime = currentTime,
+                    matchState = match?.state,
+                    generalInProgressColor = ClavaColor.DisabledItemBackground,
+                    isSelected = selectedPlayers.map { it.name }.contains(player.name),
+            ) {
+                Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                     .clickable { playerClickedListener(player) }
@@ -137,69 +137,78 @@ fun CreateMatchScreen(
                         Text(
                                 text = match?.state?.getTimeLeft(currentTime)?.asString() ?: "Not played"
                         )
-                        if (match?.isPaused == true) {
-                            Icon(
-                                    painter = painterResource(id = R.drawable.baseline_pause_24),
-                                    contentDescription = "Match paused"
-                            )
-                        }
+                    if (match?.isPaused == true) {
+                        Icon(
+                                painter = painterResource(id = R.drawable.baseline_pause_24),
+                                contentDescription = "Match paused"
+                        )
                     }
                 }
             }
         }
+    }
+}
 
-        Divider(thickness = DividerThickness)
-        SelectedItemActions(
-                buttons = listOf(
-                        SelectedItemAction(
-                                icon = SelectedItemActionIcon.VectorIcon(Icons.Default.Close),
-                                contentDescription = "Remove all",
-                                enabled = selectedPlayers.any(),
-                                onClick = removeAllFromMatchListener,
-                        ),
-                        SelectedItemAction(
-                                icon = SelectedItemActionIcon.VectorIcon(Icons.Default.Check),
-                                contentDescription = "Create match",
-                                enabled = selectedPlayers.any(),
-                                onClick = createMatchListener,
-                        ),
-                ),
-        ) {
-            if (selectedPlayers.none()) {
-                Text(
-                        text = "No players selected",
-                        style = Typography.h4,
-                        modifier = Modifier
-                                .weight(1f)
-                                .padding(horizontal = 10.dp)
-                )
-            }
-            else {
-                LazyRow(
-                        contentPadding = PaddingValues(vertical = 10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(5.dp),
-                        modifier = Modifier.weight(1f)
-                ) {
-                    items(
-                            selectedPlayers
-                                    .map { it to playerMatchStates[it.name]?.state }
-                                    // Show players who are already on court first
-                                    .sortedByDescending { it.second.transformForSorting(currentTime) }
-                    ) { (player, matchState) ->
-                        SelectableListItem(
-                                currentTime = currentTime,
-                                matchState = matchState,
-                                generalInProgressColor = ClavaColor.DisabledItemBackground
-                        ) {
-                            // TODO Mark if anyone has played each other already tonight
-                            Text(
-                                    text = player.name,
-                                    style = Typography.h4,
-                                    modifier = Modifier
-                                            .padding(vertical = 5.dp, horizontal = 10.dp)
-                                            .clickable { playerClickedListener(player) }
-                            )
-                        }
+@Composable
+private fun CreateMatchScreenFooter(
+        currentTime: Calendar,
+        selectedPlayers: Iterable<Player>,
+        matches: Iterable<Match> = listOf(),
+        playerMatchStates: Map<String, Match?>,
+        createMatchListener: () -> Unit,
+        removeAllFromMatchListener: () -> Unit,
+        playerClickedListener: (Player) -> Unit,
+) {
+    SelectedItemActions(
+            buttons = listOf(
+                    SelectedItemAction(
+                            icon = SelectedItemActionIcon.VectorIcon(Icons.Default.Close),
+                            contentDescription = "Remove all",
+                            enabled = selectedPlayers.any(),
+                            onClick = removeAllFromMatchListener,
+                    ),
+                    SelectedItemAction(
+                            icon = SelectedItemActionIcon.VectorIcon(Icons.Default.Check),
+                            contentDescription = "Create match",
+                            enabled = selectedPlayers.any(),
+                            onClick = createMatchListener,
+                    ),
+            ),
+    ) {
+        if (selectedPlayers.none()) {
+            Text(
+                    text = "No players selected",
+                    style = Typography.h4,
+                    modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 10.dp)
+            )
+        }
+        else {
+            LazyRow(
+                    contentPadding = PaddingValues(vertical = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    modifier = Modifier.weight(1f)
+            ) {
+                items(
+                        selectedPlayers
+                                .map { it to playerMatchStates[it.name]?.state }
+                                // Show players who are already on court first
+                                .sortedByDescending { it.second.transformForSorting(currentTime) }
+                ) { (player, matchState) ->
+                    SelectableListItem(
+                            currentTime = currentTime,
+                            matchState = matchState,
+                            generalInProgressColor = ClavaColor.DisabledItemBackground
+                    ) {
+                        // TODO Mark if anyone has played each other already tonight
+                        Text(
+                                text = player.name,
+                                style = Typography.h4,
+                                modifier = Modifier
+                                        .padding(vertical = 5.dp, horizontal = 10.dp)
+                                        .clickable { playerClickedListener(player) }
+                        )
                     }
                 }
             }

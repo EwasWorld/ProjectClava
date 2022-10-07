@@ -3,7 +3,6 @@ package com.eywa.projectclava.main.ui.sharedUi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -29,7 +28,6 @@ import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.main.model.Player
 import com.eywa.projectclava.main.ui.mainScreens.SetupCourtsScreen
 import com.eywa.projectclava.ui.theme.ClavaColor
-import com.eywa.projectclava.ui.theme.DividerThickness
 import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
 
@@ -122,112 +120,114 @@ fun <T : SetupListItem> SetupListScreen(
             itemEditCancelledListener = itemNameEditCancelledListener,
     )
 
-    Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxSize()
+    ClavaScreen(
+            noContentText = "No ${typeContentDescription}s to show",
+            hasContent = items?.any() ?: false,
+            footerContent = {
+                SetupListScreenFooter(
+                        typeContentDescription = typeContentDescription,
+                        items = items,
+                        addItemName = addItemName,
+                        showAddItemBlankError = showAddItemBlankError,
+                        addItemNameClearPressedListener = addItemNameClearPressedListener,
+                        addItemNameChangedListener = addItemNameChangedListener,
+                        itemAddedListener = itemAddedListener
+                )
+            }
     ) {
-        if (items?.any() != true) {
-            Spacer(modifier = Modifier.weight(1f))
-            Text(
-                    text = "No ${typeContentDescription}s to show",
-                    style = Typography.h4
-            )
-            Spacer(modifier = Modifier.weight(1f))
-        }
-        else {
-            LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    contentPadding = PaddingValues(vertical = 20.dp),
-                    modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                            .padding(horizontal = 20.dp)
+        items(items!!.sortedBy { it.name }) { item ->
+            SelectableListItem(
+                    currentTime = currentTime,
+                    enabled = item.enabled,
+                    matchState = getMatchState(item),
             ) {
-                items(items.sortedBy { it.name }) { item ->
-                    SelectableListItem(
-                            currentTime = currentTime,
-                            enabled = item.enabled,
-                            matchState = getMatchState(item),
+                Column(
+                        modifier = Modifier.clickable { itemClickedListener(item) }
+                ) {
+                    Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(start = 15.dp)
                     ) {
-                        Column(
-                                modifier = Modifier.clickable { itemClickedListener(item) }
+                        val decoration = if (item.enabled) TextDecoration.None else TextDecoration.LineThrough
+                        Text(
+                                text = item.name,
+                                style = Typography.h4.copy(textDecoration = decoration),
+                                modifier = Modifier.weight(1f)
+                        )
+                        IconButton(
+                                onClick = { itemNameEditStartedListener(item) }
                         ) {
-                            Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(start = 15.dp)
-                            ) {
-                                val decoration = if (item.enabled) TextDecoration.None else TextDecoration.LineThrough
-                                Text(
-                                        text = item.name,
-                                        style = Typography.h4.copy(textDecoration = decoration),
-                                        modifier = Modifier.weight(1f)
-                                )
-                                IconButton(
-                                        onClick = { itemNameEditStartedListener(item) }
-                                ) {
-                                    Icon(
-                                            imageVector = Icons.Default.Edit,
-                                            contentDescription = "Edit ${item.name}"
-                                    )
-                                }
-                                IconButton(
-                                        onClick = { itemDeletedListener(item) }
-                                ) {
-                                    Icon(
-                                            imageVector = Icons.Default.Close,
-                                            contentDescription = "Delete ${item.name}"
-                                    )
-                                }
-                            }
-                            if (hasExtraContent(item)) {
-                                Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier
-                                                .padding(horizontal = 15.dp)
-                                                .padding(bottom = 10.dp)
-                                ) {
-                                    extraContent(item)
-                                }
-                            }
+                            Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Edit ${item.name}"
+                            )
+                        }
+                        IconButton(
+                                onClick = { itemDeletedListener(item) }
+                        ) {
+                            Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Delete ${item.name}"
+                            )
+                        }
+                    }
+                    if (hasExtraContent(item)) {
+                        Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                        .padding(horizontal = 15.dp)
+                                        .padding(bottom = 10.dp)
+                        ) {
+                            extraContent(item)
                         }
                     }
                 }
             }
         }
+    }
+}
 
-        Divider(thickness = DividerThickness)
-        Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                        .background(ClavaColor.HeaderFooterBackground)
-                        .padding(20.dp)
+@Composable
+private fun <T : SetupListItem> SetupListScreenFooter(
+        typeContentDescription: String,
+        items: Iterable<T>?,
+        addItemName: String,
+        showAddItemBlankError: Boolean,
+        addItemNameClearPressedListener: () -> Unit,
+        addItemNameChangedListener: (String) -> Unit,
+        itemAddedListener: (String) -> Unit,
+) {
+    Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                    .background(ClavaColor.HeaderFooterBackground)
+                    .padding(20.dp)
+    ) {
+        val onAddPressed = { itemAddedListener(addItemName) }
+
+        ListItemNameTextField(
+                typeContentDescription = typeContentDescription,
+                existingItems = items,
+                proposedItemName = addItemName,
+                showBlankError = showAddItemBlankError,
+                onValueChangedListener = addItemNameChangedListener,
+                onClearPressedListener = addItemNameClearPressedListener,
+                onDoneListener = onAddPressed,
+                modifier = Modifier.weight(1f),
+        )
+        Surface(
+                shape = RoundedCornerShape(100),
+                color = MaterialTheme.colors.primary,
+                modifier = Modifier.padding(start = 10.dp)
         ) {
-            val onAddPressed = { itemAddedListener(addItemName) }
-
-            ListItemNameTextField(
-                    typeContentDescription = typeContentDescription,
-                    existingItems = items,
-                    proposedItemName = addItemName,
-                    showBlankError = showAddItemBlankError,
-                    onValueChangedListener = addItemNameChangedListener,
-                    onClearPressedListener = addItemNameClearPressedListener,
-                    onDoneListener = onAddPressed,
-                    modifier = Modifier.weight(1f),
-            )
-            Surface(
-                    shape = RoundedCornerShape(100),
-                    color = MaterialTheme.colors.primary,
-                    modifier = Modifier.padding(start = 10.dp)
+            IconButton(
+                    enabled = !addItemName.isDuplicate(items) && addItemName.isNotBlank(),
+                    onClick = onAddPressed,
             ) {
-                IconButton(
-                        enabled = !addItemName.isDuplicate(items) && addItemName.isNotBlank(),
-                        onClick = onAddPressed,
-                ) {
-                    Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Add"
-                    )
-                }
+                Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add"
+                )
             }
         }
     }

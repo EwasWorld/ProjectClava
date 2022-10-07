@@ -1,10 +1,8 @@
 package com.eywa.projectclava.main.ui.mainScreens
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -27,7 +25,6 @@ import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.getCourtsInUse
 import com.eywa.projectclava.main.ui.sharedUi.*
-import com.eywa.projectclava.ui.theme.DividerThickness
 import com.eywa.projectclava.ui.theme.Typography
 import kotlinx.coroutines.delay
 import java.util.*
@@ -114,119 +111,130 @@ fun CurrentMatchesScreen(
             resumeListener = resumeListener,
     )
 
-    Column {
-        AvailableCourtsHeader(currentTime = currentTime, courts = courts, matches = matches)
-        Divider(thickness = DividerThickness)
+    ClavaScreen(
+            noContentText = "No matches being played",
+            hasContent = !matches?.filter { it.isCurrent }.isNullOrEmpty(),
+            headerContent = { AvailableCourtsHeader(currentTime = currentTime, courts = courts, matches = matches) },
+            footerContent = {
+                CurrentMatchesScreenFooter(
+                        selectedMatch = selectedMatch,
+                        completeMatchListener = completeMatchListener,
+                        pauseListener = pauseListener,
+                        openAddTimeDialogListener = openAddTimeDialogListener,
+                        openChangeCourtDialogListener = openChangeCourtDialogListener,
+                        openResumeDialogListener = openResumeDialogListener,
+                )
+            },
+    ) {
+        items(matches
+                ?.filter { it.isCurrent }
+                ?.sortedBy { it.state }
+                ?: listOf()
+        ) { match ->
+            val isSelected = selectedMatch?.id == match.id
 
-        LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(vertical = 10.dp),
-                modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = 10.dp)
-        ) {
-            items(matches
-                    ?.filter { it.isCurrent }
-                    ?.sortedBy { it.state }
-                    ?: listOf()
-            ) { match ->
-                val isSelected = selectedMatch?.id == match.id
-
-                SelectableListItem(
-                        currentTime = currentTime,
-                        matchState = match.state,
-                        isSelected = isSelected,
-                ) {
-                    Column(
-                            modifier = Modifier
-                                    .fillMaxWidth()
-                                    .selectable(
-                                            selected = isSelected,
-                                            onClick = { selectedMatchListener(match) }
-                                    )
-                                    .padding(10.dp)
-                    ) {
-                        Row {
-                            Text(
-                                    text = match.court?.name ?: if (match.isPaused) "Paused" else "No court",
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    style = Typography.h4,
-                                    modifier = Modifier.weight(1f)
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                    text = match.state.getTimeLeft(currentTime).asString(),
-                                    style = Typography.h4.copy(fontWeight = FontWeight.Normal),
-                            )
-                            if (match.isPaused) {
-                                Icon(
-                                        painter = painterResource(id = R.drawable.baseline_pause_24),
-                                        contentDescription = "Match paused"
+            SelectableListItem(
+                    currentTime = currentTime,
+                    matchState = match.state,
+                    isSelected = isSelected,
+            ) {
+                Column(
+                        modifier = Modifier
+                                .fillMaxWidth()
+                                .selectable(
+                                        selected = isSelected,
+                                        onClick = { selectedMatchListener(match) }
                                 )
-                            }
-                        }
+                                .padding(10.dp)
+                ) {
+                    Row {
                         Text(
-                                text = match.players.sortedBy { it.name }.joinToString(limit = 10) { it.name },
+                                text = match.court?.name ?: if (match.isPaused) "Paused" else "No court",
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
+                                style = Typography.h4,
+                                modifier = Modifier.weight(1f)
                         )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                                text = match.state.getTimeLeft(currentTime).asString(),
+                                style = Typography.h4.copy(fontWeight = FontWeight.Normal),
+                        )
+                        if (match.isPaused) {
+                            Icon(
+                                    painter = painterResource(id = R.drawable.baseline_pause_24),
+                                    contentDescription = "Match paused"
+                            )
+                        }
                     }
+                    Text(
+                            text = match.players.sortedBy { it.name }.joinToString(limit = 10) { it.name },
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
         }
-
-        Divider(thickness = DividerThickness)
-        SelectedItemActions(
-                text = when {
-                    selectedMatch == null -> "No match selected"
-                    selectedMatch.court != null -> selectedMatch.court!!.name
-                    selectedMatch.isPaused -> selectedMatch.players.joinToString { it.name }
-                    else -> "No court"
-                },
-                buttons = listOf(
-                        SelectedItemAction(
-                                icon = SelectedItemActionIcon.PainterIcon(R.drawable.baseline_more_time_24),
-                                contentDescription = "Add time",
-                                enabled = selectedMatch != null,
-                                onClick = { selectedMatch?.let { openAddTimeDialogListener(it) } }
-                        ),
-                        SelectedItemAction(
-                                icon = SelectedItemActionIcon.PainterIcon(R.drawable.baseline_swap_horiz_24),
-                                contentDescription = "Change court",
-                                enabled = selectedMatch != null,
-                                onClick = { selectedMatch?.let { openChangeCourtDialogListener(it) } }
-                        ),
-                        if (selectedMatch?.isPaused == true) {
-                            SelectedItemAction(
-                                    icon = SelectedItemActionIcon.VectorIcon(Icons.Default.PlayArrow),
-                                    contentDescription = "Resume match",
-                                    enabled = true,
-                                    onClick = { openResumeDialogListener(selectedMatch) }
-                            )
-                        }
-                        else {
-                            SelectedItemAction(
-                                    icon = SelectedItemActionIcon.PainterIcon(R.drawable.baseline_pause_24),
-                                    contentDescription = "Pause match",
-                                    enabled = selectedMatch != null,
-                                    onClick = { selectedMatch?.let { pauseListener(it) } }
-                            )
-                        },
-                        SelectedItemAction(
-                                icon = SelectedItemActionIcon.VectorIcon(Icons.Default.Check),
-                                contentDescription = "End match",
-                                enabled = selectedMatch != null,
-                                onClick = { selectedMatch?.let { completeMatchListener(it) } }
-                        ),
-                ),
-        )
     }
 }
 
 @Composable
-fun CurrentMatchesScreenDialogs(
+private fun CurrentMatchesScreenFooter(
+        selectedMatch: Match?,
+        completeMatchListener: (Match) -> Unit,
+        pauseListener: (Match) -> Unit,
+        openAddTimeDialogListener: (Match) -> Unit,
+        openChangeCourtDialogListener: (Match) -> Unit,
+        openResumeDialogListener: (Match) -> Unit,
+) {
+    SelectedItemActions(
+            text = when {
+                selectedMatch == null -> "No match selected"
+                selectedMatch.court != null -> selectedMatch.court!!.name
+                selectedMatch.isPaused -> selectedMatch.players.joinToString { it.name }
+                else -> "No court"
+            },
+            buttons = listOf(
+                    SelectedItemAction(
+                            icon = SelectedItemActionIcon.PainterIcon(R.drawable.baseline_more_time_24),
+                            contentDescription = "Add time",
+                            enabled = selectedMatch != null,
+                            onClick = { selectedMatch?.let { openAddTimeDialogListener(it) } }
+                    ),
+                    SelectedItemAction(
+                            icon = SelectedItemActionIcon.PainterIcon(R.drawable.baseline_swap_horiz_24),
+                            contentDescription = "Change court",
+                            enabled = selectedMatch != null,
+                            onClick = { selectedMatch?.let { openChangeCourtDialogListener(it) } }
+                    ),
+                    if (selectedMatch?.isPaused == true) {
+                        SelectedItemAction(
+                                icon = SelectedItemActionIcon.VectorIcon(Icons.Default.PlayArrow),
+                                contentDescription = "Resume match",
+                                enabled = true,
+                                onClick = { openResumeDialogListener(selectedMatch) }
+                        )
+                    }
+                    else {
+                        SelectedItemAction(
+                                icon = SelectedItemActionIcon.PainterIcon(R.drawable.baseline_pause_24),
+                                contentDescription = "Pause match",
+                                enabled = selectedMatch != null,
+                                onClick = { selectedMatch?.let { pauseListener(it) } }
+                        )
+                    },
+                    SelectedItemAction(
+                            icon = SelectedItemActionIcon.VectorIcon(Icons.Default.Check),
+                            contentDescription = "End match",
+                            enabled = selectedMatch != null,
+                            onClick = { selectedMatch?.let { completeMatchListener(it) } }
+                    ),
+            ),
+    )
+}
+
+@Composable
+private fun CurrentMatchesScreenDialogs(
         availableCourts: Iterable<Court>?,
         addTimeDialogOpenFor: Match?,
         closeAddTimeDialogListener: () -> Unit,
