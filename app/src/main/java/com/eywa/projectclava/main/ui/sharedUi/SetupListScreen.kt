@@ -38,6 +38,11 @@ interface SetupListItem {
     val enabled: Boolean
 }
 
+fun <T : SetupListItem> String.isDuplicate(
+        existingItems: Iterable<T>?,
+        itemBeingEdited: T? = null,
+) = this != itemBeingEdited?.name && existingItems?.any { it.name == this } == true
+
 @Composable
 fun <T : SetupListItem> SetupListScreen(
         typeContentDescription: String,
@@ -52,7 +57,8 @@ fun <T : SetupListItem> SetupListScreen(
         extraContent: @Composable RowScope.(T) -> Unit = {},
 ) {
     val newItemName = rememberSaveable { mutableStateOf("") }
-    var isEditDialogShown: T? by remember { mutableStateOf(null) }
+    var editDialogOpenFor: T? by remember { mutableStateOf(null) }
+    val addFieldTouched = rememberSaveable { mutableStateOf(false) }
 
     SetupListScreen(
             typeContentDescription = typeContentDescription,
@@ -60,18 +66,27 @@ fun <T : SetupListItem> SetupListScreen(
             items = items,
             getMatchState = getMatchState,
             addItemName = newItemName.value,
-            addItemNameChangedListener = { newItemName.value = it },
-            itemAddedListener = itemAddedListener,
-            editDialogOpenFor = isEditDialogShown,
+            showAddItemBlankError = addFieldTouched.value,
+            addItemNameClearPressedListener = {
+                newItemName.value = ""
+                addFieldTouched.value = false
+            },
+            addItemNameChangedListener = {
+                newItemName.value = it
+                addFieldTouched.value = true
+            },
+            itemAddedListener = {
+                itemAddedListener(it)
+                newItemName.value = ""
+                addFieldTouched.value = false
+            },
+            editDialogOpenFor = editDialogOpenFor,
             itemNameEditedListener = { item, newName ->
-                isEditDialogShown = null
+                editDialogOpenFor = null
                 itemNameEditedListener(item, newName)
             },
-            itemNameEditCancelledListener = { isEditDialogShown = null },
-            itemNameEditStartedListener = {
-                isEditDialogShown = it
-                newItemName.value = it.name
-            },
+            itemNameEditCancelledListener = { editDialogOpenFor = null },
+            itemNameEditStartedListener = { editDialogOpenFor = it },
             itemDeletedListener = itemDeletedListener,
             itemClickedListener = itemClickedListener,
             hasExtraContent = hasExtraContent,
@@ -86,6 +101,8 @@ fun <T : SetupListItem> SetupListScreen(
         items: Iterable<T>?,
         getMatchState: (T) -> MatchState?,
         addItemName: String,
+        showAddItemBlankError: Boolean,
+        addItemNameClearPressedListener: () -> Unit,
         addItemNameChangedListener: (String) -> Unit,
         itemAddedListener: (String) -> Unit,
         editDialogOpenFor: T?,
@@ -109,8 +126,6 @@ fun <T : SetupListItem> SetupListScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxSize()
     ) {
-        val isAddNameDuplicate = items?.any { it.name == addItemName } ?: false
-
         if (items?.any() != true) {
             Spacer(modifier = Modifier.weight(1f))
             Text(
@@ -148,7 +163,6 @@ fun <T : SetupListItem> SetupListScreen(
                                         modifier = Modifier.weight(1f)
                                 )
                                 IconButton(
-                                        enabled = item.enabled,
                                         onClick = { itemNameEditStartedListener(item) }
                                 ) {
                                     Icon(
@@ -157,7 +171,6 @@ fun <T : SetupListItem> SetupListScreen(
                                     )
                                 }
                                 IconButton(
-                                        enabled = item.enabled,
                                         onClick = { itemDeletedListener(item) }
                                 ) {
                                     Icon(
@@ -189,21 +202,15 @@ fun <T : SetupListItem> SetupListScreen(
                         .background(ClavaColor.HeaderFooterBackground)
                         .padding(20.dp)
         ) {
-            val onAddPressed = {
-                if (addItemName.isBlank()) {
-                    // TODO Toast
-                }
-                else {
-                    itemAddedListener(addItemName)
-                    addItemNameChangedListener("")
-                }
-            }
+            val onAddPressed = { itemAddedListener(addItemName) }
 
             ListItemNameTextField(
                     typeContentDescription = typeContentDescription,
                     existingItems = items,
                     proposedItemName = addItemName,
+                    showBlankError = showAddItemBlankError,
                     onValueChangedListener = addItemNameChangedListener,
+                    onClearPressedListener = addItemNameClearPressedListener,
                     onDoneListener = onAddPressed,
                     modifier = Modifier.weight(1f),
             )
@@ -213,7 +220,7 @@ fun <T : SetupListItem> SetupListScreen(
                     modifier = Modifier.padding(start = 10.dp)
             ) {
                 IconButton(
-                        enabled = !isAddNameDuplicate && addItemName.isNotBlank(),
+                        enabled = !addItemName.isDuplicate(items) && addItemName.isNotBlank(),
                         onClick = onAddPressed,
                 ) {
                     Icon(
@@ -231,12 +238,20 @@ fun <T : SetupListItem> ListItemNameTextField(
         typeContentDescription: String,
         existingItems: Iterable<T>?,
         proposedItemName: String,
+        showBlankError: Boolean,
         onValueChangedListener: (String) -> Unit,
+        onClearPressedListener: () -> Unit,
         onDoneListener: () -> Unit,
-        modifier: Modifier = Modifier
+        modifier: Modifier = Modifier,
+        itemBeingEdited: T? = null,
 ) {
-    // TODO Edit: not duplicate if it's the name of the player being edited
-    val isDuplicate = existingItems?.any { it.name == proposedItemName } ?: false
+    val isDuplicate = proposedItemName.isDuplicate(existingItems, itemBeingEdited)
+    val errorMessage = when {
+        isDuplicate -> "A person with already exists"
+        showBlankError && proposedItemName.isBlank() -> "Cannot be empty"
+        else -> null
+    }
+    val label: @Composable () -> Unit = { Text("Add $typeContentDescription") }
 
     Column(
             verticalArrangement = Arrangement.spacedBy(3.dp),
@@ -245,12 +260,10 @@ fun <T : SetupListItem> ListItemNameTextField(
         OutlinedTextField(
                 value = proposedItemName,
                 onValueChange = onValueChangedListener,
-                label = {
-                    // TODO Change text to edit when editing
-                    Text("Add $typeContentDescription")
-                },
+                label = label.takeIf { itemBeingEdited == null },
+                placeholder = { Text("John Doe") },
                 trailingIcon = {
-                    IconButton(onClick = { onValueChangedListener("") }) {
+                    IconButton(onClick = onClearPressedListener) {
                         Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Clear"
@@ -264,9 +277,9 @@ fun <T : SetupListItem> ListItemNameTextField(
                 ),
                 keyboardActions = KeyboardActions(onDone = { onDoneListener() }),
         )
-        if (isDuplicate) {
+        errorMessage?.let {
             Text(
-                    text = "Name has already been used",
+                    text = errorMessage,
                     color = MaterialTheme.colors.error,
                     modifier = Modifier.padding(start = 5.dp)
             )
@@ -282,23 +295,16 @@ fun <T : SetupListItem> EditDialog(
         itemEditedListener: (T, String) -> Unit,
         itemEditCancelledListener: () -> Unit,
 ) {
-    val editName = rememberSaveable { mutableStateOf(editDialogOpenFor?.name ?: "") }
-    val isDuplicate = items?.any { it.name == editName.value } ?: false
-    val okListener = {
-
-        if (editName.value.isBlank()) {
-            // TODO Toast
-        }
-        else {
-            itemEditedListener(editDialogOpenFor!!, editName.value)
-        }
-    }
+    val editName = rememberSaveable(editDialogOpenFor) { mutableStateOf(editDialogOpenFor?.name ?: "") }
+    val fieldTouched = rememberSaveable(editDialogOpenFor) { mutableStateOf(false) }
+    val isDuplicate = editName.value.isDuplicate(items, editDialogOpenFor)
+    val okListener = { itemEditedListener(editDialogOpenFor!!, editName.value) }
 
     ClavaDialog(
             isShown = editDialogOpenFor != null,
             title = "Edit ${editDialogOpenFor?.name}",
             okButtonText = "Edit",
-            okButtonEnabled = !isDuplicate,
+            okButtonEnabled = !isDuplicate && editName.value.isNotBlank(),
             onCancelListener = itemEditCancelledListener,
             onOkListener = okListener
     ) {
@@ -306,8 +312,17 @@ fun <T : SetupListItem> EditDialog(
                 typeContentDescription = typeContentDescription,
                 existingItems = items,
                 proposedItemName = editName.value,
-                onValueChangedListener = { editName.value = it },
-                onDoneListener = okListener
+                onValueChangedListener = {
+                    fieldTouched.value = true
+                    editName.value = it
+                },
+                onClearPressedListener = {
+                    fieldTouched.value = false
+                    editName.value = ""
+                },
+                showBlankError = fieldTouched.value,
+                onDoneListener = okListener,
+                itemBeingEdited = editDialogOpenFor,
         )
     }
 }
@@ -334,6 +349,8 @@ fun SetupListScreen_Preview() {
                 currentTime = currentTime,
                 addItemName = "",
                 addItemNameChangedListener = {},
+                addItemNameClearPressedListener = {},
+                showAddItemBlankError = false,
                 items = players.sortedBy { it.name },
                 getMatchState = { player: Player ->
                     states[players.sortedBy { it.name }.indexOf(player) % states.size]
@@ -358,6 +375,8 @@ fun ExtraInfo_SetupListScreen_Preview() {
             courts = generateCourts(10),
             matches = generateMatches(5, currentTime),
             addItemName = "",
+            addItemNameClearPressedListener = {},
+            showAddItemBlankError = false,
             addItemNameChangedListener = {},
             itemAddedListener = {},
             editDialogOpenFor = null,
@@ -379,6 +398,8 @@ fun Dialog_SetupListScreen_Preview() {
                 typeContentDescription = "player",
                 addItemName = "",
                 addItemNameChangedListener = {},
+                addItemNameClearPressedListener = {},
+                showAddItemBlankError = false,
                 items = players,
                 getMatchState = { null },
                 editDialogOpenFor = players[2],
@@ -402,6 +423,8 @@ fun Error_SetupListScreen_Preview() {
                 typeContentDescription = "player",
                 addItemName = generatePlayers.first().name,
                 addItemNameChangedListener = {},
+                addItemNameClearPressedListener = {},
+                showAddItemBlankError = false,
                 items = generatePlayers,
                 getMatchState = { null },
                 editDialogOpenFor = null,

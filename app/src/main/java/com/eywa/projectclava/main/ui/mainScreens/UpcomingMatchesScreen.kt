@@ -134,7 +134,7 @@ fun UpcomingMatchesScreen(
                                 match.players
                                         .map { it to playerMatchStates[it.name] }
                                         .partition {
-                                            it.second?.isCurrent(currentTime) != true || it.second?.state?.isFinished(
+                                            it.second?.isCurrent != true || it.second?.state?.isFinished(
                                                     currentTime
                                             ) != true
                                         }

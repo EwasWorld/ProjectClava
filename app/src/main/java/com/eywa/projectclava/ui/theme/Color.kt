@@ -14,9 +14,10 @@ object ClavaColor {
 
     val ItemBackground = Color.White
     val DisabledItemBackground = Color(0xFFAAA4B4)
-    val MatchQueued = Color(0xFF4CAF50)
+    val MatchQueued = Color(0xFFA5D6A7)
     val MatchPaused = Color(0xFF4FC3F7)
-    val MatchFinished = Color(0xFFF44336)
+    val MatchInProgress = Color(0xFF4CAF50)
+    val MatchOverrun = Color(0xFFF44336)
     val MatchFinishingSoon = Color(0xFFFFC107)
 
     val SelectedBorder = Color(0xFF3F51B5)

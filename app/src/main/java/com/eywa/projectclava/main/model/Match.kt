@@ -23,6 +23,14 @@ fun Iterable<Match>.getPlayerStates() =
 fun Iterable<Match>.getCourtsInUse(currentTime: Calendar) =
         filter { it.isInProgress(currentTime) }.mapNotNull { it.court }
 
+fun Iterable<Match>.getLatestMatchForPlayer(player: Player) =
+        filter { it.containsPlayer(player) }.getLatestFinishingMatch()
+
+fun Iterable<Match>.getLatestMatchForCourt(court: Court) =
+        filter { it.court?.name == court.name }.getLatestFinishingMatch()
+
+fun Iterable<Match>.getLatestFinishingMatch() = maxByOrNull { it.state }
+
 fun DatabaseMatchFull.asMatch() = Match(
         id = match.id,
         players = players.map { it.asPlayer() },
@@ -49,13 +57,20 @@ data class Match(
     val isPaused
         get() = state is MatchState.Paused
 
+    val isInProgress
+        get() = state is MatchState.InProgressOrComplete
+
+    /**
+     * true if the match is paused, in progress, or overrunning
+     */
+    val isCurrent
+        get() = isPaused || isInProgress
+
+    fun containsPlayer(player: Player) = players.any { it.name == player.name }
+
     fun isInProgress(currentTime: Calendar) =
             state is MatchState.InProgressOrComplete && !state.isFinished(currentTime)
 
-    /**
-     * true if the match is paused or in progress
-     */
-    fun isCurrent(currentTime: Calendar) = isPaused || isInProgress(currentTime)
 
     fun isFinished(currentTime: Calendar) = state.isFinished(currentTime)
 

@@ -127,7 +127,7 @@ fun CurrentMatchesScreen(
                         .padding(horizontal = 10.dp)
         ) {
             items(matches
-                    ?.filter { it.isCurrent(currentTime) }
+                    ?.filter { it.isCurrent }
                     ?.sortedBy { it.state }
                     ?: listOf()
             ) { match ->
@@ -294,7 +294,7 @@ fun CurrentMatchesScreen_Preview(
             courts = generateCourts(params.matchCount + params.availableCourtsCount),
             matches = matches,
             selectedMatch = params.selectedIndex?.let { index ->
-                matches.filter { it.isCurrent(currentTime) }.sortedBy { it.state }[index]
+                matches.filter { it.isCurrent }.sortedBy { it.state }[index]
             },
             selectedMatchListener = {},
             completeMatchListener = {},

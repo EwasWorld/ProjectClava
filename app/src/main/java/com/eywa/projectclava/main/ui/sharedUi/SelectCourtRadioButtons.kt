@@ -2,6 +2,7 @@ package com.eywa.projectclava.main.ui.sharedUi
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.RadioButton
@@ -36,7 +37,7 @@ fun SelectCourtRadioButtons(
         selectedCourt: Court?,
         onCourtSelected: (Court) -> Unit,
 ) {
-    LazyColumn {
+    LazyColumn(modifier = Modifier.fillMaxWidth()) {
         items(availableCourts?.sortedBy { it.name } ?: listOf()) { court ->
             Row(
                     verticalAlignment = Alignment.CenterVertically,

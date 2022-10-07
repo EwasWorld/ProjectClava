@@ -4,6 +4,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.Player
+import com.eywa.projectclava.main.model.getLatestMatchForPlayer
 import com.eywa.projectclava.main.ui.sharedUi.SetupListScreen
 import kotlinx.coroutines.delay
 import java.util.*
@@ -26,22 +27,35 @@ fun SetupPlayersScreen(
     }
 
     val newItemName = rememberSaveable { mutableStateOf("") }
-    var isEditDialogShown: Player? by remember { mutableStateOf(null) }
+    var editDialogOpenFor: Player? by remember { mutableStateOf(null) }
+    val addFieldTouched = rememberSaveable { mutableStateOf(false) }
 
     SetupPlayersScreen(
             currentTime = currentTime,
             items = items,
             matches = matches,
             addItemName = newItemName.value,
-            addItemNameChangedListener = { newItemName.value = it },
-            itemAddedListener = itemAddedListener,
-            editDialogOpenFor = isEditDialogShown,
+            showAddItemBlankError = addFieldTouched.value,
+            addItemNameClearPressedListener = {
+                newItemName.value = ""
+                addFieldTouched.value = false
+            },
+            addItemNameChangedListener = {
+                newItemName.value = it
+                addFieldTouched.value = true
+            },
+            itemAddedListener = {
+                itemAddedListener(it)
+                newItemName.value = ""
+                addFieldTouched.value = false
+            },
+            editDialogOpenFor = editDialogOpenFor,
             itemNameEditedListener = { item, newName ->
-                isEditDialogShown = null
+                editDialogOpenFor = null
                 itemNameEditedListener(item, newName)
             },
-            itemNameEditCancelledListener = { isEditDialogShown = null },
-            itemNameEditStartedListener = { isEditDialogShown = it },
+            itemNameEditCancelledListener = { editDialogOpenFor = null },
+            itemNameEditStartedListener = { editDialogOpenFor = it },
             itemDeletedListener = { itemDeletedListener(it) },
             toggleIsPresentListener = toggleIsPresentListener,
     )
@@ -53,6 +67,8 @@ fun SetupPlayersScreen(
         items: Iterable<Player>?,
         matches: Iterable<Match>?,
         addItemName: String,
+        showAddItemBlankError: Boolean,
+        addItemNameClearPressedListener: () -> Unit,
         addItemNameChangedListener: (String) -> Unit,
         itemAddedListener: (String) -> Unit,
         editDialogOpenFor: Player?,
@@ -66,12 +82,10 @@ fun SetupPlayersScreen(
             currentTime = currentTime,
             typeContentDescription = "player",
             items = items,
-            getMatchState = { player ->
-                matches
-                        ?.filter { it.isCurrent(currentTime) && it.players.contains(player) }
-                        ?.maxOfOrNull { it.state }
-            },
+            getMatchState = { matches?.getLatestMatchForPlayer(it)?.state },
             addItemName = addItemName,
+            showAddItemBlankError = showAddItemBlankError,
+            addItemNameClearPressedListener = addItemNameClearPressedListener,
             addItemNameChangedListener = addItemNameChangedListener,
             itemAddedListener = itemAddedListener,
             editDialogOpenFor = editDialogOpenFor,

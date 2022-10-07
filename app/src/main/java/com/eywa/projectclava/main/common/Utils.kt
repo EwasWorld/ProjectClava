@@ -21,8 +21,8 @@ fun MatchState.asColor(currentTime: Calendar, generalInProgressColor: Color? = n
     if (this is MatchState.NotStarted) return ClavaColor.MatchQueued
     if (this !is MatchState.InProgressOrComplete) return null
 
-    val timeLeft = getTimeLeft(currentTime) ?: return null
-    return if (timeLeft.isEndingSoon()) ClavaColor.MatchFinishingSoon else generalInProgressColor
+    val timeLeft = getTimeLeft(currentTime) ?: return ClavaColor.MatchOverrun
+    return if (timeLeft.isEndingSoon()) ClavaColor.MatchFinishingSoon else ClavaColor.MatchInProgress
 }
 
 fun TimeRemaining?.asString() = this?.let { "$minutes:" + seconds.toString().padStart(2, '0') } ?: "--:--"

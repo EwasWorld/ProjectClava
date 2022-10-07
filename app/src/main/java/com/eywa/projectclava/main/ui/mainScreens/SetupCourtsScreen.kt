@@ -14,6 +14,7 @@ import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
+import com.eywa.projectclava.main.model.getLatestMatchForCourt
 import com.eywa.projectclava.main.ui.sharedUi.SetupListScreen
 import kotlinx.coroutines.delay
 import java.util.*
@@ -37,22 +38,35 @@ fun SetupCourtsScreen(
     }
 
     val newItemName = rememberSaveable { mutableStateOf("") }
-    var isEditDialogShown: Court? by remember { mutableStateOf(null) }
+    var editDialogOpenFor: Court? by remember { mutableStateOf(null) }
+    val addFieldTouched = rememberSaveable { mutableStateOf(false) }
 
     SetupCourtsScreen(
             currentTime = currentTime,
             matches = matches,
             courts = courts,
             addItemName = newItemName.value,
-            addItemNameChangedListener = { newItemName.value = it },
-            itemAddedListener = itemAddedListener,
-            editDialogOpenFor = isEditDialogShown,
+            showAddItemBlankError = addFieldTouched.value,
+            addItemNameClearPressedListener = {
+                newItemName.value = ""
+                addFieldTouched.value = false
+            },
+            addItemNameChangedListener = {
+                newItemName.value = it
+                addFieldTouched.value = true
+            },
+            itemAddedListener = {
+                itemAddedListener(it)
+                newItemName.value = ""
+                addFieldTouched.value = false
+            },
+            editDialogOpenFor = editDialogOpenFor,
             itemNameEditedListener = { item, newName ->
-                isEditDialogShown = null
+                editDialogOpenFor = null
                 itemNameEditedListener(item, newName)
             },
-            itemNameEditCancelledListener = { isEditDialogShown = null },
-            itemNameEditStartedListener = { isEditDialogShown = it },
+            itemNameEditCancelledListener = { editDialogOpenFor = null },
+            itemNameEditStartedListener = { editDialogOpenFor = it },
             itemDeletedListener = { itemDeletedListener(it) },
             toggleIsPresentListener = toggleIsPresentListener,
     )
@@ -64,6 +78,8 @@ fun SetupCourtsScreen(
         matches: Iterable<Match>?,
         courts: Iterable<Court>?,
         addItemName: String,
+        showAddItemBlankError: Boolean,
+        addItemNameClearPressedListener: () -> Unit,
         addItemNameChangedListener: (String) -> Unit,
         itemAddedListener: (String) -> Unit,
         editDialogOpenFor: Court?,
@@ -77,8 +93,10 @@ fun SetupCourtsScreen(
             currentTime = currentTime,
             typeContentDescription = "court",
             items = courts,
-            getMatchState = { matches?.findCourt(it)?.state },
+            getMatchState = { matches?.getLatestMatchForCourt(it)?.state },
             addItemName = addItemName,
+            showAddItemBlankError = showAddItemBlankError,
+            addItemNameClearPressedListener = addItemNameClearPressedListener,
             addItemNameChangedListener = addItemNameChangedListener,
             itemAddedListener = itemAddedListener,
             editDialogOpenFor = editDialogOpenFor,
@@ -87,18 +105,16 @@ fun SetupCourtsScreen(
             itemNameEditStartedListener = itemNameEditStartedListener,
             itemDeletedListener = { itemDeletedListener(it) },
             itemClickedListener = toggleIsPresentListener,
-            hasExtraContent = { it.canBeUsed && matches?.findCourt(it)?.isCurrent(currentTime) == true },
+            hasExtraContent = { matches?.getLatestMatchForCourt(it) != null },
             extraContent = {
-                ExtraContent(currentTime = currentTime, match = matches?.findCourt(it)!!)
+                ExtraContent(currentTime = currentTime, match = matches?.getLatestMatchForCourt(it)!!)
             }
     )
 }
 
-fun Iterable<Match>.findCourt(court: Court) = find { it.court?.name == court.name }
-
 @Composable
 fun RowScope.ExtraContent(currentTime: Calendar, match: Match) {
-    if (match.court == null || match.court?.canBeUsed == false) return
+    if (match.court == null) return
 
     Text(
             text = match.players.joinToString { it.name },
@@ -124,6 +140,8 @@ fun SetupCourtsScreen_Preview() {
             courts = generateCourts(10),
             matches = generateMatches(5, currentTime),
             addItemName = "",
+            addItemNameClearPressedListener = {},
+            showAddItemBlankError = false,
             addItemNameChangedListener = {},
             itemAddedListener = {},
             editDialogOpenFor = null,
