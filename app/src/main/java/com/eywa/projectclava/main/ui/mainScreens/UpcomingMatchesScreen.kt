@@ -77,7 +77,8 @@ fun UpcomingMatchesScreen(
         defaultTimeSeconds: Int,
         selectMatchListener: (Match) -> Unit,
 ) {
-    val availableCourts = courts?.minus(matches.getCourtsInUse(currentTime).toSet())
+    // TODO Colour if player is disabled
+    val availableCourts = courts?.minus(matches.getCourtsInUse().toSet())
     val playerMatchStates = matches.getPlayerStates()
     val sortedMatches = matches.filter { it.state is MatchState.NotStarted }.sortedBy { it.state }
 
@@ -186,9 +187,10 @@ private fun UpcomingMatchesScreenFooter(
                 is MatchState.NotStarted,
                 is MatchState.Completed,
                 is MatchState.Paused -> null
-                is MatchState.InProgressOrComplete -> {
+                is MatchState.InProgressOrComplete,
+                is MatchState.OnCourt -> {
                     val playerName = selectedMatchState.key.name
-                    val matchState = (selectedMatchState.value!! as MatchState.InProgressOrComplete)
+                    val matchState = (selectedMatchState.value!! as MatchState.OnCourt)
                     "$playerName is on ${matchState.court.name}\nTime remaining: ${
                         matchState.getTimeLeft(
                                 currentTime
@@ -214,7 +216,7 @@ private fun UpcomingMatchesScreenFooter(
                                     && hasAvailableCourts
                                     && selectedMatch.players
                                     .all {
-                                        playerMatchStates[it.name]?.isInProgress(currentTime)?.not() ?: true
+                                        playerMatchStates[it.name]?.isInProgress?.not() ?: true
                                     },
                             onClick = { selectedMatch?.let { openStartMatchDialogListener(it) } },
                     ),

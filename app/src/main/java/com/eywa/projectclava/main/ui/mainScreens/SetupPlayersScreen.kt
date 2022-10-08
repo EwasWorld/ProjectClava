@@ -4,7 +4,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.Player
-import com.eywa.projectclava.main.model.getLatestMatchForPlayer
+import com.eywa.projectclava.main.model.getPlayerColouringMatch
 import com.eywa.projectclava.main.ui.sharedUi.SetupListScreen
 import kotlinx.coroutines.delay
 import java.util.*
@@ -82,7 +82,12 @@ fun SetupPlayersScreen(
             currentTime = currentTime,
             typeContentDescription = "player",
             items = items,
-            getMatchState = { matches?.getLatestMatchForPlayer(it)?.state },
+            getMatchState = { player ->
+                matches
+                        ?.filter { match -> match.players.any { player.name == it.name } }
+                        ?.getPlayerColouringMatch()
+                        ?.state
+            },
             addItemName = addItemName,
             showAddItemBlankError = showAddItemBlankError,
             addItemNameClearPressedListener = addItemNameClearPressedListener,

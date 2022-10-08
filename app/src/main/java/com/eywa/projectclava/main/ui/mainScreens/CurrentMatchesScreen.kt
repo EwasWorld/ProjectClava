@@ -99,7 +99,7 @@ fun CurrentMatchesScreen(
         resumeListener: (Match, Court) -> Unit,
 ) {
     CurrentMatchesScreenDialogs(
-            availableCourts = courts?.minus((matches?.getCourtsInUse(currentTime) ?: listOf()).toSet()),
+            availableCourts = courts?.minus((matches?.getCourtsInUse() ?: listOf()).toSet()),
             addTimeDialogOpenFor = addTimeDialogOpenFor,
             closeAddTimeDialogListener = closeAddTimeDialogListener,
             changeCourtDialogOpenFor = changeCourtDialogOpenFor,

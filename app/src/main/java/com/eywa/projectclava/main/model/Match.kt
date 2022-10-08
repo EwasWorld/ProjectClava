@@ -6,22 +6,37 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
-fun Iterable<Match>.getPlayerStates() =
+fun Iterable<Match>.getPlayerMatches() =
         map { it.players.map { player -> player to it } }
                 .flatten()
                 .groupBy { it.first.name }
-                .mapNotNull { (_, pairs) ->
-                    pairs.first().first.name to when (pairs.size) {
+                .map { (_, pairs) -> pairs.first().first.name to pairs.map { it.second } }
+                .toMap()
+
+fun Iterable<Match>.getPlayerStates() =
+        getPlayerMatches()
+                .mapValues { (_, matches) ->
+                    when (matches.size) {
                         0 -> null
-                        1 -> pairs.first().second
+                        1 -> matches.first()
                         // Take the value with the largest remaining time
-                        else -> pairs.map { it.second }.maxByOrNull { it.state }
+                        else -> matches.maxByOrNull { it.state }
                     }
                 }
                 .toMap()
 
-fun Iterable<Match>.getCourtsInUse(currentTime: Calendar) =
-        filter { it.isInProgress(currentTime) }.mapNotNull { it.court }
+/**
+ * Returns max of ([Match.isCurrent] else [MatchState.NotStarted] else any)
+ */
+fun Iterable<Match>.getPlayerColouringMatch() = (
+        filter { it.isCurrent }.takeIf { it.isNotEmpty() }
+                ?: filter { it.state is MatchState.NotStarted }.takeIf { it.isNotEmpty() }
+                ?: this
+        ).maxByOrNull { it.state }
+
+fun Iterable<Match>.getCourtsInUse() = filter { it.isInProgress }.map { it.court!! }
+
+fun Iterable<Match>.getNextMatchToFinish() = filter { it.isInProgress }.minByOrNull { it.state }
 
 fun Iterable<Match>.getLatestMatchForPlayer(player: Player) =
         filter { it.containsPlayer(player) }.getLatestFinishingMatch()
@@ -31,7 +46,7 @@ fun Iterable<Match>.getLatestMatchForCourt(court: Court) =
 
 fun Iterable<Match>.getLatestFinishingMatch() = maxByOrNull { it.state }
 
-fun DatabaseMatchFull.asMatch() = Match(
+fun DatabaseMatchFull.asMatch(currentTime: Calendar) = Match(
         id = match.id,
         players = players.map { it.asPlayer() },
         state = when (match.stateType) {
@@ -39,12 +54,23 @@ fun DatabaseMatchFull.asMatch() = Match(
                     remainingTimeSeconds = match.stateSecondsLeft!!,
                     matchPausedAt = match.stateDate
             )
-            MatchState.InProgressOrComplete::class.simpleName -> MatchState.InProgressOrComplete(
+            MatchState.OnCourt::class.simpleName -> MatchState.OnCourt(
                     matchEndTime = match.stateDate,
-                    court = court!!.asCourt()
+                    court = court!!.asCourt(),
             )
             MatchState.NotStarted::class.simpleName -> MatchState.NotStarted(match.stateDate)
             MatchState.Completed::class.simpleName -> MatchState.Completed(match.stateDate)
+            MatchState.InProgressOrComplete::class.simpleName -> {
+                if (match.stateDate.before(currentTime)) {
+                    MatchState.OnCourt(
+                            matchEndTime = match.stateDate,
+                            court = court!!.asCourt(),
+                    )
+                }
+                else {
+                    MatchState.Completed(match.stateDate)
+                }
+            }
             else -> throw IllegalStateException("Couldn't convert database match to match state")
         }
 )
@@ -58,7 +84,7 @@ data class Match(
         get() = state is MatchState.Paused
 
     val isInProgress
-        get() = state is MatchState.InProgressOrComplete
+        get() = state is MatchState.OnCourt
 
     /**
      * true if the match is paused, in progress, or overrunning
@@ -68,44 +94,41 @@ data class Match(
 
     fun containsPlayer(player: Player) = players.any { it.name == player.name }
 
-    fun isInProgress(currentTime: Calendar) =
-            state is MatchState.InProgressOrComplete && !state.isFinished(currentTime)
-
-
     fun isFinished(currentTime: Calendar) = state.isFinished(currentTime)
 
     fun getFinishTime() = when (state) {
         is MatchState.Completed -> state.matchEndTime
-        is MatchState.InProgressOrComplete -> state.matchEndTime
+        is MatchState.OnCourt -> state.matchEndTime
         else -> null
     }
 
-    val lastPlayedTime
-        get() = when (state) {
-            is MatchState.NotStarted -> null
-            is MatchState.InProgressOrComplete -> state.matchEndTime
-            is MatchState.Completed -> state.matchEndTime
-            is MatchState.Paused -> state.matchPausedAt
-        }
+    fun getLastPlayedTime(currentTime: Calendar) = when (state) {
+        is MatchState.NotStarted -> null
+        is MatchState.OnCourt -> if (state.matchEndTime.before(currentTime)) currentTime else state.matchEndTime
+        is MatchState.Completed -> state.matchEndTime
+        is MatchState.Paused -> state.matchPausedAt
+        is MatchState.InProgressOrComplete -> throw NotImplementedError()
+    }
 
     val court
-        get() = if (state is MatchState.InProgressOrComplete) state.court else null
+        get() = if (state is MatchState.OnCourt) state.court else null
 
     fun asDatabaseMatch() = DatabaseMatch(
             id = id,
             stateType = state::class.simpleName!!,
             stateDate = when (state) {
                 is MatchState.NotStarted -> state.createdAt
-                is MatchState.InProgressOrComplete -> state.matchEndTime
+                is MatchState.OnCourt -> state.matchEndTime
                 is MatchState.Completed -> state.matchEndTime
                 is MatchState.Paused -> state.matchPausedAt
+                is MatchState.InProgressOrComplete -> throw NotImplementedError()
             },
             stateSecondsLeft = state
                     .takeIf { it is MatchState.Paused }
                     ?.let { (it as MatchState.Paused).remainingTimeSeconds },
             courtId = state
-                    .takeIf { it is MatchState.InProgressOrComplete }
-                    ?.let { (it as MatchState.InProgressOrComplete).court.id },
+                    .takeIf { it is MatchState.OnCourt }
+                    ?.let { (it as MatchState.OnCourt).court.id },
     )
 
     fun startMatch(currentTime: Calendar, court: Court, duration: Int? = null): Match {
@@ -117,7 +140,7 @@ data class Match(
         }
 
         return copy(
-                state = MatchState.InProgressOrComplete(
+                state = MatchState.OnCourt(
                         matchEndTime = (currentTime.clone() as Calendar).apply {
                             add(Calendar.SECOND, duration ?: (state as MatchState.Paused).remainingTimeSeconds.toInt())
                         },
@@ -135,7 +158,7 @@ data class Match(
     fun pauseMatch(currentTime: Calendar): Match {
         if (isPaused) return this
 
-        check(state is MatchState.InProgressOrComplete && !state.isFinished(currentTime)) {
+        check(state is MatchState.OnCourt && !state.isFinished(currentTime)) {
             "Match is not in progress"
         }
 
@@ -154,7 +177,7 @@ data class Match(
 
         state as MatchState.Paused
         return copy(
-                state = MatchState.InProgressOrComplete(
+                state = MatchState.OnCourt(
                         matchEndTime = (currentTime.clone() as Calendar)
                                 .apply { add(Calendar.SECOND, state.remainingTimeSeconds.toInt()) },
                         court = court,
@@ -169,7 +192,7 @@ data class Match(
         is MatchState.Paused -> copy(
                 state = state.copy(remainingTimeSeconds = state.remainingTimeSeconds + timeToAdd)
         )
-        is MatchState.InProgressOrComplete -> {
+        is MatchState.OnCourt -> {
             copy(
                     state = if (!state.isFinished(currentTime)) {
                         state.copy(
@@ -195,7 +218,7 @@ data class Match(
     }
 
     fun changeCourt(court: Court): Match {
-        if (state !is MatchState.InProgressOrComplete) return this
+        if (state !is MatchState.OnCourt) return this
         return copy(state = state.copy(court = court))
     }
 }
@@ -209,6 +232,9 @@ data class TimeRemaining(
     private val totalTimeInSeconds: Int
         get() = minutes * 60 + seconds
 
+    val isNegative
+        get() = totalTimeInSeconds < 0
+
     fun isEndingSoon(minutesThreshold: Int = 2) =
             minutes < minutesThreshold || (minutes == minutesThreshold && seconds == 0)
 
@@ -216,10 +242,14 @@ data class TimeRemaining(
 }
 
 sealed class MatchState : Comparable<MatchState> {
-    private val order = listOf(NotStarted::class, Paused::class, InProgressOrComplete::class)
+    private val order = listOf(NotStarted::class, Paused::class, OnCourt::class, Completed::class)
 
+    /**
+     * Can be negative
+     */
     abstract fun getTimeLeft(currentTime: Calendar): TimeRemaining?
     abstract fun isFinished(currentTime: Calendar): Boolean
+    open fun getFinishedTime(): Calendar? = null
 
     fun compareClass(other: MatchState) =
             order.indexOfFirst { it.isInstance(this) }.compareTo(order.indexOfFirst { it.isInstance(other) })
@@ -237,23 +267,33 @@ sealed class MatchState : Comparable<MatchState> {
         override fun isFinished(currentTime: Calendar): Boolean = false
     }
 
+    // TODO Delete InProgressOrComplete
+    @Deprecated("Use OnCourt instead, keeping for database conversions")
     data class InProgressOrComplete(
             val matchEndTime: Calendar,
             val court: Court,
     ) : MatchState() {
+        override fun compareTo(other: MatchState) = throw NotImplementedError()
+        override fun getTimeLeft(currentTime: Calendar) = throw NotImplementedError()
+        override fun isFinished(currentTime: Calendar) = throw NotImplementedError()
+    }
+
+    data class OnCourt(
+            val matchEndTime: Calendar,
+            val court: Court,
+    ) : MatchState() {
         override fun getTimeLeft(currentTime: Calendar): TimeRemaining? {
-            if (matchEndTime.before(currentTime)) return null
-
-            val difference = matchEndTime.timeInMillis - currentTime.timeInMillis
-            if (difference <= 0) return null
-
-            return TimeRemaining(TimeUnit.MILLISECONDS.toSeconds(difference))
+            return TimeRemaining(
+                    TimeUnit.MILLISECONDS.toSeconds(
+                            matchEndTime.timeInMillis - currentTime.timeInMillis
+                    )
+            )
         }
 
         override fun compareTo(other: MatchState): Int {
             val classComparison = compareClass(other)
             if (classComparison != 0) return classComparison
-            other as InProgressOrComplete
+            other as OnCourt
 
             return matchEndTime.compareTo(other.matchEndTime)
         }
@@ -286,11 +326,13 @@ sealed class MatchState : Comparable<MatchState> {
         override fun compareTo(other: MatchState) =
                 when (other) {
                     is Completed -> other.matchEndTime
-                    is InProgressOrComplete -> other.matchEndTime
+                    is OnCourt -> other.matchEndTime
                     else -> null
                 }?.let { matchEndTime.compareTo(it) }
                         ?: compareClass(other)
 
         override fun isFinished(currentTime: Calendar): Boolean = true
+
+        override fun getFinishedTime() = matchEndTime
     }
 }

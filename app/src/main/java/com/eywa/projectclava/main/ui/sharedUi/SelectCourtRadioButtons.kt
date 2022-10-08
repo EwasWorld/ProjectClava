@@ -25,7 +25,7 @@ fun SelectCourtRadioButtons(
         onCourtSelected: (Court) -> Unit,
 ) {
     SelectCourtRadioButtons(
-            availableCourts = courts?.minus((matches?.getCourtsInUse(currentTime) ?: listOf()).toSet()),
+            availableCourts = courts?.minus((matches?.getCourtsInUse() ?: listOf()).toSet()),
             selectedCourt = selectedCourt,
             onCourtSelected = onCourtSelected
     )

@@ -75,7 +75,7 @@ fun generateMatchState(
         GeneratableMatchState.PAUSED -> MatchState.Paused(Random().nextInt(60 * 10).toLong() + 20, currentTime)
         GeneratableMatchState.COMPLETE -> MatchState.Completed(time!!)
         else -> {
-            MatchState.InProgressOrComplete(
+            MatchState.OnCourt(
                     matchEndTime = time!!,
                     court = court!!
             )

@@ -5,6 +5,12 @@ import com.eywa.projectclava.main.ui.sharedUi.SetupListItem
 
 fun DatabaseCourt.asCourt() = Court(id, name, canBeUsed)
 
+@Suppress("ConvertArgumentToSet") // It already is a set... silly compiler
+fun Iterable<Court>.getAvailable(matches: Iterable<Match>?) =
+        filter { it.canBeUsed }
+                .minus(matches?.getCourtsInUse()?.toSet() ?: setOf())
+                .takeIf { it.isNotEmpty() }
+
 data class Court(
         val id: Int,
         val number: String,

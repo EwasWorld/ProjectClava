@@ -335,11 +335,11 @@ fun SetupListScreen_Preview() {
     val players = generatePlayers(playersToGenerate)
     val courts = generateCourts(6)
     val states = listOf(
-            MatchState.InProgressOrComplete(currentTime.apply { add(Calendar.HOUR_OF_DAY, -1) }, courts[0]), // Disabled
-            MatchState.InProgressOrComplete(currentTime.apply { add(Calendar.HOUR_OF_DAY, -1) }, courts[1]),
+            MatchState.OnCourt(currentTime.apply { add(Calendar.HOUR_OF_DAY, -1) }, courts[0]), // Disabled
+            MatchState.OnCourt(currentTime.apply { add(Calendar.HOUR_OF_DAY, -1) }, courts[1]),
             null,
             null, // Disabled
-            MatchState.InProgressOrComplete(currentTime.apply { add(Calendar.MINUTE, 1) }, courts[2]),
+            MatchState.OnCourt(currentTime.apply { add(Calendar.MINUTE, 1) }, courts[2]),
             MatchState.Paused(5, currentTime)
     )
 

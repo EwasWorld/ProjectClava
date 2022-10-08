@@ -18,7 +18,8 @@ import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
-import com.eywa.projectclava.main.model.getCourtsInUse
+import com.eywa.projectclava.main.model.getAvailable
+import com.eywa.projectclava.main.model.getNextMatchToFinish
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
@@ -30,12 +31,11 @@ fun AvailableCourtsHeader(
         matches: Iterable<Match>?,
 ) {
     val availableCourtsString = courts
-            ?.minus((matches?.getCourtsInUse(currentTime) ?: listOf()).toSet())
-            ?.takeIf { it.isNotEmpty() }
-            ?.joinToString { it.number.toString() }
+            ?.getAvailable(matches)
+            ?.joinToString { it.number }
             ?.let { "Available courts: $it" }
-    val nextAvailableCourt = matches?.filter { it.isInProgress(currentTime) }
-            ?.minByOrNull { it.state }
+    val nextAvailableCourt = matches
+            ?.getNextMatchToFinish()
             ?.let { "Next available court: " + it.state.getTimeLeft(currentTime).asString() }
 
     Text(

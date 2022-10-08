@@ -36,7 +36,7 @@ data class DatabaseMatch(
         val stateSecondsLeft: Long?,
 
         /**
-         * Used only by [MatchState.InProgressOrComplete]
+         * Used only by [MatchState.OnCourt]
          */
         @ColumnInfo(index = true)
         val courtId: Int?,

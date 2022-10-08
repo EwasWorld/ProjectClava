@@ -27,7 +27,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     var courts = courtRepo.getAll().map { it.map { dbMatch -> dbMatch.asCourt() } }
     var players = playerRepo.getAll().map { it.map { dbMatch -> dbMatch.asPlayer() } }
-    val matches = matchRepo.getAll().map { it.map { dbMatch -> dbMatch.asMatch() } }
+    val matches = matchRepo.getAll().map { it.map { dbMatch -> dbMatch.asMatch(Calendar.getInstance()) } }
 
     fun addPlayer(playerName: String) = viewModelScope.launch {
         playerRepo.insertAll(Player(0, playerName).asDatabasePlayer())
