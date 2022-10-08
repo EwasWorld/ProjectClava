@@ -244,8 +244,8 @@ private fun StartMatchDialog(
         startMatchCancelListener: () -> Unit,
         defaultTimeSeconds: Int,
 ) {
-    var selectedCourt by remember { mutableStateOf(availableCourts?.minByOrNull { it.name }) }
-    var timeSeconds by remember { mutableStateOf(defaultTimeSeconds) }
+    var selectedCourt by remember(startMatchDialogOpenFor) { mutableStateOf(availableCourts?.minByOrNull { it.name }) }
+    var timeSeconds by remember(startMatchDialogOpenFor) { mutableStateOf(defaultTimeSeconds) }
 
     ClavaDialog(
             isShown = startMatchDialogOpenFor != null,

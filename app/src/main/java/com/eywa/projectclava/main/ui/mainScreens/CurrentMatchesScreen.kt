@@ -3,11 +3,13 @@ package com.eywa.projectclava.main.ui.mainScreens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.material.Divider
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -15,12 +17,15 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.R
+import com.eywa.projectclava.main.DEFAULT_ADD_TIME
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
-import com.eywa.projectclava.main.model.getCourtsInUse
+import com.eywa.projectclava.main.model.MatchState
+import com.eywa.projectclava.main.model.getAvailable
 import com.eywa.projectclava.main.ui.sharedUi.*
+import com.eywa.projectclava.ui.theme.DividerThickness
 import com.eywa.projectclava.ui.theme.Typography
 import kotlinx.coroutines.delay
 import java.util.*
@@ -33,7 +38,7 @@ fun CurrentMatchesScreen(
         setCompletedListener: (Match) -> Unit,
         changeCourtListener: (Match, Court) -> Unit,
         pauseListener: (Match) -> Unit,
-        resumeListener: (Match, Court) -> Unit,
+        resumeListener: (Match, Court, resumeTime: Int) -> Unit,
 ) {
     var currentTime by remember { mutableStateOf(Calendar.getInstance(Locale.getDefault())) }
     LaunchedEffect(Unit) {
@@ -92,11 +97,11 @@ fun CurrentMatchesScreen(
         resumeDialogOpenFor: Match?,
         openResumeDialogListener: (Match) -> Unit,
         closeResumeDialogListener: () -> Unit,
-        resumeListener: (Match, Court) -> Unit,
+        resumeListener: (Match, Court, resumeTime: Int) -> Unit,
 ) {
     // TODO Button to complete all matches
     CurrentMatchesScreenDialogs(
-            availableCourts = courts?.minus((matches?.getCourtsInUse() ?: listOf()).toSet()),
+            availableCourts = courts?.getAvailable(matches),
             addTimeDialogOpenFor = addTimeDialogOpenFor,
             closeAddTimeDialogListener = closeAddTimeDialogListener,
             changeCourtDialogOpenFor = changeCourtDialogOpenFor,
@@ -232,10 +237,15 @@ private fun CurrentMatchesScreenDialogs(
         changeCourtListener: (Match, Court) -> Unit,
         resumeDialogOpenFor: Match?,
         closeResumeDialogListener: () -> Unit,
-        resumeListener: (Match, Court) -> Unit,
+        resumeListener: (Match, Court, resumeTime: Int) -> Unit,
 ) {
-    var timeToAdd: Int by remember { mutableStateOf(2 * 60) }
-    var selectedCourt by remember { mutableStateOf(availableCourts?.minByOrNull { it.name }) }
+    // TODO Caching issue with these. Pause match, resume with random time - A, then pause, resume again will time A
+    var timeToAdd: Int by remember(addTimeDialogOpenFor) { mutableStateOf(DEFAULT_ADD_TIME) }
+    val remainingTime = addTimeDialogOpenFor?.state?.let { it as MatchState.Paused }
+            ?.remainingTimeSeconds?.toInt()
+            ?.takeIf { it > 0 }
+    var resumeTime: Int by remember(addTimeDialogOpenFor) { mutableStateOf(remainingTime ?: (DEFAULT_ADD_TIME)) }
+    var selectedCourt by remember(addTimeDialogOpenFor) { mutableStateOf(availableCourts?.minByOrNull { it.name }) }
 
     ClavaDialog(
             isShown = addTimeDialogOpenFor != null,
@@ -246,7 +256,10 @@ private fun CurrentMatchesScreenDialogs(
     ) {
         TimePicker(
                 totalSeconds = timeToAdd,
-                timeChangedListener = { timeToAdd = it }
+                timeChangedListener = { timeToAdd = it },
+                modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.CenterHorizontally)
         )
     }
     ClavaDialog(
@@ -268,8 +281,16 @@ private fun CurrentMatchesScreenDialogs(
             title = "Resume match",
             okButtonText = "Resume",
             onCancelListener = closeResumeDialogListener,
-            onOkListener = { resumeListener(resumeDialogOpenFor!!, selectedCourt!!) }
+            onOkListener = { resumeListener(resumeDialogOpenFor!!, selectedCourt!!, resumeTime) }
     ) {
+        TimePicker(
+                totalSeconds = resumeTime,
+                timeChangedListener = { resumeTime = it },
+                modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.CenterHorizontally)
+        )
+        Divider(thickness = DividerThickness)
         SelectCourtRadioButtons(
                 availableCourts = availableCourts,
                 selectedCourt = selectedCourt,
@@ -306,7 +327,7 @@ fun CurrentMatchesScreen_Preview(
             resumeDialogOpenFor = null,
             openResumeDialogListener = {},
             closeResumeDialogListener = {},
-            resumeListener = { _, _ -> },
+            resumeListener = { _, _, _ -> },
     )
 }
 

@@ -27,7 +27,12 @@ fun MatchState.asColor(currentTime: Calendar, generalInProgressColor: Color? = n
     return if (timeLeft.isEndingSoon()) ClavaColor.MatchFinishingSoon else ClavaColor.MatchInProgress
 }
 
-fun TimeRemaining?.asString() = this?.let { "$minutes:" + abs(seconds).toString().padStart(2, '0') } ?: "--:--"
+fun TimeRemaining?.asString() = this?.let {
+    (if (seconds < 0 || minutes < 0) "-" else "") +
+            abs(minutes) +
+            ":" +
+            abs(seconds).toString().padStart(2, '0')
+} ?: "--:--"
 
 /**
  * For the purposes of sorting, treat null as NoTime

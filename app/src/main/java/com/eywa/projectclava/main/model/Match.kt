@@ -4,7 +4,6 @@ import com.eywa.projectclava.main.database.match.DatabaseMatch
 import com.eywa.projectclava.main.database.match.DatabaseMatchFull
 import java.util.*
 import java.util.concurrent.TimeUnit
-import kotlin.math.abs
 
 fun Iterable<Match>.getPlayerMatches() =
         map { it.players.map { player -> player to it } }
@@ -37,9 +36,6 @@ fun Iterable<Match>.getPlayerColouringMatch() = (
 fun Iterable<Match>.getCourtsInUse() = filter { it.isInProgress }.map { it.court!! }
 
 fun Iterable<Match>.getNextMatchToFinish() = filter { it.isInProgress }.minByOrNull { it.state }
-
-fun Iterable<Match>.getLatestMatchForPlayer(player: Player) =
-        filter { it.containsPlayer(player) }.getLatestFinishingMatch()
 
 fun Iterable<Match>.getLatestMatchForCourt(court: Court) =
         filter { it.court?.name == court.name }.getLatestFinishingMatch()
@@ -159,28 +155,25 @@ data class Match(
     fun pauseMatch(currentTime: Calendar): Match {
         if (isPaused) return this
 
-        check(state is MatchState.OnCourt && !state.isFinished(currentTime)) {
-            "Match is not in progress"
-        }
+        check(state is MatchState.OnCourt) { "Match is not in progress" }
 
         return copy(
                 state = MatchState.Paused(
                         remainingTimeSeconds = TimeUnit.MILLISECONDS.toSeconds(
-                                abs(currentTime.timeInMillis - state.matchEndTime.timeInMillis)
+                                currentTime.timeInMillis - state.matchEndTime.timeInMillis
                         ),
                         matchPausedAt = currentTime,
                 )
         )
     }
 
-    fun resumeMatch(currentTime: Calendar, court: Court): Match {
+    fun resumeMatch(currentTime: Calendar, court: Court, resumeTime: Int): Match {
         if (!isPaused) return this
-
         state as MatchState.Paused
+
         return copy(
                 state = MatchState.OnCourt(
-                        matchEndTime = (currentTime.clone() as Calendar)
-                                .apply { add(Calendar.SECOND, state.remainingTimeSeconds.toInt()) },
+                        matchEndTime = (currentTime.clone() as Calendar).apply { add(Calendar.SECOND, resumeTime) },
                         court = court,
                 )
         )

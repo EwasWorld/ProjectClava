@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.R
+import com.eywa.projectclava.main.DEFAULT_ADD_TIME
 import com.eywa.projectclava.main.common.GeneratableMatchState
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.model.Match
@@ -129,7 +130,7 @@ private fun PreviousMatchesScreenDialogs(
         closeAddTimeDialogListener: () -> Unit,
         addTimeListener: (Match, timeToAdd: Int) -> Unit,
 ) {
-    var timeToAdd: Int by remember { mutableStateOf(2 * 60) }
+    var timeToAdd: Int by remember(addTimeDialogOpenFor) { mutableStateOf(DEFAULT_ADD_TIME) }
 
     ClavaDialog(
             isShown = addTimeDialogOpenFor != null,

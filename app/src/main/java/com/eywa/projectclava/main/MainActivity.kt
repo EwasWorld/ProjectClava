@@ -33,6 +33,9 @@ import java.util.*
  * Time spent: 26 hrs
  */
 
+// TODO Store like default match time
+const val DEFAULT_ADD_TIME = 60 * 2
+
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
 
@@ -146,11 +149,12 @@ fun Navigation(viewModel: MainViewModel) {
                                 viewModel.updateMatch(match.changeCourt(court))
                             },
                             pauseListener = { viewModel.updateMatch(it.pauseMatch(Calendar.getInstance(Locale.getDefault()))) },
-                            resumeListener = { match, court ->
+                            resumeListener = { match, court, resumeTime ->
                                 viewModel.updateMatch(
                                         match.resumeMatch(
                                                 Calendar.getInstance(Locale.getDefault()),
-                                                court
+                                                court,
+                                                resumeTime
                                         )
                                 )
                             },

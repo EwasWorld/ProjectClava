@@ -12,7 +12,7 @@ import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
 
 /**
- * @param currentTime required if match is [MatchState.OnCourt]
+ * @param currentTime required if match is [MatchState.OnCourt] || [MatchState.Paused]
  */
 @Composable
 fun MatchStateIndicator(match: Match?, currentTime: Calendar?) {
