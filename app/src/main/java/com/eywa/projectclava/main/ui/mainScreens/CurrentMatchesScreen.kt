@@ -3,22 +3,18 @@ package com.eywa.projectclava.main.ui.mainScreens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.R
-import com.eywa.projectclava.main.common.asString
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.model.Court
@@ -157,16 +153,7 @@ fun CurrentMatchesScreen(
                                 modifier = Modifier.weight(1f)
                         )
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                                text = match.state.getTimeLeft(currentTime).asString(),
-                                style = Typography.h4.copy(fontWeight = FontWeight.Normal),
-                        )
-                        if (match.isPaused) {
-                            Icon(
-                                    painter = painterResource(id = R.drawable.baseline_pause_24),
-                                    contentDescription = "Match paused"
-                            )
-                        }
+                        MatchStateIndicator(match = match, currentTime = currentTime)
                     }
                     Text(
                             text = match.players.sortedBy { it.name }.joinToString(limit = 10) { it.name },
@@ -193,7 +180,7 @@ private fun CurrentMatchesScreenFooter(
                 selectedMatch == null -> "No match selected"
                 selectedMatch.court != null -> selectedMatch.court!!.name
                 selectedMatch.isPaused -> selectedMatch.players.joinToString { it.name }
-                else -> "No court"
+                else -> "Unidentifiable match selected"
             },
             buttons = listOf(
                     SelectedItemAction(
