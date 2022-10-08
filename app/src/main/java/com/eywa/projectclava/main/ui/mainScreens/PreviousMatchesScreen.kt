@@ -3,24 +3,19 @@ package com.eywa.projectclava.main.ui.mainScreens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.R
 import com.eywa.projectclava.main.common.GeneratableMatchState
-import com.eywa.projectclava.main.common.asString
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.Typography
-import kotlinx.coroutines.delay
 import java.util.*
 
 @Composable
@@ -29,18 +24,10 @@ fun PreviousMatchesScreen(
         addTimeListener: (Match, timeToAdd: Int) -> Unit,
         deleteMatchListener: (Match) -> Unit,
 ) {
-    var currentTime by remember { mutableStateOf(Calendar.getInstance(Locale.getDefault())) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(1000)
-            currentTime = Calendar.getInstance(Locale.getDefault())
-        }
-    }
     var selectedMatch: Match? by remember(matches) { mutableStateOf(null) }
     var addTimeDialogOpenFor: Match? by remember(matches) { mutableStateOf(null) }
 
     PreviousMatchesScreen(
-            currentTime = currentTime,
             matches = matches,
             selectedMatch = selectedMatch,
             selectedMatchListener = { newSelection ->
@@ -56,7 +43,6 @@ fun PreviousMatchesScreen(
 
 @Composable
 fun PreviousMatchesScreen(
-        currentTime: Calendar,
         matches: Iterable<Match>?,
         selectedMatch: Match?,
         selectedMatchListener: (Match) -> Unit,
@@ -72,7 +58,7 @@ fun PreviousMatchesScreen(
             addTimeListener = addTimeListener,
     )
 
-    val finishedMatches = matches?.filter { it.isFinished(currentTime) }
+    val finishedMatches = matches?.filter { it.isFinished }
     ClavaScreen(
             noContentText = "No matches have been completed",
             hasContent = !finishedMatches.isNullOrEmpty(),
@@ -84,7 +70,7 @@ fun PreviousMatchesScreen(
                 )
             }
     ) {
-        items(finishedMatches?.sortedBy { it.state } ?: listOf()) { match ->
+        items(finishedMatches?.sortedByDescending { it.state } ?: listOf()) { match ->
             val isSelected = selectedMatch?.id == match.id
 
             SelectableListItem(isSelected = isSelected) {
@@ -104,16 +90,7 @@ fun PreviousMatchesScreen(
                                 modifier = Modifier.weight(1f)
                         )
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                                text = match.getFinishTime()?.asString()!!,
-                                style = Typography.h4.copy(fontWeight = FontWeight.Normal),
-                        )
-                        if (match.isPaused) {
-                            Icon(
-                                    painter = painterResource(id = R.drawable.baseline_pause_24),
-                                    contentDescription = "Match paused"
-                            )
-                        }
+                        MatchStateIndicator(match = match, currentTime = null)
                     }
                 }
             }
@@ -173,7 +150,6 @@ private fun PreviousMatchesScreenDialogs(
 fun PreviousMatchesScreen_Preview() {
     val currentTime = Calendar.getInstance(Locale.getDefault())
     PreviousMatchesScreen(
-            currentTime = currentTime,
             matches = generateMatches(4, currentTime, GeneratableMatchState.COMPLETE),
             selectedMatch = null,
             selectedMatchListener = { },

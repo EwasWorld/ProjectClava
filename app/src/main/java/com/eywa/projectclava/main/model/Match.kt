@@ -86,6 +86,9 @@ data class Match(
     val isInProgress
         get() = state is MatchState.OnCourt
 
+    val isFinished
+        get() = state is MatchState.Completed
+
     /**
      * true if the match is paused, in progress, or overrunning
      */
@@ -93,8 +96,6 @@ data class Match(
         get() = isPaused || isInProgress
 
     fun containsPlayer(player: Player) = players.any { it.name == player.name }
-
-    fun isFinished(currentTime: Calendar) = state.isFinished(currentTime)
 
     fun getFinishTime() = when (state) {
         is MatchState.Completed -> state.matchEndTime

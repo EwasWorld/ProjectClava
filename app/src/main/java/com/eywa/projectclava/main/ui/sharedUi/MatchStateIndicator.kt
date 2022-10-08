@@ -11,14 +11,17 @@ import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
 
+/**
+ * @param currentTime required if match is [MatchState.OnCourt]
+ */
 @Composable
-fun MatchStateIndicator(match: Match?, currentTime: Calendar) {
+fun MatchStateIndicator(match: Match?, currentTime: Calendar?) {
     Text(
             text = when (match?.state) {
                 null,
                 is MatchState.NotStarted -> "Not played"
                 is MatchState.Paused,
-                is MatchState.OnCourt -> match.state.getTimeLeft(currentTime)!!.asString()
+                is MatchState.OnCourt -> match.state.getTimeLeft(currentTime!!)!!.asString()
                 is MatchState.Completed -> match.state.getFinishedTime()!!.asString()
                 is MatchState.InProgressOrComplete -> throw NotImplementedError()
             },
