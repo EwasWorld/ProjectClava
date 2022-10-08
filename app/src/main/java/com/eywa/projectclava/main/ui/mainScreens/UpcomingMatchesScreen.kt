@@ -1,10 +1,12 @@
 package com.eywa.projectclava.main.ui.mainScreens
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.Checkbox
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -13,6 +15,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
@@ -29,7 +32,7 @@ import java.util.*
 fun UpcomingMatchesScreen(
         courts: Iterable<Court>?,
         matches: Iterable<Match> = listOf(),
-        startMatchOkListener: (Match, Court, totalTimeSeconds: Int, useAsDefaultTime: Boolean) -> Unit,
+        startMatchOkListener: (Match, Court, totalTimeSeconds: Int) -> Unit,
         removeMatchListener: (Match) -> Unit,
         defaultTimeSeconds: Int,
 ) {
@@ -49,9 +52,9 @@ fun UpcomingMatchesScreen(
             matches = matches,
             openStartMatchDialogListener = { startMatchDialogOpenFor = it },
             startMatchDialogOpenFor = startMatchDialogOpenFor,
-            startMatchOkListener = { match, court, totalTimeSeconds, useAsDefaultTime ->
+            startMatchOkListener = { match, court, totalTimeSeconds ->
                 selectedMatch = null
-                startMatchOkListener(match, court, totalTimeSeconds, useAsDefaultTime)
+                startMatchOkListener(match, court, totalTimeSeconds)
             },
             startMatchCancelListener = { startMatchDialogOpenFor = null },
             removeMatchListener = removeMatchListener,
@@ -70,15 +73,14 @@ fun UpcomingMatchesScreen(
         matches: Iterable<Match> = listOf(),
         openStartMatchDialogListener: (Match) -> Unit,
         startMatchDialogOpenFor: Match?,
-        startMatchOkListener: (Match, Court, totalTimeSeconds: Int, useAsDefaultTime: Boolean) -> Unit,
+        startMatchOkListener: (Match, Court, totalTimeSeconds: Int) -> Unit,
         startMatchCancelListener: () -> Unit,
         removeMatchListener: (Match) -> Unit,
         selectedMatch: Match?,
         defaultTimeSeconds: Int,
         selectMatchListener: (Match) -> Unit,
 ) {
-    // TODO Colour if player is disabled
-    val availableCourts = courts?.minus(matches.getCourtsInUse().toSet())
+    val availableCourts = courts?.getAvailable(matches)
     val playerMatchStates = matches.getPlayerStates()
     val sortedMatches = matches.filter { it.state is MatchState.NotStarted }.sortedBy { it.state }
 
@@ -116,14 +118,15 @@ fun UpcomingMatchesScreen(
             SelectableListItem(
                     currentTime = currentTime,
                     isSelected = selectedMatch == match,
-                    generalInProgressColor = ClavaColor.DisabledItemBackground,
+                    enabled = match.players.all { it.isPresent },
                     matchState = match.players
-                            .mapNotNull { playerMatchStates[it.name]?.state }
-                            .maxByOrNull { it }
-                            ?.takeIf { !it.isFinished(currentTime) }
-                            ?.let { matchState ->
-                                if (matchState !is MatchState.NotStarted) return@let matchState
-                                matchingPlayersInEarlierUpcoming?.let { matchState }
+                            .mapNotNull { playerMatchStates[it.name] }
+                            .maxByOrNull { it.state }
+                            ?.takeIf { !it.isFinished }
+                            ?.let { foundMatch ->
+                                if (foundMatch.state !is MatchState.NotStarted) return@let foundMatch.state
+                                // If anyone is in an earlier upcoming mach, use the NotStarted colour
+                                matchingPlayersInEarlierUpcoming?.let { foundMatch.state }
                             }
             ) {
                 LazyRow(
@@ -147,13 +150,13 @@ fun UpcomingMatchesScreen(
                     ) { (player, match) ->
                         SelectableListItem(
                                 currentTime = currentTime,
+                                enabled = player.enabled,
                                 matchState = match?.state?.let { matchState ->
                                     if (matchState !is MatchState.NotStarted) return@let matchState
                                     matchingPlayersInEarlierUpcoming
                                             ?.takeIf { it.find { p -> p.name == player.name } != null }
                                             ?.let { matchState }
                                 },
-                                generalInProgressColor = ClavaColor.DisabledItemBackground,
                         ) {
                             Text(
                                     text = player.name,
@@ -176,32 +179,40 @@ private fun UpcomingMatchesScreenFooter(
         playerMatchStates: Map<String, Match?>,
         hasAvailableCourts: Boolean,
 ) {
-    val selectedMatchState = selectedMatch?.players
-            ?.associateWith { playerMatchStates[it.name]?.state }
-            ?.filter { it.value?.isFinished(currentTime) == false }
-            ?.maxByOrNull { it.value!! }
-    SelectedItemActions(
-            text = selectedMatch?.players?.joinToString { it.name } ?: "No match selected",
-            extraText = when (selectedMatchState?.value) {
+    val extraText: String?
+    val color: Color?
+    selectedMatch?.players?.find { !it.isPresent }.let { disabledPlayer ->
+        if (disabledPlayer != null) {
+            extraText = "${disabledPlayer.name} is not present"
+            color = ClavaColor.DisabledItemBackground
+        }
+        else {
+            val (selectedPlayer, selectedMatchState) = selectedMatch?.players
+                    ?.associateWith { playerMatchStates[it.name]?.state }
+                    ?.filter { it.value?.isFinished(currentTime) == false }
+                    ?.maxByOrNull { it.value!! }
+                    ?: mapOf(null to null).asIterable().first()
+
+            color = selectedMatchState?.takeIf { it !is MatchState.NotStarted }?.asColor(currentTime)
+            extraText = when (selectedMatchState) {
                 null,
                 is MatchState.NotStarted,
-                is MatchState.Completed,
-                is MatchState.Paused -> null
+                is MatchState.Completed -> null
+                is MatchState.Paused -> "${selectedPlayer?.name}'s match is paused"
                 is MatchState.InProgressOrComplete,
                 is MatchState.OnCourt -> {
-                    val playerName = selectedMatchState.key.name
-                    val matchState = (selectedMatchState.value!! as MatchState.OnCourt)
-                    "$playerName is on ${matchState.court.name}\nTime remaining: ${
-                        matchState.getTimeLeft(
-                                currentTime
-                        ).asString()
-                    }"
+                    val matchState = (selectedMatchState as MatchState.OnCourt)
+                    "${selectedPlayer?.name} is on ${matchState.court.name}" +
+                            "\nTime remaining: " + matchState.getTimeLeft(currentTime).asString()
                 }
-            },
-            color = selectedMatchState?.value?.takeIf { it !is MatchState.NotStarted }?.asColor(
-                    currentTime = currentTime,
-                    generalInProgressColor = ClavaColor.DisabledItemBackground
-            ),
+            }
+        }
+    }
+
+    SelectedItemActions(
+            text = selectedMatch?.players?.sortedBy { it.name }?.joinToString { it.name } ?: "No match selected",
+            extraText = extraText,
+            color = color,
             buttons = listOf(
                     SelectedItemAction(
                             icon = SelectedItemActionIcon.VectorIcon(Icons.Default.Close),
@@ -216,7 +227,8 @@ private fun UpcomingMatchesScreenFooter(
                                     && hasAvailableCourts
                                     && selectedMatch.players
                                     .all {
-                                        playerMatchStates[it.name]?.isInProgress?.not() ?: true
+                                        (playerMatchStates[it.name]?.isInProgress?.not() ?: true)
+                                                && it.isPresent
                                     },
                             onClick = { selectedMatch?.let { openStartMatchDialogListener(it) } },
                     ),
@@ -228,13 +240,12 @@ private fun UpcomingMatchesScreenFooter(
 private fun StartMatchDialog(
         availableCourts: Iterable<Court>?,
         startMatchDialogOpenFor: Match?,
-        startMatchOkListener: (Match, Court, totalTimeSeconds: Int, useAsDefaultTime: Boolean) -> Unit,
+        startMatchOkListener: (Match, Court, totalTimeSeconds: Int) -> Unit,
         startMatchCancelListener: () -> Unit,
         defaultTimeSeconds: Int,
 ) {
     var selectedCourt by remember { mutableStateOf(availableCourts?.minByOrNull { it.name }) }
     var timeSeconds by remember { mutableStateOf(defaultTimeSeconds) }
-    var defaultTimeChecked by remember { mutableStateOf(true) }
 
     ClavaDialog(
             isShown = startMatchDialogOpenFor != null,
@@ -243,25 +254,16 @@ private fun StartMatchDialog(
             okButtonEnabled = selectedCourt != null,
             onCancelListener = startMatchCancelListener,
             onOkListener = {
-                startMatchOkListener(startMatchDialogOpenFor!!, selectedCourt!!, timeSeconds, defaultTimeChecked)
+                startMatchOkListener(startMatchDialogOpenFor!!, selectedCourt!!, timeSeconds)
             },
     ) {
-        Column {
-            TimePicker(
-                    totalSeconds = timeSeconds,
-                    timeChangedListener = { timeSeconds = it },
-            )
-            Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable { defaultTimeChecked = !defaultTimeChecked }
-            ) {
-                Checkbox(checked = defaultTimeChecked, onCheckedChange = { defaultTimeChecked = !defaultTimeChecked })
-                Text(
-                        text = "Use this as the default time",
-                        modifier = Modifier.padding(end = 20.dp)
-                )
-            }
-        }
+        TimePicker(
+                totalSeconds = timeSeconds,
+                timeChangedListener = { timeSeconds = it },
+                modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.CenterHorizontally)
+        )
         Divider(thickness = DividerThickness)
         SelectCourtRadioButtons(
                 availableCourts = availableCourts,
@@ -290,7 +292,7 @@ fun UpcomingMatchesScreen_Preview(
             selectMatchListener = {},
             openStartMatchDialogListener = {},
             startMatchDialogOpenFor = if (params.startMatchDialogOpen) matches[0] else null,
-            startMatchOkListener = { _, _, _, _ -> },
+            startMatchOkListener = { _, _, _ -> },
             startMatchCancelListener = {},
             defaultTimeSeconds = 15 * 60,
     )

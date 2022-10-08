@@ -1,6 +1,9 @@
 package com.eywa.projectclava.main
 
 import android.app.Application
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.eywa.projectclava.main.database.ClavaDatabase
@@ -18,6 +21,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val courtRepo: CourtRepo
     private val matchRepo: MatchRepo
 
+    var defaultMatchTime by mutableStateOf(15 * 60)
+        private set
+
     init {
         val db = ClavaDatabase.getInstance(application)
         playerRepo = db.playerRepo()
@@ -28,6 +34,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var courts = courtRepo.getAll().map { it.map { dbMatch -> dbMatch.asCourt() } }
     var players = playerRepo.getAll().map { it.map { dbMatch -> dbMatch.asPlayer() } }
     val matches = matchRepo.getAll().map { it.map { dbMatch -> dbMatch.asMatch(Calendar.getInstance()) } }
+
+    fun updateDefaultMatchTime(timeInSeconds: Int) {
+        defaultMatchTime = timeInSeconds
+    }
 
     fun addPlayer(playerName: String) = viewModelScope.launch {
         playerRepo.insertAll(Player(0, playerName).asDatabasePlayer())

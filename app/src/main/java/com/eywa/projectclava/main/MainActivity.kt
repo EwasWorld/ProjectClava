@@ -8,13 +8,10 @@ import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -24,6 +21,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.eywa.projectclava.main.model.Player
 import com.eywa.projectclava.main.ui.mainScreens.*
+import com.eywa.projectclava.main.ui.sharedUi.TimePicker
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.DividerThickness
 import com.eywa.projectclava.ui.theme.ProjectClavaTheme
@@ -56,7 +54,6 @@ fun Navigation(viewModel: MainViewModel) {
     val players by viewModel.players.collectAsState(initial = listOf())
     val matches by viewModel.matches.collectAsState(initial = listOf())
     val courts by viewModel.courts.collectAsState(initial = listOf())
-    val defaultTimer = rememberSaveable { mutableStateOf(15 * 60) }
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -119,10 +116,7 @@ fun Navigation(viewModel: MainViewModel) {
                     UpcomingMatchesScreen(
                             courts = courts,
                             matches = matches,
-                            startMatchOkListener = { match, court, totalTimeSeconds, useAsDefaultTime ->
-                                if (useAsDefaultTime) {
-                                    defaultTimer.value = totalTimeSeconds
-                                }
+                            startMatchOkListener = { match, court, totalTimeSeconds ->
                                 viewModel.updateMatch(
                                         match.startMatch(
                                                 Calendar.getInstance(Locale.getDefault()),
@@ -132,7 +126,7 @@ fun Navigation(viewModel: MainViewModel) {
                                 )
                             },
                             removeMatchListener = { viewModel.deleteMatch(it) },
-                            defaultTimeSeconds = defaultTimer.value,
+                            defaultTimeSeconds = viewModel.defaultMatchTime,
                     )
                 }
                 composable(NavRoute.CURRENT_MATCHES.route) {
@@ -189,12 +183,13 @@ fun Drawer(
         closeDrawer: () -> Unit,
 ) {
     val current by navController.currentBackStackEntryAsState()
+    val textStyle = Typography.h4
 
     @Composable
     fun DrawerTextButton(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
         Text(
                 text = text,
-                style = Typography.h4,
+                style = textStyle,
                 modifier = modifier
                         .fillMaxWidth()
                         .clickable(onClick = onClick)
@@ -231,6 +226,21 @@ fun Drawer(
     Column(
             modifier = Modifier.padding(vertical = 15.dp)
     ) {
+        Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 25.dp),
+        ) {
+            Text(
+                    text = "Default match time:",
+                    style = textStyle,
+            )
+            TimePicker(
+                    totalSeconds = viewModel.defaultMatchTime,
+                    timeChangedListener = { viewModel.updateDefaultMatchTime(it) }
+            )
+        }
+        DrawerDivider()
+
         NavRoute.values().forEach {
             TextNavButton(text = it.drawerText, destination = it.route)
             if (it.dividerAfter) {
@@ -252,7 +262,6 @@ fun Drawer(
                 DrawerTextButton(text = "Delete all matches") { viewModel.deleteAllMatches() }
             }
         }
-        // TODO Button to complete all matches
     }
 }
 

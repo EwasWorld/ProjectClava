@@ -6,12 +6,17 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
@@ -26,39 +31,66 @@ fun TimePicker(
         timeChangedListener: (Int) -> Unit,
         modifier: Modifier = Modifier,
 ) {
+    // TODO Work on null display - it's a bit awkward
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
 
-    Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterHorizontally),
-            modifier = modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp)
-    ) {
-        NumericTextField(
-                value = minutes.toString(),
-                placeholderText = "min",
-                onValueChange = { timeChangedListener(Integer.parseInt(it) * 60 + seconds) }
-        )
-        Text(":")
-        NumericTextField(
-                value = seconds.toString().padStart(2, '0'),
-                placeholderText = "sec",
-                onValueChange = { timeChangedListener(Integer.parseInt(it) + minutes * 60) }
-        )
+    fun String.parseInt() =
+            try {
+                if (isNullOrBlank()) 0 else Integer.parseInt(this)
+            }
+            catch (e: NumberFormatException) {
+                0
+            }
+
+    Column {
+        Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterHorizontally),
+                modifier = modifier.padding(horizontal = 10.dp)
+        ) {
+            NumericTextField(
+                    value = minutes.takeIf { it != 0 }?.toString() ?: "",
+                    placeholderText = "min",
+                    isError = minutes < 0,
+                    goNext = true,
+                    onValueChange = { timeChangedListener(it.parseInt() * 60 + seconds) }
+            )
+            Text(":")
+            NumericTextField(
+                    value = seconds.toString().padStart(2, '0'),
+                    placeholderText = "sec",
+                    isError = seconds < 0,
+                    goNext = false,
+                    onValueChange = { timeChangedListener(it.parseInt() + minutes * 60) }
+            )
+        }
+        if (minutes < 0 || seconds < 0) {
+            Text(
+                    text = "Cannot be less than 0",
+                    color = MaterialTheme.colors.error,
+                    modifier = Modifier.padding(start = 5.dp)
+            )
+        }
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+/**
+ * @param goNext true if the keyboard's done action should be NEXT instead of DONE
+ */
+@OptIn(ExperimentalMaterialApi::class, ExperimentalComposeUiApi::class)
 @Composable
 private fun NumericTextField(
         value: String,
         onValueChange: (String) -> Unit,
         placeholderText: String?,
+        isError: Boolean,
         modifier: Modifier = Modifier,
+        goNext: Boolean = true,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
 
     BasicTextField(
             value = value,
@@ -70,13 +102,11 @@ private fun NumericTextField(
             visualTransformation = VisualTransformation.None,
             keyboardOptions = KeyboardOptions.Default.copy(
                     keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Done
+                    imeAction = if (goNext) ImeAction.Next else ImeAction.Done
             ),
             keyboardActions = KeyboardActions(
-                    onDone = {
-//                                        keyboardController?.hide()
-                        // TODO Keyboard actions?
-                    }
+                    onDone = { if (!goNext) keyboardController?.hide() },
+                    onNext = { focusManager.moveFocus(FocusDirection.Right) }
             ),
     ) { innerTextField ->
         TextFieldDefaults.OutlinedTextFieldDecorationBox(
@@ -86,6 +116,7 @@ private fun NumericTextField(
                 interactionSource = interactionSource,
                 enabled = true,
                 singleLine = true,
+                isError = isError,
                 visualTransformation = VisualTransformation.None,
                 placeholder = placeholderText?.let {
                     {

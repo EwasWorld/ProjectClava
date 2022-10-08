@@ -22,7 +22,7 @@ fun ClavaDialog(
         okButtonEnabled: Boolean = true,
         onCancelListener: () -> Unit,
         onOkListener: () -> Unit,
-        content: @Composable () -> Unit
+        content: @Composable ColumnScope.() -> Unit
 ) {
     if (!isShown) return
 

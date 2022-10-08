@@ -98,6 +98,7 @@ fun CurrentMatchesScreen(
         closeResumeDialogListener: () -> Unit,
         resumeListener: (Match, Court) -> Unit,
 ) {
+    // TODO Button to complete all matches
     CurrentMatchesScreenDialogs(
             availableCourts = courts?.minus((matches?.getCourtsInUse() ?: listOf()).toSet()),
             addTimeDialogOpenFor = addTimeDialogOpenFor,
