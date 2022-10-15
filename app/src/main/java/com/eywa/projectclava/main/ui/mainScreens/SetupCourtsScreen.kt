@@ -16,6 +16,7 @@ import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.getLatestMatchForCourt
 import com.eywa.projectclava.main.ui.sharedUi.SetupListScreen
+import com.eywa.projectclava.main.ui.sharedUi.SetupListTabSwitcherItem
 import kotlinx.coroutines.delay
 import java.util.*
 
@@ -28,6 +29,8 @@ fun SetupCourtsScreen(
         itemNameEditedListener: (Court, String) -> Unit,
         itemDeletedListener: (Court) -> Unit,
         toggleIsPresentListener: (Court) -> Unit,
+        selectedTab: SetupListTabSwitcherItem,
+        onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
 ) {
     var currentTime by remember { mutableStateOf(Calendar.getInstance(Locale.getDefault())) }
     LaunchedEffect(Unit) {
@@ -69,6 +72,8 @@ fun SetupCourtsScreen(
             itemNameEditStartedListener = { editDialogOpenFor = it },
             itemDeletedListener = { itemDeletedListener(it) },
             toggleIsPresentListener = toggleIsPresentListener,
+            selectedTab = selectedTab,
+            onTabSelectedListener = onTabSelectedListener,
     )
 }
 
@@ -88,6 +93,8 @@ fun SetupCourtsScreen(
         itemNameEditStartedListener: (Court) -> Unit,
         itemDeletedListener: (Court) -> Unit,
         toggleIsPresentListener: (Court) -> Unit,
+        selectedTab: SetupListTabSwitcherItem,
+        onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
 ) {
     SetupListScreen(
             currentTime = currentTime,
@@ -108,7 +115,9 @@ fun SetupCourtsScreen(
             hasExtraContent = { matches?.getLatestMatchForCourt(it) != null },
             extraContent = {
                 ExtraContent(currentTime = currentTime, match = matches?.getLatestMatchForCourt(it)!!)
-            }
+            },
+            selectedTab = selectedTab,
+            onTabSelectedListener = onTabSelectedListener,
     )
 }
 
@@ -150,5 +159,7 @@ fun SetupCourtsScreen_Preview() {
             itemNameEditStartedListener = {},
             itemDeletedListener = {},
             toggleIsPresentListener = {},
+            selectedTab = SetupListTabSwitcherItem.PLAYERS,
+            onTabSelectedListener = {},
     )
 }

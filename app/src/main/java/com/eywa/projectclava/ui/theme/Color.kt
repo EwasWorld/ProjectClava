@@ -22,4 +22,10 @@ object ClavaColor {
 
     val SelectedBorder = Color(0xFF3F51B5)
     val GeneralBorder = Color.LightGray
+
+    val TabSwitcherSelected = Purple500
+    val OnTabSwitcherSelected = Color.White
+    val TabSwitcherNotSelected = Color.White
+    val OnTabSwitcherNotSelected = Color.Black
+    val TabSwitcherBorder = Color.LightGray
 }

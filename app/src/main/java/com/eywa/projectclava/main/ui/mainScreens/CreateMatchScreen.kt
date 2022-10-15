@@ -219,6 +219,7 @@ private fun CreateMatchScreenFooter(
                     modifier = Modifier.weight(1f)
             ) {
                 items(sortedPlayers) { (player, matches) ->
+                    // TODO Remove general in progress colour
                     SelectableListItem(
                             currentTime = currentTime,
                             matchState = matches?.getPlayerColouringMatch()?.state,

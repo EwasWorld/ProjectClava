@@ -6,6 +6,7 @@ import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.Player
 import com.eywa.projectclava.main.model.getPlayerColouringMatch
 import com.eywa.projectclava.main.ui.sharedUi.SetupListScreen
+import com.eywa.projectclava.main.ui.sharedUi.SetupListTabSwitcherItem
 import kotlinx.coroutines.delay
 import java.util.*
 
@@ -17,6 +18,8 @@ fun SetupPlayersScreen(
         itemNameEditedListener: (Player, String) -> Unit,
         itemDeletedListener: (Player) -> Unit,
         toggleIsPresentListener: (Player) -> Unit,
+        selectedTab: SetupListTabSwitcherItem,
+        onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
 ) {
     var currentTime by remember { mutableStateOf(Calendar.getInstance(Locale.getDefault())) }
     LaunchedEffect(Unit) {
@@ -58,6 +61,8 @@ fun SetupPlayersScreen(
             itemNameEditStartedListener = { editDialogOpenFor = it },
             itemDeletedListener = { itemDeletedListener(it) },
             toggleIsPresentListener = toggleIsPresentListener,
+            selectedTab = selectedTab,
+            onTabSelectedListener = onTabSelectedListener,
     )
 }
 
@@ -77,6 +82,8 @@ fun SetupPlayersScreen(
         itemNameEditStartedListener: (Player) -> Unit,
         itemDeletedListener: (Player) -> Unit,
         toggleIsPresentListener: (Player) -> Unit,
+        selectedTab: SetupListTabSwitcherItem,
+        onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
 ) {
     SetupListScreen(
             currentTime = currentTime,
@@ -99,5 +106,7 @@ fun SetupPlayersScreen(
             itemNameEditStartedListener = itemNameEditStartedListener,
             itemDeletedListener = { itemDeletedListener(it) },
             itemClickedListener = toggleIsPresentListener,
+            selectedTab = selectedTab,
+            onTabSelectedListener = onTabSelectedListener,
     )
 }

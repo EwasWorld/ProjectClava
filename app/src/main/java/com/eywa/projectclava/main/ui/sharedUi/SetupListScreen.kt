@@ -36,6 +36,10 @@ interface SetupListItem {
     val enabled: Boolean
 }
 
+enum class SetupListTabSwitcherItem(override val label: String) : TabSwitcherItem {
+    PLAYERS("Players"), COURTS("Courts")
+}
+
 fun <T : SetupListItem> String.isDuplicate(
         existingItems: Iterable<T>?,
         itemBeingEdited: T? = null,
@@ -52,6 +56,8 @@ fun <T : SetupListItem> SetupListScreen(
         itemDeletedListener: (T) -> Unit,
         itemClickedListener: (T) -> Unit,
         hasExtraContent: (T) -> Boolean = { false },
+        selectedTab: SetupListTabSwitcherItem,
+        onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
         extraContent: @Composable RowScope.(T) -> Unit = {},
 ) {
     val newItemName = rememberSaveable { mutableStateOf("") }
@@ -88,6 +94,8 @@ fun <T : SetupListItem> SetupListScreen(
             itemDeletedListener = itemDeletedListener,
             itemClickedListener = itemClickedListener,
             hasExtraContent = hasExtraContent,
+            selectedTab = selectedTab,
+            onTabSelectedListener = onTabSelectedListener,
             extraContent = extraContent,
     )
 }
@@ -110,6 +118,8 @@ fun <T : SetupListItem> SetupListScreen(
         itemDeletedListener: (T) -> Unit,
         itemClickedListener: (T) -> Unit,
         hasExtraContent: (T) -> Boolean = { false },
+        selectedTab: SetupListTabSwitcherItem,
+        onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
         extraContent: @Composable RowScope.(T) -> Unit = {},
 ) {
     EditDialog(
@@ -132,6 +142,14 @@ fun <T : SetupListItem> SetupListScreen(
                         addItemNameClearPressedListener = addItemNameClearPressedListener,
                         addItemNameChangedListener = addItemNameChangedListener,
                         itemAddedListener = itemAddedListener
+                )
+            },
+            aboveListContent = {
+                TabSwitcher(
+                        items = SetupListTabSwitcherItem.values().toList(),
+                        selectedItem = selectedTab,
+                        onItemClicked = onTabSelectedListener,
+                        modifier = Modifier.padding(20.dp)
                 )
             }
     ) {
@@ -362,6 +380,8 @@ fun SetupListScreen_Preview() {
                 itemAddedListener = {},
                 itemNameEditStartedListener = {},
                 itemDeletedListener = {},
+                selectedTab = SetupListTabSwitcherItem.PLAYERS,
+                onTabSelectedListener = {},
         )
     }
 }
@@ -385,6 +405,8 @@ fun ExtraInfo_SetupListScreen_Preview() {
             itemNameEditStartedListener = {},
             itemDeletedListener = {},
             toggleIsPresentListener = {},
+            selectedTab = SetupListTabSwitcherItem.PLAYERS,
+            onTabSelectedListener = {},
     )
 }
 
@@ -409,6 +431,8 @@ fun Dialog_SetupListScreen_Preview() {
                 itemAddedListener = {},
                 itemNameEditStartedListener = {},
                 itemDeletedListener = {},
+                selectedTab = SetupListTabSwitcherItem.PLAYERS,
+                onTabSelectedListener = {},
         )
     }
 }
@@ -434,6 +458,8 @@ fun Error_SetupListScreen_Preview() {
                 itemAddedListener = {},
                 itemNameEditStartedListener = {},
                 itemDeletedListener = {},
+                selectedTab = SetupListTabSwitcherItem.PLAYERS,
+                onTabSelectedListener = {},
         )
     }
 }

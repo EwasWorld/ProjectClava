@@ -18,8 +18,16 @@ fun ClavaScreen(
         hasContent: Boolean,
         headerContent: @Composable (() -> Unit)? = null,
         footerContent: @Composable (() -> Unit)? = null,
+        aboveListContent: @Composable (() -> Unit)? = null,
         listContent: LazyListScope.() -> Unit,
 ) {
+    val lazyColumnPadding = if (aboveListContent == null) {
+        PaddingValues(vertical = 20.dp)
+    }
+    else {
+        PaddingValues(bottom = 20.dp)
+    }
+
     Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxSize()
@@ -28,6 +36,8 @@ fun ClavaScreen(
             headerContent()
             Divider(thickness = DividerThickness)
         }
+
+        aboveListContent?.invoke()
 
         if (!hasContent) {
             Spacer(modifier = Modifier.weight(1f))
@@ -40,7 +50,7 @@ fun ClavaScreen(
         else {
             LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
-                    contentPadding = PaddingValues(vertical = 20.dp),
+                    contentPadding = lazyColumnPadding,
                     modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)

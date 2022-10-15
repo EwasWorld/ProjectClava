@@ -19,8 +19,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.eywa.projectclava.main.model.Match
+import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.main.model.Player
 import com.eywa.projectclava.main.ui.mainScreens.*
+import com.eywa.projectclava.main.ui.sharedUi.SetupListTabSwitcherItem
 import com.eywa.projectclava.main.ui.sharedUi.TimePicker
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.DividerThickness
@@ -33,6 +36,7 @@ import java.util.*
  * Time spent: 26 hrs
  */
 
+// TODO Do something with previous day's matches. Maybe add a divider between days? Add a report for day's attendees?
 // TODO Store like default match time
 const val DEFAULT_ADD_TIME = 60 * 2
 
@@ -60,6 +64,16 @@ fun Navigation(viewModel: MainViewModel) {
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    var selectedSetupTab by remember { mutableStateOf(SetupListTabSwitcherItem.PLAYERS) }
+    val onTabSelectedListener = { item: SetupListTabSwitcherItem ->
+        selectedSetupTab = item
+        navController.navigate(
+                when (item) {
+                    SetupListTabSwitcherItem.PLAYERS -> NavRoute.ADD_PLAYER.route
+                    SetupListTabSwitcherItem.COURTS -> NavRoute.ADD_COURT.route
+                }
+        )
+    }
 
     ModalDrawer(
             drawerContent = {
@@ -67,6 +81,7 @@ fun Navigation(viewModel: MainViewModel) {
                         navController = navController,
                         viewModel = viewModel,
                         players = players,
+                        matches = matches,
                         closeDrawer = {
                             scope.launch {
                                 drawerState.animateTo(
@@ -93,6 +108,8 @@ fun Navigation(viewModel: MainViewModel) {
                             },
                             itemDeletedListener = { viewModel.deletePlayer(it) },
                             toggleIsPresentListener = { viewModel.updatePlayers(it.copy(isPresent = !it.isPresent)) },
+                            selectedTab = selectedSetupTab,
+                            onTabSelectedListener = onTabSelectedListener,
                     )
                 }
                 composable(NavRoute.ADD_COURT.route) {
@@ -105,6 +122,8 @@ fun Navigation(viewModel: MainViewModel) {
                             },
                             itemDeletedListener = { viewModel.deleteCourt(it) },
                             toggleIsPresentListener = { viewModel.updateCourt(it.copy(canBeUsed = !it.canBeUsed)) },
+                            selectedTab = selectedSetupTab,
+                            onTabSelectedListener = onTabSelectedListener,
                     )
                 }
                 composable(NavRoute.CREATE_MATCH.route) {
@@ -184,6 +203,7 @@ fun Drawer(
         navController: NavController,
         viewModel: MainViewModel,
         players: Iterable<Player>,
+        matches: Iterable<Match>,
         closeDrawer: () -> Unit,
 ) {
     val current by navController.currentBackStackEntryAsState()
@@ -257,6 +277,17 @@ fun Drawer(
             viewModel.updatePlayers(*players.map { it.copy(isPresent = false) }.toTypedArray())
             navController.navigate(NavRoute.ADD_PLAYER.route)
             closeDrawer()
+        }
+        DrawerTextButton(text = "Mark all in progress matches as complete") {
+            matches.forEach {
+                if (it.state is MatchState.OnCourt) {
+                    viewModel.updateMatch(
+                            it.copy(
+                                    state = MatchState.Completed(it.state.matchEndTime)
+                            )
+                    )
+                }
+            }
         }
 
         DrawerDivider()
