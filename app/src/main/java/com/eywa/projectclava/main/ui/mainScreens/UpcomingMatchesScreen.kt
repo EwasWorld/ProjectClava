@@ -215,14 +215,18 @@ private fun UpcomingMatchesScreenFooter(
             color = color,
             buttons = listOf(
                     SelectedItemAction(
-                            icon = SelectedItemActionIcon.VectorIcon(Icons.Default.Close),
-                            contentDescription = "Remove match",
+                            icon = ClavaIconInfo.VectorIcon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Remove match",
+                            ),
                             enabled = selectedMatch != null,
                             onClick = { selectedMatch?.let { removeMatchListener(it) } },
                     ),
                     SelectedItemAction(
-                            icon = SelectedItemActionIcon.VectorIcon(Icons.Default.PlayArrow),
-                            contentDescription = "Start match",
+                            icon = ClavaIconInfo.VectorIcon(
+                                    imageVector = Icons.Default.PlayArrow,
+                                    contentDescription = "Start match",
+                            ),
                             enabled = selectedMatch != null
                                     && hasAvailableCourts
                                     && selectedMatch.players

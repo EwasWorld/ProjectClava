@@ -122,6 +122,7 @@ fun <T : SetupListItem> SetupListScreen(
         onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
         extraContent: @Composable RowScope.(T) -> Unit = {},
 ) {
+    // TODO Add a search FAB
     EditDialog(
             typeContentDescription = typeContentDescription,
             items = items,

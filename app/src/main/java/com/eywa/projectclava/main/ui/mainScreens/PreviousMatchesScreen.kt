@@ -109,14 +109,18 @@ private fun PreviousMatchesScreenFooter(
             text = selectedMatch?.players?.joinToString { it.name } ?: "No match selected",
             buttons = listOf(
                     SelectedItemAction(
-                            icon = SelectedItemActionIcon.PainterIcon(R.drawable.baseline_more_time_24),
-                            contentDescription = "Add time",
+                            icon = ClavaIconInfo.PainterIcon(
+                                    drawable = R.drawable.baseline_more_time_24,
+                                    contentDescription = "Add time",
+                            ),
                             enabled = selectedMatch != null,
                             onClick = { selectedMatch?.let { openAddTimeDialogListener(it) } }
                     ),
                     SelectedItemAction(
-                            icon = SelectedItemActionIcon.VectorIcon(Icons.Default.Close),
-                            contentDescription = "Delete match",
+                            icon = ClavaIconInfo.VectorIcon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Delete match",
+                            ),
                             enabled = selectedMatch != null,
                             onClick = { selectedMatch?.let { deleteMatchListener(it) } }
                     ),

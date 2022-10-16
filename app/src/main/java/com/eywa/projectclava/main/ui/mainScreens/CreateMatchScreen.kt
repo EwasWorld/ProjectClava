@@ -169,14 +169,18 @@ private fun CreateMatchScreenFooter(
     SelectedItemActions(
             buttons = listOf(
                     SelectedItemAction(
-                            icon = SelectedItemActionIcon.VectorIcon(Icons.Default.Close),
-                            contentDescription = "Remove all",
+                            icon = ClavaIconInfo.VectorIcon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Remove all",
+                            ),
                             enabled = selectedPlayers.any(),
                             onClick = removeAllFromMatchListener,
                     ),
                     SelectedItemAction(
-                            icon = SelectedItemActionIcon.VectorIcon(Icons.Default.Check),
-                            contentDescription = "Create match",
+                            icon = ClavaIconInfo.VectorIcon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Create match",
+                            ),
                             enabled = selectedPlayers.any(),
                             onClick = createMatchListener,
                     ),

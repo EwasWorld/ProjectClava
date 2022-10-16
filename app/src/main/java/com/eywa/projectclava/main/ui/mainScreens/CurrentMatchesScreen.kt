@@ -189,36 +189,46 @@ private fun CurrentMatchesScreenFooter(
             },
             buttons = listOf(
                     SelectedItemAction(
-                            icon = SelectedItemActionIcon.PainterIcon(R.drawable.baseline_more_time_24),
-                            contentDescription = "Add time",
+                            icon = ClavaIconInfo.PainterIcon(
+                                    drawable = R.drawable.baseline_more_time_24,
+                                    contentDescription = "Add time",
+                            ),
                             enabled = selectedMatch != null,
                             onClick = { selectedMatch?.let { openAddTimeDialogListener(it) } }
                     ),
                     SelectedItemAction(
-                            icon = SelectedItemActionIcon.PainterIcon(R.drawable.baseline_swap_horiz_24),
-                            contentDescription = "Change court",
+                            icon = ClavaIconInfo.PainterIcon(
+                                    drawable = R.drawable.baseline_swap_horiz_24,
+                                    contentDescription = "Change court",
+                            ),
                             enabled = selectedMatch != null,
                             onClick = { selectedMatch?.let { openChangeCourtDialogListener(it) } }
                     ),
                     if (selectedMatch?.isPaused == true) {
                         SelectedItemAction(
-                                icon = SelectedItemActionIcon.VectorIcon(Icons.Default.PlayArrow),
-                                contentDescription = "Resume match",
+                                icon = ClavaIconInfo.VectorIcon(
+                                        imageVector = Icons.Default.PlayArrow,
+                                        contentDescription = "Resume match",
+                                ),
                                 enabled = true,
                                 onClick = { openResumeDialogListener(selectedMatch) }
                         )
                     }
                     else {
                         SelectedItemAction(
-                                icon = SelectedItemActionIcon.PainterIcon(R.drawable.baseline_pause_24),
-                                contentDescription = "Pause match",
+                                icon = ClavaIconInfo.PainterIcon(
+                                        drawable = R.drawable.baseline_pause_24,
+                                        contentDescription = "Pause match",
+                                ),
                                 enabled = selectedMatch != null,
                                 onClick = { selectedMatch?.let { pauseListener(it) } }
                         )
                     },
                     SelectedItemAction(
-                            icon = SelectedItemActionIcon.VectorIcon(Icons.Default.Check),
-                            contentDescription = "End match",
+                            icon = ClavaIconInfo.VectorIcon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "End match",
+                            ),
                             enabled = selectedMatch != null,
                             onClick = { selectedMatch?.let { completeMatchListener(it) } }
                     ),
