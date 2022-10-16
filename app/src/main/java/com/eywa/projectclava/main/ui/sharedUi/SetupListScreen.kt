@@ -154,12 +154,11 @@ fun <T : SetupListItem> SetupListScreen(
                         itemAddedListener = itemAddedListener
                 )
             },
-            aboveListContent = {
+            headerContent = {
                 TabSwitcher(
                         items = SetupListTabSwitcherItem.values().toList(),
                         selectedItem = selectedTab,
                         onItemClicked = onTabSelectedListener,
-                        modifier = Modifier.padding(20.dp)
                 )
             }
     ) {

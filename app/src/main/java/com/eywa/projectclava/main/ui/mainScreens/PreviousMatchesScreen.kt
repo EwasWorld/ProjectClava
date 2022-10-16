@@ -83,12 +83,11 @@ fun PreviousMatchesScreen(
                         deleteMatchListener = deleteMatchListener
                 )
             },
-            aboveListContent = {
+            headerContent = {
                 TabSwitcher(
                         items = HistoryTabSwitcherItem.values().toList(),
                         selectedItem = HistoryTabSwitcherItem.MATCHES,
                         onItemClicked = onTabSelectedListener,
-                        modifier = Modifier.padding(20.dp)
                 )
             }
     ) {

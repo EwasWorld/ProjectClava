@@ -10,7 +10,6 @@ val Teal200 = Color(0xFF03DAC5)
 object ClavaColor {
     val Background = Color(0xAAD1C4E9)
     val HeaderFooterBackground = Color.White
-    val DrawerCurrentDestination = Color(0xFFD1C4E9)
 
     val ItemBackground = Color.White
     val DisabledItemBackground = Color(0xFFAAA4B4)
@@ -28,4 +27,6 @@ object ClavaColor {
     val TabSwitcherNotSelected = Color.White
     val OnTabSwitcherNotSelected = Color.Black
     val TabSwitcherBorder = Color.LightGray
+
+    val Divider = Color.Black.copy(alpha = 0.12f)
 }

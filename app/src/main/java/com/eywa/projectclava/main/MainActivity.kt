@@ -40,7 +40,7 @@ import kotlinx.coroutines.launch
 import java.util.*
 
 /*
- * Time spent: 30 hrs
+ * Time spent: 33 hrs
  */
 
 // TODO Store like default match time

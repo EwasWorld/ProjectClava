@@ -34,51 +34,89 @@ fun <T : TabSwitcherItem> TabSwitcher(
 ) {
     require(items.count() >= 2) { "Must have at least two items" }
 
-    Surface(
-            shape = RoundedCornerShape(100),
-            border = BorderStroke(1.dp, ClavaColor.TabSwitcherBorder),
-            modifier = modifier.height(IntrinsicSize.Min)
+    val borderStroke = 1.dp
+    val cornerRoundPercent = 30
+
+    Box(
+            modifier = modifier
+                    .padding(horizontal = 10.dp)
+                    .padding(top = 15.dp)
     ) {
+        Surface(
+                shape = RoundedCornerShape(cornerRoundPercent, cornerRoundPercent, 0, 0),
+                border = BorderStroke(borderStroke, ClavaColor.TabSwitcherBorder),
+                modifier = Modifier.height(IntrinsicSize.Min)
+        ) {
+            Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth()
+            ) {
+                items.forEachIndexed { index, item ->
+                    val textColour: Color
+                    val backgroundColour: Color
+                    if (selectedItem == item) {
+                        backgroundColour = ClavaColor.TabSwitcherSelected
+                        textColour = ClavaColor.OnTabSwitcherSelected
+                    }
+                    else {
+                        backgroundColour = ClavaColor.TabSwitcherNotSelected
+                        textColour = ClavaColor.OnTabSwitcherNotSelected
+                    }
+
+                    Text(
+                            text = item.label,
+                            style = Typography.body1.copy(
+                                    color = textColour,
+                                    fontWeight = FontWeight.Bold,
+                            ),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                    .clickable { onItemClicked(item) }
+                                    .weight(1f)
+                                    .background(backgroundColour)
+                                    .fillMaxHeight()
+                                    .padding(10.dp)
+                    )
+                    if (index != items.count() - 1) {
+                        Divider(
+                                color = ClavaColor.TabSwitcherBorder,
+                                modifier = Modifier
+                                        .fillMaxHeight()
+                                        .width(borderStroke)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Hide the border at the bottom. This is probably a dumb way to do it
         Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter)
         ) {
+            Spacer(modifier = Modifier.width(borderStroke))
             items.forEachIndexed { index, item ->
-                val textColour: Color
-                val backgroundColour: Color
-                if (selectedItem == item) {
-                    backgroundColour = ClavaColor.TabSwitcherSelected
-                    textColour = ClavaColor.OnTabSwitcherSelected
+                val colour = if (selectedItem == item) {
+                    ClavaColor.TabSwitcherSelected
                 }
                 else {
-                    backgroundColour = ClavaColor.TabSwitcherNotSelected
-                    textColour = ClavaColor.OnTabSwitcherNotSelected
+                    ClavaColor.TabSwitcherNotSelected
                 }
 
-                Text(
-                        text = item.label,
-                        style = Typography.body1.copy(
-                                color = textColour,
-                                fontWeight = FontWeight.Bold,
-                        ),
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                                .clickable { onItemClicked(item) }
-                                .weight(1f)
-                                .background(backgroundColour)
-                                .fillMaxHeight()
-                                .padding(10.dp)
+                Divider(
+                        thickness = borderStroke,
+                        color = colour,
+                        modifier = Modifier.weight(1f)
                 )
                 if (index != items.count() - 1) {
-                    Divider(
-                            color = ClavaColor.TabSwitcherBorder,
-                            modifier = Modifier
-                                    .fillMaxHeight()
-                                    .width(2.dp)
-                    )
+                    Spacer(modifier = Modifier.width(1.dp))
                 }
             }
+            Spacer(modifier = Modifier.width(borderStroke))
         }
     }
 }
