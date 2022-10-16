@@ -1,7 +1,8 @@
 package com.eywa.projectclava.main
 
-import android.annotation.SuppressLint
+import android.app.Activity
 import android.os.Bundle
+import android.view.inputmethod.InputMethodManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -18,6 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsCompat.toWindowInsetsCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -39,7 +43,7 @@ import kotlinx.coroutines.launch
 import java.util.*
 
 /*
- * Time spent: 29 hrs
+ * Time spent: 30 hrs
  */
 
 // TODO Do something with previous day's matches. Maybe add a divider between days? Add a report for day's attendees?
@@ -51,18 +55,30 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        var isBottomNavVisible by mutableStateOf(true)
+        val imm = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+
+        // Hide the nav bar when the keyboard is showing
+        setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
+            isBottomNavVisible = !insets.isVisible(WindowInsetsCompat.Type.ime())
+            toWindowInsetsCompat(view.onApplyWindowInsets(insets.toWindowInsets()!!))
+        }
+
         setContent {
             ProjectClavaTheme {
-                Navigation(viewModel)
+                Navigation(viewModel, isBottomNavVisible)
             }
         }
     }
 }
 
-@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun Navigation(viewModel: MainViewModel) {
+fun Navigation(
+        viewModel: MainViewModel,
+        isBottomNavVisible: Boolean = true,
+) {
     val navController = rememberNavController()
 
     val players by viewModel.players.collectAsState(initial = listOf())
@@ -75,7 +91,11 @@ fun Navigation(viewModel: MainViewModel) {
     Scaffold(
             backgroundColor = ClavaColor.Background,
             scaffoldState = rememberScaffoldState(drawerState = drawerState),
-            bottomBar = { ClavaBottomNav(navController = navController) },
+            bottomBar = {
+                if (isBottomNavVisible) {
+                    ClavaBottomNav(navController = navController)
+                }
+            },
             drawerContent = {
                 Drawer(
                         navController = navController,

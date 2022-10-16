@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextDecoration
@@ -123,6 +124,9 @@ fun <T : SetupListItem> SetupListScreen(
         extraContent: @Composable RowScope.(T) -> Unit = {},
 ) {
     // TODO Add a search FAB
+    // TODO Add an are you sure to deletion
+    val focusManager = LocalFocusManager.current
+
     EditDialog(
             typeContentDescription = typeContentDescription,
             items = items,
@@ -161,7 +165,10 @@ fun <T : SetupListItem> SetupListScreen(
                     matchState = getMatchState(item),
             ) {
                 Column(
-                        modifier = Modifier.clickable { itemClickedListener(item) }
+                        modifier = Modifier.clickable {
+                            itemClickedListener(item)
+                            focusManager.clearFocus()
+                        }
                 ) {
                     Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -174,7 +181,10 @@ fun <T : SetupListItem> SetupListScreen(
                                 modifier = Modifier.weight(1f)
                         )
                         IconButton(
-                                onClick = { itemNameEditStartedListener(item) }
+                                onClick = {
+                                    itemNameEditStartedListener(item)
+                                    focusManager.clearFocus()
+                                }
                         ) {
                             Icon(
                                     imageVector = Icons.Default.Edit,
@@ -182,7 +192,10 @@ fun <T : SetupListItem> SetupListScreen(
                             )
                         }
                         IconButton(
-                                onClick = { itemDeletedListener(item) }
+                                onClick = {
+                                    itemDeletedListener(item)
+                                    focusManager.clearFocus()
+                                }
                         ) {
                             Icon(
                                     imageVector = Icons.Default.Close,

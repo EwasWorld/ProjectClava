@@ -32,6 +32,7 @@ fun TimePicker(
         modifier: Modifier = Modifier,
 ) {
     // TODO Work on null display - it's a bit awkward
+    // TODO Tab in the first field clears the field...
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
 
