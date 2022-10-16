@@ -60,6 +60,7 @@ fun ClavaBottomNav(
                 currentRoute = currentRoute,
                 onClick = onClick,
         )
+        // TODO Add an icon if a match has finished
         ClavaBottomNavItem(
                 icon = ClavaIconInfo.PainterIcon(R.drawable.baseline_timelapse_24),
                 label = "Ongoing",

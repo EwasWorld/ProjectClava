@@ -1,8 +1,6 @@
 package com.eywa.projectclava.main
 
-import android.app.Activity
 import android.os.Bundle
-import android.view.inputmethod.InputMethodManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -34,6 +32,7 @@ import com.eywa.projectclava.main.model.Player
 import com.eywa.projectclava.main.ui.mainScreens.*
 import com.eywa.projectclava.main.ui.sharedUi.ClavaBottomNav
 import com.eywa.projectclava.main.ui.sharedUi.SetupListTabSwitcherItem
+import com.eywa.projectclava.main.ui.sharedUi.TabSwitcherItem
 import com.eywa.projectclava.main.ui.sharedUi.TimePicker
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.DividerThickness
@@ -46,7 +45,6 @@ import java.util.*
  * Time spent: 30 hrs
  */
 
-// TODO Do something with previous day's matches. Maybe add a divider between days? Add a report for day's attendees?
 // TODO Store like default match time
 const val DEFAULT_ADD_TIME = 60 * 2
 
@@ -57,7 +55,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         var isBottomNavVisible by mutableStateOf(true)
-        val imm = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
 
         // Hide the nav bar when the keyboard is showing
         setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
@@ -124,6 +121,19 @@ fun Navigation(
     }
 }
 
+class TabSwitcherState<T : TabSwitcherItem>(
+        initialState: T,
+        private val navController: NavController,
+) {
+    var currentState by mutableStateOf(initialState)
+        private set
+
+    fun update(newState: T) {
+        currentState = newState
+        navController.navigate(newState.destination.route)
+    }
+}
+
 @Composable
 fun ClavaNavigation(
         navController: NavHostController,
@@ -133,16 +143,8 @@ fun ClavaNavigation(
         viewModel: MainViewModel,
         bottomPadding: Dp = 0.dp
 ) {
-    var selectedSetupTab by remember { mutableStateOf(SetupListTabSwitcherItem.PLAYERS) }
-    val onTabSelectedListener = { item: SetupListTabSwitcherItem ->
-        selectedSetupTab = item
-        navController.navigate(
-                when (item) {
-                    SetupListTabSwitcherItem.PLAYERS -> NavRoute.ADD_PLAYER.route
-                    SetupListTabSwitcherItem.COURTS -> NavRoute.ADD_COURT.route
-                }
-        )
-    }
+    val setupListTabSwitcherState = remember { TabSwitcherState(SetupListTabSwitcherItem.PLAYERS, navController) }
+    val historyTabSwitcherState = remember { TabSwitcherState(HistoryTabSwitcherItem.MATCHES, navController) }
 
     NavHost(
             navController = navController,
@@ -159,8 +161,8 @@ fun ClavaNavigation(
                     },
                     itemDeletedListener = { viewModel.deletePlayer(it) },
                     toggleIsPresentListener = { viewModel.updatePlayers(it.copy(isPresent = !it.isPresent)) },
-                    selectedTab = selectedSetupTab,
-                    onTabSelectedListener = onTabSelectedListener,
+                    selectedTab = setupListTabSwitcherState.currentState,
+                    onTabSelectedListener = { setupListTabSwitcherState.update(it) },
             )
         }
         composable(NavRoute.ADD_COURT.route) {
@@ -173,8 +175,8 @@ fun ClavaNavigation(
                     },
                     itemDeletedListener = { viewModel.deleteCourt(it) },
                     toggleIsPresentListener = { viewModel.updateCourt(it.copy(canBeUsed = !it.canBeUsed)) },
-                    selectedTab = selectedSetupTab,
-                    onTabSelectedListener = onTabSelectedListener,
+                    selectedTab = setupListTabSwitcherState.currentState,
+                    onTabSelectedListener = { setupListTabSwitcherState.update(it) },
             )
         }
         composable(NavRoute.CREATE_MATCH.route) {
@@ -241,7 +243,15 @@ fun ClavaNavigation(
                                 )
                         )
                     },
-                    deleteMatchListener = { viewModel.deleteMatch(it) }
+                    deleteMatchListener = { viewModel.deleteMatch(it) },
+                    selectedTab = historyTabSwitcherState.currentState,
+                    onTabSelectedListener = { historyTabSwitcherState.update(it) },
+            )
+        }
+        composable(NavRoute.DAYS_REPORT.route) {
+            DaysReportScreen(
+                    selectedTab = historyTabSwitcherState.currentState,
+                    onTabSelectedListener = { historyTabSwitcherState.update(it) },
             )
         }
     }
@@ -360,4 +370,5 @@ enum class NavRoute(val route: String) {
     UPCOMING_MATCHES("upcoming_matches"),
     CURRENT_MATCHES("current_matches"),
     PREVIOUS_MATCHES("previous_matches"),
+    DAYS_REPORT("days_report"),
 }

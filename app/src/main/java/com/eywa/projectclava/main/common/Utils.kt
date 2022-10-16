@@ -8,11 +8,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.abs
 
-fun Calendar.asString(): String = SimpleDateFormat("HH:mm", Locale.getDefault()).format(this.time)
-fun Calendar.isToday() = Calendar.getInstance(Locale.getDefault()).apply {
-    set(Calendar.HOUR_OF_DAY, 0)
-    set(Calendar.MINUTE, 0)
-}.before(this)
+fun Calendar.asDateString(): String = SimpleDateFormat("d MMM yy", Locale.getDefault()).format(this.time)
+fun Calendar.asTimeString(): String = SimpleDateFormat("HH:mm", Locale.getDefault()).format(this.time)
 
 /**
  * @param generalInProgressColor color to use when the match is in progress, not finished, and not ending soon

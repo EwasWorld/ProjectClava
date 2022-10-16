@@ -22,6 +22,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.eywa.projectclava.main.NavRoute
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.common.generatePlayers
@@ -37,8 +38,12 @@ interface SetupListItem {
     val enabled: Boolean
 }
 
-enum class SetupListTabSwitcherItem(override val label: String) : TabSwitcherItem {
-    PLAYERS("Players"), COURTS("Courts")
+enum class SetupListTabSwitcherItem(
+        override val label: String,
+        override val destination: NavRoute,
+) : TabSwitcherItem {
+    PLAYERS("Players", NavRoute.ADD_PLAYER),
+    COURTS("Courts", NavRoute.ADD_COURT),
 }
 
 fun <T : SetupListItem> String.isDuplicate(

@@ -12,18 +12,30 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.R
 import com.eywa.projectclava.main.DEFAULT_ADD_TIME
+import com.eywa.projectclava.main.NavRoute
 import com.eywa.projectclava.main.common.GeneratableMatchState
+import com.eywa.projectclava.main.common.asDateString
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
 
+enum class HistoryTabSwitcherItem(
+        override val label: String,
+        override val destination: NavRoute
+) : TabSwitcherItem {
+    MATCHES("Matches", NavRoute.PREVIOUS_MATCHES),
+    SUMMARY("Summary", NavRoute.DAYS_REPORT),
+}
+
 @Composable
 fun PreviousMatchesScreen(
         matches: Iterable<Match>?,
         addTimeListener: (Match, timeToAdd: Int) -> Unit,
         deleteMatchListener: (Match) -> Unit,
+        selectedTab: HistoryTabSwitcherItem,
+        onTabSelectedListener: (HistoryTabSwitcherItem) -> Unit,
 ) {
     var selectedMatch: Match? by remember(matches) { mutableStateOf(null) }
     var addTimeDialogOpenFor: Match? by remember(matches) { mutableStateOf(null) }
@@ -39,6 +51,8 @@ fun PreviousMatchesScreen(
             openAddTimeDialogListener = { addTimeDialogOpenFor = it },
             closeAddTimeDialogListener = { addTimeDialogOpenFor = null },
             deleteMatchListener = deleteMatchListener,
+            selectedTab = selectedTab,
+            onTabSelectedListener = onTabSelectedListener,
     )
 }
 
@@ -52,6 +66,8 @@ fun PreviousMatchesScreen(
         closeAddTimeDialogListener: () -> Unit,
         addTimeListener: (Match, timeToAdd: Int) -> Unit,
         deleteMatchListener: (Match) -> Unit,
+        selectedTab: HistoryTabSwitcherItem,
+        onTabSelectedListener: (HistoryTabSwitcherItem) -> Unit,
 ) {
     PreviousMatchesScreenDialogs(
             addTimeDialogOpenFor = addTimeDialogOpenFor,
@@ -59,7 +75,7 @@ fun PreviousMatchesScreen(
             addTimeListener = addTimeListener,
     )
 
-    val finishedMatches = matches?.filter { it.isFinished }
+    val finishedMatches = matches?.filter { it.isFinished }?.sortedByDescending { it.state }
     ClavaScreen(
             noContentText = "No matches have been completed",
             hasContent = !finishedMatches.isNullOrEmpty(),
@@ -69,22 +85,46 @@ fun PreviousMatchesScreen(
                         openAddTimeDialogListener = openAddTimeDialogListener,
                         deleteMatchListener = deleteMatchListener
                 )
+            },
+            aboveListContent = {
+                TabSwitcher(
+                        items = HistoryTabSwitcherItem.values().toList(),
+                        selectedItem = selectedTab,
+                        onItemClicked = onTabSelectedListener,
+                        modifier = Modifier.padding(20.dp)
+                )
             }
     ) {
-        items(finishedMatches?.sortedByDescending { it.state } ?: listOf()) { match ->
+        items((finishedMatches ?: listOf()).withIndex().toList()) { (index, match) ->
             val isSelected = selectedMatch?.id == match.id
 
-            SelectableListItem(isSelected = isSelected) {
-                Column(
-                        modifier = Modifier
-                                .fillMaxWidth()
-                                .selectable(
-                                        selected = isSelected,
-                                        onClick = { selectedMatchListener(match) }
-                                )
-                                .padding(10.dp)
-                ) {
-                    Row {
+            val date = match.getFinishTime()!!.asDateString()
+            val matchesPreviousDate = index
+                    .takeIf { it > 0 }
+                    ?.let { finishedMatches!![it - 1].getFinishTime()!!.asDateString() == date }
+                    ?: false
+
+            Column {
+                if (!matchesPreviousDate) {
+                    Text(
+                            text = match.getFinishTime()!!.asDateString(),
+                            style = Typography.h3,
+                            modifier = Modifier.padding(
+                                    bottom = 10.dp,
+                                    top = if (index == 0) 0.dp else 10.dp
+                            )
+                    )
+                }
+                SelectableListItem(isSelected = isSelected) {
+                    Row(
+                            modifier = Modifier
+                                    .fillMaxWidth()
+                                    .selectable(
+                                            selected = isSelected,
+                                            onClick = { selectedMatchListener(match) }
+                                    )
+                                    .padding(10.dp)
+                    ) {
                         Text(
                                 text = match.players.sortedBy { it.name }.joinToString(limit = 10) { it.name },
                                 style = Typography.h4,
@@ -163,5 +203,7 @@ fun PreviousMatchesScreen_Preview() {
             openAddTimeDialogListener = { },
             closeAddTimeDialogListener = { },
             deleteMatchListener = { },
+            selectedTab = HistoryTabSwitcherItem.MATCHES,
+            onTabSelectedListener = {},
     )
 }
