@@ -34,7 +34,6 @@ fun PreviousMatchesScreen(
         matches: Iterable<Match>?,
         addTimeListener: (Match, timeToAdd: Int) -> Unit,
         deleteMatchListener: (Match) -> Unit,
-        selectedTab: HistoryTabSwitcherItem,
         onTabSelectedListener: (HistoryTabSwitcherItem) -> Unit,
 ) {
     var selectedMatch: Match? by remember(matches) { mutableStateOf(null) }
@@ -51,7 +50,6 @@ fun PreviousMatchesScreen(
             openAddTimeDialogListener = { addTimeDialogOpenFor = it },
             closeAddTimeDialogListener = { addTimeDialogOpenFor = null },
             deleteMatchListener = deleteMatchListener,
-            selectedTab = selectedTab,
             onTabSelectedListener = onTabSelectedListener,
     )
 }
@@ -66,7 +64,6 @@ fun PreviousMatchesScreen(
         closeAddTimeDialogListener: () -> Unit,
         addTimeListener: (Match, timeToAdd: Int) -> Unit,
         deleteMatchListener: (Match) -> Unit,
-        selectedTab: HistoryTabSwitcherItem,
         onTabSelectedListener: (HistoryTabSwitcherItem) -> Unit,
 ) {
     PreviousMatchesScreenDialogs(
@@ -89,7 +86,7 @@ fun PreviousMatchesScreen(
             aboveListContent = {
                 TabSwitcher(
                         items = HistoryTabSwitcherItem.values().toList(),
-                        selectedItem = selectedTab,
+                        selectedItem = HistoryTabSwitcherItem.MATCHES,
                         onItemClicked = onTabSelectedListener,
                         modifier = Modifier.padding(20.dp)
                 )
@@ -109,10 +106,12 @@ fun PreviousMatchesScreen(
                     Text(
                             text = match.getFinishTime()!!.asDateString(),
                             style = Typography.h3,
-                            modifier = Modifier.padding(
-                                    bottom = 10.dp,
-                                    top = if (index == 0) 0.dp else 10.dp
-                            )
+                            modifier = Modifier
+                                    .padding(
+                                            bottom = 10.dp,
+                                            top = if (index == 0) 0.dp else 10.dp
+                                    )
+                                    .padding(horizontal = 5.dp)
                     )
                 }
                 SelectableListItem(isSelected = isSelected) {
@@ -203,7 +202,6 @@ fun PreviousMatchesScreen_Preview() {
             openAddTimeDialogListener = { },
             closeAddTimeDialogListener = { },
             deleteMatchListener = { },
-            selectedTab = HistoryTabSwitcherItem.MATCHES,
             onTabSelectedListener = {},
     )
 }

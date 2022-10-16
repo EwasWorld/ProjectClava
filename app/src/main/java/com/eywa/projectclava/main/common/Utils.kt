@@ -11,10 +11,7 @@ import kotlin.math.abs
 fun Calendar.asDateString(): String = SimpleDateFormat("d MMM yy", Locale.getDefault()).format(this.time)
 fun Calendar.asTimeString(): String = SimpleDateFormat("HH:mm", Locale.getDefault()).format(this.time)
 
-/**
- * @param generalInProgressColor color to use when the match is in progress, not finished, and not ending soon
- */
-fun MatchState.asColor(currentTime: Calendar, generalInProgressColor: Color? = null): Color? {
+fun MatchState.asColor(currentTime: Calendar): Color? {
     if (this is MatchState.Paused) return ClavaColor.MatchPaused
     if (this is MatchState.NotStarted) return ClavaColor.MatchQueued
     if (this !is MatchState.OnCourt) return null

@@ -424,7 +424,6 @@ fun ExtraInfo_SetupListScreen_Preview() {
             itemNameEditStartedListener = {},
             itemDeletedListener = {},
             toggleIsPresentListener = {},
-            selectedTab = SetupListTabSwitcherItem.PLAYERS,
             onTabSelectedListener = {},
     )
 }

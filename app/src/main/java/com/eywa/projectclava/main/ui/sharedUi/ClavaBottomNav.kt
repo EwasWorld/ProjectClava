@@ -73,7 +73,7 @@ fun ClavaBottomNav(
                 icon = ClavaIconInfo.PainterIcon(R.drawable.baseline_history_24),
                 label = "History",
                 contentDescription = "Match history",
-                destination = NavRoute.PREVIOUS_MATCHES.route,
+                destinations = listOf(NavRoute.PREVIOUS_MATCHES.route, NavRoute.DAYS_REPORT.route),
                 currentRoute = currentRoute,
                 onClick = onClick,
         )

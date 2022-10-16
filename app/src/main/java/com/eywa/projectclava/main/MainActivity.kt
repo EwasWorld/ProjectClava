@@ -31,8 +31,6 @@ import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.main.model.Player
 import com.eywa.projectclava.main.ui.mainScreens.*
 import com.eywa.projectclava.main.ui.sharedUi.ClavaBottomNav
-import com.eywa.projectclava.main.ui.sharedUi.SetupListTabSwitcherItem
-import com.eywa.projectclava.main.ui.sharedUi.TabSwitcherItem
 import com.eywa.projectclava.main.ui.sharedUi.TimePicker
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.DividerThickness
@@ -121,19 +119,6 @@ fun Navigation(
     }
 }
 
-class TabSwitcherState<T : TabSwitcherItem>(
-        initialState: T,
-        private val navController: NavController,
-) {
-    var currentState by mutableStateOf(initialState)
-        private set
-
-    fun update(newState: T) {
-        currentState = newState
-        navController.navigate(newState.destination.route)
-    }
-}
-
 @Composable
 fun ClavaNavigation(
         navController: NavHostController,
@@ -143,9 +128,6 @@ fun ClavaNavigation(
         viewModel: MainViewModel,
         bottomPadding: Dp = 0.dp
 ) {
-    val setupListTabSwitcherState = remember { TabSwitcherState(SetupListTabSwitcherItem.PLAYERS, navController) }
-    val historyTabSwitcherState = remember { TabSwitcherState(HistoryTabSwitcherItem.MATCHES, navController) }
-
     NavHost(
             navController = navController,
             startDestination = NavRoute.ADD_PLAYER.route,
@@ -161,8 +143,7 @@ fun ClavaNavigation(
                     },
                     itemDeletedListener = { viewModel.deletePlayer(it) },
                     toggleIsPresentListener = { viewModel.updatePlayers(it.copy(isPresent = !it.isPresent)) },
-                    selectedTab = setupListTabSwitcherState.currentState,
-                    onTabSelectedListener = { setupListTabSwitcherState.update(it) },
+                    onTabSelectedListener = { navController.navigate(it.destination.route) },
             )
         }
         composable(NavRoute.ADD_COURT.route) {
@@ -175,8 +156,7 @@ fun ClavaNavigation(
                     },
                     itemDeletedListener = { viewModel.deleteCourt(it) },
                     toggleIsPresentListener = { viewModel.updateCourt(it.copy(canBeUsed = !it.canBeUsed)) },
-                    selectedTab = setupListTabSwitcherState.currentState,
-                    onTabSelectedListener = { setupListTabSwitcherState.update(it) },
+                    onTabSelectedListener = { navController.navigate(it.destination.route) },
             )
         }
         composable(NavRoute.CREATE_MATCH.route) {
@@ -244,14 +224,13 @@ fun ClavaNavigation(
                         )
                     },
                     deleteMatchListener = { viewModel.deleteMatch(it) },
-                    selectedTab = historyTabSwitcherState.currentState,
-                    onTabSelectedListener = { historyTabSwitcherState.update(it) },
+                    onTabSelectedListener = { navController.navigate(it.destination.route) },
             )
         }
         composable(NavRoute.DAYS_REPORT.route) {
             DaysReportScreen(
-                    selectedTab = historyTabSwitcherState.currentState,
-                    onTabSelectedListener = { historyTabSwitcherState.update(it) },
+                    matches = matches,
+                    onTabSelectedListener = { navController.navigate(it.destination.route) },
             )
         }
     }

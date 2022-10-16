@@ -18,7 +18,6 @@ fun SetupPlayersScreen(
         itemNameEditedListener: (Player, String) -> Unit,
         itemDeletedListener: (Player) -> Unit,
         toggleIsPresentListener: (Player) -> Unit,
-        selectedTab: SetupListTabSwitcherItem,
         onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
 ) {
     var currentTime by remember { mutableStateOf(Calendar.getInstance(Locale.getDefault())) }
@@ -61,7 +60,6 @@ fun SetupPlayersScreen(
             itemNameEditStartedListener = { editDialogOpenFor = it },
             itemDeletedListener = { itemDeletedListener(it) },
             toggleIsPresentListener = toggleIsPresentListener,
-            selectedTab = selectedTab,
             onTabSelectedListener = onTabSelectedListener,
     )
 }
@@ -82,7 +80,6 @@ fun SetupPlayersScreen(
         itemNameEditStartedListener: (Player) -> Unit,
         itemDeletedListener: (Player) -> Unit,
         toggleIsPresentListener: (Player) -> Unit,
-        selectedTab: SetupListTabSwitcherItem,
         onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
 ) {
     SetupListScreen(
@@ -106,7 +103,7 @@ fun SetupPlayersScreen(
             itemNameEditStartedListener = itemNameEditStartedListener,
             itemDeletedListener = { itemDeletedListener(it) },
             itemClickedListener = toggleIsPresentListener,
-            selectedTab = selectedTab,
+            selectedTab = SetupListTabSwitcherItem.PLAYERS,
             onTabSelectedListener = onTabSelectedListener,
     )
 }

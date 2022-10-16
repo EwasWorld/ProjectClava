@@ -10,12 +10,13 @@ fun generatePlayers(count: Int): List<Player> {
     require(count > 0) { "Count should be > 0" }
 
     val defaultNames = listOf("James", "Jack", "Jason", "Julien", "Jeremy")
+    val defaultSurnames = 'A'..'Z'
     val names = List(count) { defaultNames[it % defaultNames.size] }
     return names
             .mapIndexed { index, name ->
                 Player(
                         id = 1,
-                        name = name + " " + (index / defaultNames.size),
+                        name = name + " " + defaultSurnames.elementAt(index % defaultSurnames.count()),
                         isPresent = index % 3 != 1,
                 )
             }

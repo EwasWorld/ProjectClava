@@ -99,7 +99,6 @@ fun CurrentMatchesScreen(
         closeResumeDialogListener: () -> Unit,
         resumeListener: (Match, Court, resumeTime: Int) -> Unit,
 ) {
-    // TODO Button to complete all matches
     CurrentMatchesScreenDialogs(
             availableCourts = courts?.getAvailable(matches),
             addTimeDialogOpenFor = addTimeDialogOpenFor,

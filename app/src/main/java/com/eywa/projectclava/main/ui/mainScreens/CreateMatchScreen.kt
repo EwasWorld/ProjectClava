@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.main.common.*
 import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.sharedUi.*
-import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.Typography
 import kotlinx.coroutines.delay
 import java.util.*
@@ -192,7 +191,7 @@ private fun CreateMatchScreenFooter(
                     style = Typography.h4,
                     modifier = Modifier
                             .weight(1f)
-                            .padding(horizontal = 10.dp)
+                            .padding(horizontal = 10.dp, vertical = 15.dp)
             )
         }
         else {
@@ -223,11 +222,10 @@ private fun CreateMatchScreenFooter(
                     modifier = Modifier.weight(1f)
             ) {
                 items(sortedPlayers) { (player, matches) ->
-                    // TODO Remove general in progress colour
+                    // TODO Disabled colour if any player is disabled
                     SelectableListItem(
                             currentTime = currentTime,
                             matchState = matches?.getPlayerColouringMatch()?.state,
-                            generalInProgressColor = ClavaColor.DisabledItemBackground
                     ) {
                         Text(
                                 text = player.name + if (playedBefore[player.name] == true) "*" else "",

@@ -29,7 +29,6 @@ fun SetupCourtsScreen(
         itemNameEditedListener: (Court, String) -> Unit,
         itemDeletedListener: (Court) -> Unit,
         toggleIsPresentListener: (Court) -> Unit,
-        selectedTab: SetupListTabSwitcherItem,
         onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
 ) {
     var currentTime by remember { mutableStateOf(Calendar.getInstance(Locale.getDefault())) }
@@ -72,7 +71,6 @@ fun SetupCourtsScreen(
             itemNameEditStartedListener = { editDialogOpenFor = it },
             itemDeletedListener = { itemDeletedListener(it) },
             toggleIsPresentListener = toggleIsPresentListener,
-            selectedTab = selectedTab,
             onTabSelectedListener = onTabSelectedListener,
     )
 }
@@ -93,7 +91,6 @@ fun SetupCourtsScreen(
         itemNameEditStartedListener: (Court) -> Unit,
         itemDeletedListener: (Court) -> Unit,
         toggleIsPresentListener: (Court) -> Unit,
-        selectedTab: SetupListTabSwitcherItem,
         onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
 ) {
     SetupListScreen(
@@ -116,7 +113,7 @@ fun SetupCourtsScreen(
             extraContent = {
                 ExtraContent(currentTime = currentTime, match = matches?.getLatestMatchForCourt(it)!!)
             },
-            selectedTab = selectedTab,
+            selectedTab = SetupListTabSwitcherItem.COURTS,
             onTabSelectedListener = onTabSelectedListener,
     )
 }
@@ -159,7 +156,6 @@ fun SetupCourtsScreen_Preview() {
             itemNameEditStartedListener = {},
             itemDeletedListener = {},
             toggleIsPresentListener = {},
-            selectedTab = SetupListTabSwitcherItem.PLAYERS,
             onTabSelectedListener = {},
     )
 }

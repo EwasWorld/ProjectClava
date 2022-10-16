@@ -4,7 +4,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.main.common.asColor
 import com.eywa.projectclava.main.model.MatchState
@@ -21,13 +20,12 @@ fun SelectableListItem(
         currentTime: Calendar? = null,
         enabled: Boolean = true,
         matchState: MatchState? = null,
-        generalInProgressColor: Color? = null,
         isSelected: Boolean = false,
         content: @Composable () -> Unit
 ) = Surface(
         shape = RoundedCornerShape(5.dp),
         color = if (enabled)
-            matchState?.asColor(currentTime!!, generalInProgressColor) ?: ClavaColor.ItemBackground
+            matchState?.asColor(currentTime!!) ?: ClavaColor.ItemBackground
         else
             ClavaColor.DisabledItemBackground,
         border = BorderStroke(

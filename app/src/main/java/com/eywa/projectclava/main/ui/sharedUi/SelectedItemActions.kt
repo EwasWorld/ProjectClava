@@ -36,7 +36,7 @@ fun SelectedItemActions(
         Column(
                 modifier = Modifier
                         .weight(1f)
-                        .padding(vertical = 15.dp)
+                        .padding(horizontal = 10.dp, vertical = 15.dp)
         ) {
             Text(
                     text = text,
