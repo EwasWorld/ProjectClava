@@ -12,6 +12,9 @@ import com.eywa.projectclava.main.database.match.DatabaseMatchPlayer
 import com.eywa.projectclava.main.database.match.MatchRepo
 import com.eywa.projectclava.main.database.player.PlayerRepo
 import com.eywa.projectclava.main.model.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.util.*
@@ -21,6 +24,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val courtRepo: CourtRepo
     private val matchRepo: MatchRepo
 
+    val currentTime = MutableSharedFlow<Calendar>(1)
+
     var defaultMatchTime by mutableStateOf(15 * 60)
         private set
 
@@ -29,11 +34,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         playerRepo = db.playerRepo()
         courtRepo = db.courtRepo()
         matchRepo = db.matchRepo()
+
+        viewModelScope.launch {
+            while (true) {
+                currentTime.emit(Calendar.getInstance(Locale.getDefault()))
+                delay(1000)
+            }
+        }
     }
 
     var courts = courtRepo.getAll().map { it.map { dbMatch -> dbMatch.asCourt() } }
     var players = playerRepo.getAll().map { it.map { dbMatch -> dbMatch.asPlayer() } }
     val matches = matchRepo.getAll().map { it.map { dbMatch -> dbMatch.asMatch() } }
+    val matchIdToTimeRem = matches.combine(currentTime) { matches, currentTime ->
+        matches.associate { it.id to it.state.getTimeLeft(currentTime) }
+    }
 
     fun updateDefaultMatchTime(timeInSeconds: Int) {
         defaultMatchTime = timeInSeconds

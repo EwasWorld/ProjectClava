@@ -15,13 +15,11 @@ import com.eywa.projectclava.main.common.GeneratableMatchState
 import com.eywa.projectclava.main.common.asTimeString
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
-import com.eywa.projectclava.main.model.Court
-import com.eywa.projectclava.main.model.Match
-import com.eywa.projectclava.main.model.getAvailable
-import com.eywa.projectclava.main.model.getNextMatchToFinish
+import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
 
+@Deprecated("Down with the current time!")
 @Composable
 fun AvailableCourtsHeader(
         currentTime: Calendar,
@@ -38,6 +36,34 @@ fun AvailableCourtsHeader(
 
     Text(
             text = availableCourtsString ?: nextAvailableCourt ?: "No courts found",
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = Typography.h4,
+            modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(10.dp)
+    )
+}
+
+@Composable
+fun AvailableCourtsHeader(
+        courts: Iterable<Court>?,
+        matches: Iterable<Match>?,
+        timeRemaining: () -> Map<Int, TimeRemaining?>?
+) {
+    val availableCourtsString = courts
+            ?.getAvailable(matches)
+            ?.joinToString { it.number }
+            ?.let { "Available courts: $it" }
+    val nextAvailableCourt = {
+        timeRemaining()?.values?.filterNotNull()
+                ?.minByOrNull { it }
+                ?.let { "Next available court: " + it.asTimeString() }
+    }
+
+    Text(
+            text = availableCourtsString ?: nextAvailableCourt() ?: "No courts found",
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

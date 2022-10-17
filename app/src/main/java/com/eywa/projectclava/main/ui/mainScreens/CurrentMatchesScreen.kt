@@ -19,43 +19,34 @@ import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.R
 import com.eywa.projectclava.main.DEFAULT_ADD_TIME
 import com.eywa.projectclava.main.common.generateCourts
+import com.eywa.projectclava.main.common.generateMatchTimeRemaining
 import com.eywa.projectclava.main.common.generateMatches
-import com.eywa.projectclava.main.model.Court
-import com.eywa.projectclava.main.model.Match
-import com.eywa.projectclava.main.model.MatchState
-import com.eywa.projectclava.main.model.getAvailable
+import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.DividerThickness
 import com.eywa.projectclava.ui.theme.Typography
-import kotlinx.coroutines.delay
 import java.util.*
 
 @Composable
 fun CurrentMatchesScreen(
         courts: Iterable<Court>?,
         matches: Iterable<Match>?,
+        matchIdToTimeRem: () -> Map<Int, TimeRemaining?>?,
         addTimeListener: (Match, timeToAdd: Int) -> Unit,
         setCompletedListener: (Match) -> Unit,
         changeCourtListener: (Match, Court) -> Unit,
         pauseListener: (Match) -> Unit,
         resumeListener: (Match, Court, resumeTime: Int) -> Unit,
 ) {
-    var currentTime by remember { mutableStateOf(Calendar.getInstance(Locale.getDefault())) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(1000)
-            currentTime = Calendar.getInstance(Locale.getDefault())
-        }
-    }
     var selectedMatch: Match? by remember(matches) { mutableStateOf(null) }
     var addTimeDialogOpenFor: Match? by remember(matches) { mutableStateOf(null) }
     var changeCourtDialogOpenFor: Match? by remember(matches) { mutableStateOf(null) }
     var resumeDialogOpenFor: Match? by remember(matches) { mutableStateOf(null) }
 
     CurrentMatchesScreen(
-            currentTime = currentTime,
             courts = courts,
             matches = matches,
+            matchIdToTimeRem = matchIdToTimeRem,
             selectedMatch = selectedMatch,
             selectedMatchListener = { newSelection ->
                 selectedMatch = newSelection.takeIf { selectedMatch?.id != it.id }
@@ -79,9 +70,9 @@ fun CurrentMatchesScreen(
 
 @Composable
 fun CurrentMatchesScreen(
-        currentTime: Calendar,
         courts: Iterable<Court>?,
         matches: Iterable<Match>?,
+        matchIdToTimeRem: () -> Map<Int, TimeRemaining?>?,
         selectedMatch: Match?,
         selectedMatchListener: (Match) -> Unit,
         completeMatchListener: (Match) -> Unit,
@@ -115,7 +106,9 @@ fun CurrentMatchesScreen(
     ClavaScreen(
             noContentText = "No matches being played",
             hasContent = !matches?.filter { it.isCurrent }.isNullOrEmpty(),
-            headerContent = { AvailableCourtsHeader(currentTime = currentTime, courts = courts, matches = matches) },
+            headerContent = {
+                AvailableCourtsHeader(courts = courts, matches = matches, timeRemaining = { matchIdToTimeRem() })
+            },
             footerContent = {
                 CurrentMatchesScreenFooter(
                         selectedMatch = selectedMatch,
@@ -133,9 +126,10 @@ fun CurrentMatchesScreen(
                 ?: listOf()
         ) { match ->
             val isSelected = selectedMatch?.id == match.id
+            val timeRemaining = { matchIdToTimeRem()?.get(match.id) }
 
             SelectableListItem(
-                    currentTime = currentTime,
+                    timeRemaining = timeRemaining,
                     matchState = match.state,
                     isSelected = isSelected,
             ) {
@@ -157,7 +151,7 @@ fun CurrentMatchesScreen(
                                 modifier = Modifier.weight(1f)
                         )
                         Spacer(modifier = Modifier.width(10.dp))
-                        MatchStateIndicator(match = match, currentTime = currentTime)
+                        MatchStateIndicator(match = match, timeRemaining = timeRemaining)
                     }
                     Text(
                             text = match.players.sortedBy { it.name }.joinToString(limit = 10) { it.name },
@@ -320,9 +314,9 @@ fun CurrentMatchesScreen_Preview(
     val currentTime = Calendar.getInstance(Locale.getDefault())
     val matches = generateMatches(params.matchCount, currentTime)
     CurrentMatchesScreen(
-            currentTime = currentTime,
             courts = generateCourts(params.matchCount + params.availableCourtsCount),
             matches = matches,
+            matchIdToTimeRem = { generateMatchTimeRemaining(matches, currentTime) },
             selectedMatch = params.selectedIndex?.let { index ->
                 matches.filter { it.isCurrent }.sortedBy { it.state }[index]
             },

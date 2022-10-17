@@ -11,12 +11,15 @@ import kotlin.math.abs
 fun Calendar.asDateString(): String = SimpleDateFormat("d MMM yy", Locale.getDefault()).format(this.time)
 fun Calendar.asTimeString(): String = SimpleDateFormat("HH:mm", Locale.getDefault()).format(this.time)
 
-fun MatchState.asColor(currentTime: Calendar): Color? {
+@Deprecated("Down with the current time!")
+fun MatchState.asColor(currentTime: Calendar) = asColor(getTimeLeft(currentTime))
+
+fun MatchState.asColor(timeLeft: TimeRemaining?): Color? {
     if (this is MatchState.Paused) return ClavaColor.MatchPaused
     if (this is MatchState.NotStarted) return ClavaColor.MatchQueued
     if (this !is MatchState.OnCourt) return null
 
-    val timeLeft = getTimeLeft(currentTime)!!
+    timeLeft!!
     if (timeLeft.isNegative) return ClavaColor.MatchOverrun
     return if (timeLeft.isEndingSoon()) ClavaColor.MatchFinishingSoon else ClavaColor.MatchInProgress
 }

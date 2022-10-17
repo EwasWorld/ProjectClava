@@ -113,7 +113,8 @@ fun PreviousMatchesScreen(
                                     .padding(horizontal = 5.dp)
                     )
                 }
-                SelectableListItem(isSelected = isSelected) {
+                // TODO Remove timeRemaining (use default param)
+                SelectableListItem(timeRemaining = { null }, isSelected = isSelected) {
                     Row(
                             modifier = Modifier
                                     .fillMaxWidth()

@@ -227,7 +227,7 @@ sealed class MatchState : Comparable<MatchState> {
     /**
      * Can be negative
      */
-    abstract fun getTimeLeft(currentTime: Calendar): TimeRemaining?
+    abstract fun getTimeLeft(currentTime: Calendar?): TimeRemaining?
     abstract fun isFinished(currentTime: Calendar): Boolean
     open fun getFinishedTime(): Calendar? = null
 
@@ -237,7 +237,7 @@ sealed class MatchState : Comparable<MatchState> {
     data class NotStarted(
             val createdAt: Calendar
     ) : MatchState() {
-        override fun getTimeLeft(currentTime: Calendar): TimeRemaining? = null
+        override fun getTimeLeft(currentTime: Calendar?): TimeRemaining? = null
 
         override fun compareTo(other: MatchState): Int {
             if (other is NotStarted) return createdAt.compareTo(other.createdAt)
@@ -251,10 +251,10 @@ sealed class MatchState : Comparable<MatchState> {
             val matchEndTime: Calendar,
             val court: Court,
     ) : MatchState() {
-        override fun getTimeLeft(currentTime: Calendar): TimeRemaining? {
+        override fun getTimeLeft(currentTime: Calendar?): TimeRemaining {
             return TimeRemaining(
                     TimeUnit.MILLISECONDS.toSeconds(
-                            matchEndTime.timeInMillis - currentTime.timeInMillis
+                            matchEndTime.timeInMillis - currentTime!!.timeInMillis
                     )
             )
         }
@@ -274,7 +274,7 @@ sealed class MatchState : Comparable<MatchState> {
             val remainingTimeSeconds: Long,
             val matchPausedAt: Calendar
     ) : MatchState() {
-        override fun getTimeLeft(currentTime: Calendar): TimeRemaining = TimeRemaining(remainingTimeSeconds)
+        override fun getTimeLeft(currentTime: Calendar?): TimeRemaining = TimeRemaining(remainingTimeSeconds)
 
         override fun compareTo(other: MatchState): Int {
             val classComparison = compareClass(other)
@@ -290,7 +290,7 @@ sealed class MatchState : Comparable<MatchState> {
     data class Completed(
             val matchEndTime: Calendar,
     ) : MatchState() {
-        override fun getTimeLeft(currentTime: Calendar): TimeRemaining? = null
+        override fun getTimeLeft(currentTime: Calendar?): TimeRemaining? = null
 
         override fun compareTo(other: MatchState) =
                 when (other) {
