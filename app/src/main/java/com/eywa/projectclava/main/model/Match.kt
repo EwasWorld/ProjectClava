@@ -42,7 +42,7 @@ fun Iterable<Match>.getLatestMatchForCourt(court: Court) =
 
 fun Iterable<Match>.getLatestFinishingMatch() = maxByOrNull { it.state }
 
-fun DatabaseMatchFull.asMatch(currentTime: Calendar) = Match(
+fun DatabaseMatchFull.asMatch() = Match(
         id = match.id,
         players = players.map { it.asPlayer() },
         state = when (match.stateType) {
@@ -63,7 +63,7 @@ fun DatabaseMatchFull.asMatch(currentTime: Calendar) = Match(
 data class Match(
         val id: Int,
         val players: Iterable<Player>,
-        val state: MatchState = MatchState.NotStarted(Calendar.getInstance(Locale.getDefault())),
+        val state: MatchState,
 ) {
     val isPaused
         get() = state is MatchState.Paused
@@ -79,8 +79,6 @@ data class Match(
      */
     val isCurrent
         get() = isPaused || isInProgress
-
-    fun containsPlayer(player: Player) = players.any { it.name == player.name }
 
     fun getFinishTime() = when (state) {
         is MatchState.Completed -> state.matchEndTime

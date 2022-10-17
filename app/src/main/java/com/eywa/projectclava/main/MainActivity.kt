@@ -39,6 +39,7 @@ import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.DividerThickness
 import com.eywa.projectclava.ui.theme.ProjectClavaTheme
 import com.eywa.projectclava.ui.theme.Typography
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -82,10 +83,20 @@ fun Navigation(
     val players by viewModel.players.collectAsState(initial = listOf())
     val matches by viewModel.matches.collectAsState(initial = listOf())
     val courts by viewModel.courts.collectAsState(initial = listOf())
+    var currentTime by remember { mutableStateOf(Calendar.getInstance(Locale.getDefault())) }
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
+
+    LaunchedEffect(null) {
+        scope.launch {
+            while (true) {
+                delay(1000)
+                currentTime = Calendar.getInstance(Locale.getDefault())
+            }
+        }
+    }
 
     LaunchedEffect(drawerState.isOpen) {
         if (!drawerState.isOpen) {
@@ -120,6 +131,7 @@ fun Navigation(
             },
     ) {
         ClavaNavigation(
+                currentTime = currentTime,
                 navController = navController,
                 players = players,
                 matches = matches,
@@ -132,6 +144,7 @@ fun Navigation(
 
 @Composable
 fun ClavaNavigation(
+        currentTime: Calendar,
         navController: NavHostController,
         players: Iterable<Player>,
         matches: Iterable<Match>,
@@ -175,7 +188,7 @@ fun ClavaNavigation(
                     players = players,
                     matches = matches,
                     courts = courts,
-                    createMatchListener = { viewModel.addMatch(it, Calendar.getInstance(Locale.getDefault())) }
+                    createMatchListener = { viewModel.addMatch(it, currentTime) }
             )
         }
         composable(NavRoute.UPCOMING_MATCHES.route) {
@@ -185,7 +198,7 @@ fun ClavaNavigation(
                     startMatchOkListener = { match, court, totalTimeSeconds ->
                         viewModel.updateMatch(
                                 match.startMatch(
-                                        Calendar.getInstance(Locale.getDefault()),
+                                        currentTime,
                                         court,
                                         totalTimeSeconds
                                 )
@@ -202,20 +215,20 @@ fun ClavaNavigation(
                     addTimeListener = { match, timeToAdd ->
                         viewModel.updateMatch(
                                 match.addTime(
-                                        Calendar.getInstance(Locale.getDefault()),
+                                        currentTime,
                                         timeToAdd
                                 )
                         )
                     },
-                    setCompletedListener = { viewModel.updateMatch(it.completeMatch(Calendar.getInstance(Locale.getDefault()))) },
+                    setCompletedListener = { viewModel.updateMatch(it.completeMatch(currentTime)) },
                     changeCourtListener = { match, court ->
                         viewModel.updateMatch(match.changeCourt(court))
                     },
-                    pauseListener = { viewModel.updateMatch(it.pauseMatch(Calendar.getInstance(Locale.getDefault()))) },
+                    pauseListener = { viewModel.updateMatch(it.pauseMatch(currentTime)) },
                     resumeListener = { match, court, resumeTime ->
                         viewModel.updateMatch(
                                 match.resumeMatch(
-                                        Calendar.getInstance(Locale.getDefault()),
+                                        currentTime,
                                         court,
                                         resumeTime
                                 )
@@ -229,7 +242,7 @@ fun ClavaNavigation(
                     addTimeListener = { match, timeToAdd ->
                         viewModel.updateMatch(
                                 match.addTime(
-                                        Calendar.getInstance(Locale.getDefault()),
+                                        currentTime,
                                         timeToAdd
                                 )
                         )

@@ -33,7 +33,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     var courts = courtRepo.getAll().map { it.map { dbMatch -> dbMatch.asCourt() } }
     var players = playerRepo.getAll().map { it.map { dbMatch -> dbMatch.asPlayer() } }
-    val matches = matchRepo.getAll().map { it.map { dbMatch -> dbMatch.asMatch(Calendar.getInstance()) } }
+    val matches = matchRepo.getAll().map { it.map { dbMatch -> dbMatch.asMatch() } }
 
     fun updateDefaultMatchTime(timeInSeconds: Int) {
         defaultMatchTime = timeInSeconds
