@@ -1,21 +1,20 @@
 package com.eywa.projectclava.main.ui.sharedUi
 
-import androidx.compose.foundation.background
+import android.view.KeyEvent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -29,7 +28,6 @@ import com.eywa.projectclava.main.common.generatePlayers
 import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.main.model.Player
 import com.eywa.projectclava.main.ui.mainScreens.SetupCourtsScreen
-import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
 
@@ -233,40 +231,21 @@ private fun <T : SetupListItem> SetupListScreenFooter(
         addItemNameChangedListener: (String) -> Unit,
         itemAddedListener: (String) -> Unit,
 ) {
-    Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                    .background(ClavaColor.HeaderFooterBackground)
-                    .padding(20.dp)
-    ) {
-        val onAddPressed = { itemAddedListener(addItemName) }
+    val onAddPressed = { itemAddedListener(addItemName.trim()) }
 
-        ListItemNameTextField(
-                typeContentDescription = typeContentDescription,
-                existingItems = items,
-                proposedItemName = addItemName,
-                showBlankError = showAddItemBlankError,
-                onValueChangedListener = addItemNameChangedListener,
-                onClearPressedListener = addItemNameClearPressedListener,
-                onDoneListener = onAddPressed,
-                modifier = Modifier.weight(1f),
-        )
-        Surface(
-                shape = RoundedCornerShape(100),
-                color = MaterialTheme.colors.primary,
-                modifier = Modifier.padding(start = 10.dp)
-        ) {
-            IconButton(
-                    enabled = !addItemName.isDuplicate(items) && addItemName.isNotBlank(),
-                    onClick = onAddPressed,
-            ) {
-                Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add"
-                )
-            }
-        }
-    }
+    ListItemNameTextField(
+            typeContentDescription = typeContentDescription,
+            existingItems = items,
+            proposedItemName = addItemName,
+            showBlankError = showAddItemBlankError,
+            onValueChangedListener = addItemNameChangedListener,
+            onClearPressedListener = addItemNameClearPressedListener,
+            onDoneListener = onAddPressed,
+            textFieldModifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                    .padding(horizontal = 20.dp, vertical = 10.dp)
+                    .padding(bottom = 5.dp)
+    )
 }
 
 @Composable
@@ -279,6 +258,7 @@ fun <T : SetupListItem> ListItemNameTextField(
         onClearPressedListener: () -> Unit,
         onDoneListener: () -> Unit,
         modifier: Modifier = Modifier,
+        textFieldModifier: Modifier = Modifier,
         itemBeingEdited: T? = null,
 ) {
     val isDuplicate = proposedItemName.isDuplicate(existingItems, itemBeingEdited)
@@ -293,6 +273,7 @@ fun <T : SetupListItem> ListItemNameTextField(
             verticalArrangement = Arrangement.spacedBy(3.dp),
             modifier = modifier
     ) {
+        // TODO Use a basic text field to get around the weird top padding?
         OutlinedTextField(
                 value = proposedItemName,
                 onValueChange = onValueChangedListener,
@@ -312,6 +293,12 @@ fun <T : SetupListItem> ListItemNameTextField(
                         capitalization = KeyboardCapitalization.Words,
                 ),
                 keyboardActions = KeyboardActions(onDone = { onDoneListener() }),
+                modifier = textFieldModifier.onKeyEvent {
+                    if (it.nativeKeyEvent.keyCode != KeyEvent.KEYCODE_ENTER) return@onKeyEvent false
+
+                    onDoneListener()
+                    true
+                }
         )
         errorMessage?.let {
             Text(
@@ -334,7 +321,7 @@ fun <T : SetupListItem> EditDialog(
     val editName = rememberSaveable(editDialogOpenFor) { mutableStateOf(editDialogOpenFor?.name ?: "") }
     val fieldTouched = rememberSaveable(editDialogOpenFor) { mutableStateOf(false) }
     val isDuplicate = editName.value.isDuplicate(items, editDialogOpenFor)
-    val okListener = { itemEditedListener(editDialogOpenFor!!, editName.value) }
+    val okListener = { itemEditedListener(editDialogOpenFor!!, editName.value.trim()) }
 
     ClavaDialog(
             isShown = editDialogOpenFor != null,

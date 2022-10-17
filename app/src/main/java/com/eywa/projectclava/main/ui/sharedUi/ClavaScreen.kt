@@ -62,7 +62,12 @@ fun ClavaScreen(
 
         footerContent?.let {
             Divider(thickness = DividerThickness)
-            footerContent()
+            Surface(
+                    color = ClavaColor.HeaderFooterBackground,
+                    modifier = Modifier.fillMaxWidth()
+            ) {
+                footerContent()
+            }
         }
     }
 }

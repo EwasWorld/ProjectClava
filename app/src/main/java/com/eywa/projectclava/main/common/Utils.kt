@@ -21,12 +21,17 @@ fun MatchState.asColor(currentTime: Calendar): Color? {
     return if (timeLeft.isEndingSoon()) ClavaColor.MatchFinishingSoon else ClavaColor.MatchInProgress
 }
 
-fun TimeRemaining?.asString() = this?.let {
-    (if (seconds < 0 || minutes < 0) "-" else "") +
+fun Int?.asTimeString() = this?.let { TimeRemaining(this) }.asTimeString()
+fun TimeRemaining?.asTimeString() = asTimeString(this?.minutes, this?.seconds)
+fun asTimeString(minutes: Int?, seconds: Int?): String {
+    if (minutes == null || seconds == null) return "--:--"
+
+    val initialSign = if (seconds < 0 || minutes < 0) "-" else ""
+    return initialSign +
             abs(minutes) +
             ":" +
             abs(seconds).toString().padStart(2, '0')
-} ?: "--:--"
+}
 
 /**
  * For the purposes of sorting, treat null as NoTime

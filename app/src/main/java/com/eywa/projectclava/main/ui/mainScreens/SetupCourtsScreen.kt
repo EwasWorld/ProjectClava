@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.eywa.projectclava.R
-import com.eywa.projectclava.main.common.asString
+import com.eywa.projectclava.main.common.asTimeString
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.model.Court
@@ -127,7 +127,7 @@ fun RowScope.ExtraContent(currentTime: Calendar, match: Match) {
             modifier = Modifier.weight(1f)
     )
     Text(
-            text = match.state.getTimeLeft(currentTime).asString()
+            text = match.state.getTimeLeft(currentTime).asTimeString()
     )
     if (match.isPaused) {
         Icon(

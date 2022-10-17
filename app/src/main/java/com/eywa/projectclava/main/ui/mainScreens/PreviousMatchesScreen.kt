@@ -172,17 +172,18 @@ private fun PreviousMatchesScreenDialogs(
         closeAddTimeDialogListener: () -> Unit,
         addTimeListener: (Match, timeToAdd: Int) -> Unit,
 ) {
-    var timeToAdd: Int by remember(addTimeDialogOpenFor) { mutableStateOf(DEFAULT_ADD_TIME) }
+    var timeToAdd by remember(addTimeDialogOpenFor) { mutableStateOf(TimePickerState(DEFAULT_ADD_TIME)) }
 
     ClavaDialog(
             isShown = addTimeDialogOpenFor != null,
             title = "Add time",
             okButtonText = "Add",
             onCancelListener = closeAddTimeDialogListener,
-            onOkListener = { addTimeListener(addTimeDialogOpenFor!!, timeToAdd) }
+            okButtonEnabled = timeToAdd.isValid,
+            onOkListener = { addTimeListener(addTimeDialogOpenFor!!, timeToAdd.totalSeconds) }
     ) {
         TimePicker(
-                totalSeconds = timeToAdd,
+                timePickerState = timeToAdd,
                 timeChangedListener = { timeToAdd = it }
         )
     }

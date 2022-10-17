@@ -221,7 +221,8 @@ data class TimeRemaining(
         val minutes: Int,
         val seconds: Int,
 ) : Comparable<TimeRemaining> {
-    constructor(totalSeconds: Long) : this((totalSeconds / 60L).toInt(), (totalSeconds % 60L).toInt())
+    constructor(totalSeconds: Int) : this((totalSeconds / 60L).toInt(), (totalSeconds % 60L).toInt())
+    constructor(totalSeconds: Long) : this(totalSeconds.toInt())
 
     private val totalTimeInSeconds: Int
         get() = minutes * 60 + seconds

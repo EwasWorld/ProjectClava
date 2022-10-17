@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.Typography
 
 data class SelectedItemAction(
@@ -63,7 +62,7 @@ fun SelectedItemActions(
     Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                    .background(color ?: ClavaColor.HeaderFooterBackground)
+                    .background(color ?: Color.Transparent)
                     .padding(horizontal = 10.dp)
     ) {
         content()

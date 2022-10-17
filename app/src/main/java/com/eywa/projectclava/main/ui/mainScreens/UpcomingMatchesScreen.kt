@@ -203,7 +203,7 @@ private fun UpcomingMatchesScreenFooter(
                 is MatchState.OnCourt -> {
                     val matchState = (selectedMatchState as MatchState.OnCourt)
                     "${selectedPlayer?.name} is on ${matchState.court.name}" +
-                            "\nTime remaining: " + matchState.getTimeLeft(currentTime).asString()
+                            "\nTime remaining: " + matchState.getTimeLeft(currentTime).asTimeString()
                 }
             }
         }
@@ -249,20 +249,20 @@ private fun StartMatchDialog(
         defaultTimeSeconds: Int,
 ) {
     var selectedCourt by remember(startMatchDialogOpenFor) { mutableStateOf(availableCourts?.minByOrNull { it.name }) }
-    var timeSeconds by remember(startMatchDialogOpenFor) { mutableStateOf(defaultTimeSeconds) }
+    var timeSeconds by remember(startMatchDialogOpenFor) { mutableStateOf(TimePickerState(defaultTimeSeconds)) }
 
     ClavaDialog(
             isShown = startMatchDialogOpenFor != null,
             title = "Choose a duration and court",
             okButtonText = "Start",
-            okButtonEnabled = selectedCourt != null,
+            okButtonEnabled = selectedCourt != null && timeSeconds.isValid,
             onCancelListener = startMatchCancelListener,
             onOkListener = {
-                startMatchOkListener(startMatchDialogOpenFor!!, selectedCourt!!, timeSeconds)
+                startMatchOkListener(startMatchDialogOpenFor!!, selectedCourt!!, timeSeconds.totalSeconds)
             },
     ) {
         TimePicker(
-                totalSeconds = timeSeconds,
+                timePickerState = timeSeconds,
                 timeChangedListener = { timeSeconds = it },
                 modifier = Modifier
                         .fillMaxWidth()

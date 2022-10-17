@@ -249,11 +249,13 @@ private fun CurrentMatchesScreenDialogs(
         resumeListener: (Match, Court, resumeTime: Int) -> Unit,
 ) {
     // TODO Caching issue with these. Pause match, resume with random time - A, then pause, resume again will time A
-    var timeToAdd: Int by remember(addTimeDialogOpenFor) { mutableStateOf(DEFAULT_ADD_TIME) }
+    var timeToAdd by remember(addTimeDialogOpenFor) { mutableStateOf(TimePickerState(DEFAULT_ADD_TIME)) }
     val remainingTime = addTimeDialogOpenFor?.state?.let { it as MatchState.Paused }
             ?.remainingTimeSeconds?.toInt()
             ?.takeIf { it > 0 }
-    var resumeTime: Int by remember(addTimeDialogOpenFor) { mutableStateOf(remainingTime ?: (DEFAULT_ADD_TIME)) }
+    var resumeTime by remember(addTimeDialogOpenFor) {
+        mutableStateOf(TimePickerState(remainingTime ?: DEFAULT_ADD_TIME))
+    }
     var selectedCourt by remember(addTimeDialogOpenFor) { mutableStateOf(availableCourts?.minByOrNull { it.name }) }
 
     ClavaDialog(
@@ -261,10 +263,11 @@ private fun CurrentMatchesScreenDialogs(
             title = "Add time",
             okButtonText = "Add",
             onCancelListener = closeAddTimeDialogListener,
-            onOkListener = { addTimeListener(addTimeDialogOpenFor!!, timeToAdd) }
+            okButtonEnabled = timeToAdd.isValid,
+            onOkListener = { addTimeListener(addTimeDialogOpenFor!!, timeToAdd.totalSeconds) }
     ) {
         TimePicker(
-                totalSeconds = timeToAdd,
+                timePickerState = timeToAdd,
                 timeChangedListener = { timeToAdd = it },
                 modifier = Modifier
                         .fillMaxWidth()
@@ -290,10 +293,11 @@ private fun CurrentMatchesScreenDialogs(
             title = "Resume match",
             okButtonText = "Resume",
             onCancelListener = closeResumeDialogListener,
-            onOkListener = { resumeListener(resumeDialogOpenFor!!, selectedCourt!!, resumeTime) }
+            okButtonEnabled = resumeTime.isValid,
+            onOkListener = { resumeListener(resumeDialogOpenFor!!, selectedCourt!!, resumeTime.totalSeconds) }
     ) {
         TimePicker(
-                totalSeconds = resumeTime,
+                timePickerState = resumeTime,
                 timeChangedListener = { resumeTime = it },
                 modifier = Modifier
                         .fillMaxWidth()

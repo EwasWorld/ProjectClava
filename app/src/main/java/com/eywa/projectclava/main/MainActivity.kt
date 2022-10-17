@@ -15,6 +15,7 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener
@@ -25,6 +26,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.eywa.projectclava.main.common.asTimeString
 import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.MatchState
@@ -32,6 +34,7 @@ import com.eywa.projectclava.main.model.Player
 import com.eywa.projectclava.main.ui.mainScreens.*
 import com.eywa.projectclava.main.ui.sharedUi.ClavaBottomNav
 import com.eywa.projectclava.main.ui.sharedUi.TimePicker
+import com.eywa.projectclava.main.ui.sharedUi.TimePickerState
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.DividerThickness
 import com.eywa.projectclava.ui.theme.ProjectClavaTheme
@@ -40,7 +43,7 @@ import kotlinx.coroutines.launch
 import java.util.*
 
 /*
- * Time spent: 33 hrs
+ * Time spent: 34 hrs
  */
 
 // TODO Store like default match time
@@ -82,6 +85,13 @@ fun Navigation(
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
+
+    LaunchedEffect(drawerState.isOpen) {
+        if (!drawerState.isOpen) {
+            focusManager.clearFocus()
+        }
+    }
 
     Scaffold(
             backgroundColor = ClavaColor.Background,
@@ -97,6 +107,7 @@ fun Navigation(
                         viewModel = viewModel,
                         players = players,
                         matches = matches,
+                        isDrawerOpen = drawerState.isOpen,
                         closeDrawer = {
                             scope.launch {
                                 drawerState.animateTo(
@@ -242,9 +253,11 @@ fun Drawer(
         viewModel: MainViewModel,
         players: Iterable<Player>,
         matches: Iterable<Match>,
+        isDrawerOpen: Boolean,
         closeDrawer: () -> Unit,
 ) {
     val textStyle = Typography.h4
+    var timePickerState by remember(isDrawerOpen) { mutableStateOf(TimePickerState(viewModel.defaultMatchTime)) }
 
     /**
      * Which expandable section is currently open
@@ -304,8 +317,22 @@ fun Drawer(
                     style = textStyle,
             )
             TimePicker(
-                    totalSeconds = viewModel.defaultMatchTime,
-                    timeChangedListener = { viewModel.updateDefaultMatchTime(it) }
+                    timePickerState = timePickerState,
+                    timeChangedListener = {
+                        timePickerState = it
+                        if (timePickerState.isValid) {
+                            viewModel.updateDefaultMatchTime(it.totalSeconds)
+                        }
+                    },
+                    showError = false,
+            )
+        }
+        if (timePickerState.error != null) {
+            Text(
+                    text = timePickerState.error!! +
+                            "\nDefault time is still " + viewModel.defaultMatchTime.asTimeString(),
+                    color = MaterialTheme.colors.error,
+                    modifier = Modifier.padding(horizontal = 30.dp),
             )
         }
 

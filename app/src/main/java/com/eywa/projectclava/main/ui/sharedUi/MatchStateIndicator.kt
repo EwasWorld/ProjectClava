@@ -5,7 +5,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.painterResource
 import com.eywa.projectclava.R
-import com.eywa.projectclava.main.common.asString
 import com.eywa.projectclava.main.common.asTimeString
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.MatchState
@@ -22,7 +21,7 @@ fun MatchStateIndicator(match: Match?, currentTime: Calendar?) {
                 null,
                 is MatchState.NotStarted -> "Not played"
                 is MatchState.Paused,
-                is MatchState.OnCourt -> match.state.getTimeLeft(currentTime!!)!!.asString()
+                is MatchState.OnCourt -> match.state.getTimeLeft(currentTime!!)!!.asTimeString()
                 is MatchState.Completed -> match.state.getFinishedTime()!!.asTimeString()
                 is MatchState.InProgressOrComplete -> throw NotImplementedError()
             },

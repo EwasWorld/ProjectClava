@@ -20,30 +20,74 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.ui.theme.Typography
 import kotlin.math.roundToInt
 
+fun String.parseInt() =
+        try {
+            if (isNullOrBlank()) 0 else Integer.parseInt(this)
+        }
+        catch (e: NumberFormatException) {
+            0
+        }
+
+data class TimePickerState(
+        internal val minutes: String,
+        internal val seconds: String,
+        internal val initialMinutes: String = minutes,
+        internal val initialSeconds: String = seconds,
+        private val minutesIsDirty: Boolean = false,
+        private val secondsIsDirty: Boolean = false,
+) {
+    constructor(initialTotalSeconds: Int) : this(
+            minutes = (initialTotalSeconds / 60).takeIf { it != 0 }?.toString() ?: "",
+            seconds = (initialTotalSeconds % 60).toString().padStart(2, '0'),
+    ) {
+        check(initialTotalSeconds >= 0) { "Initial time cannot be less than 0" }
+    }
+
+    val totalSeconds
+        get() = seconds.parseInt() + minutes.parseInt() * 60
+
+    val isValid
+        get() = error == null
+
+    val error
+        get() = minutesError ?: secondsError ?: generalError
+
+    internal val secondsError
+        get() = when {
+            seconds.parseInt() < 0 -> "Cannot be less than 0"
+            seconds.parseInt() >= 60 -> "Must be less than 60"
+            else -> null
+        }
+
+    internal val minutesError
+        get() = when {
+            minutes.parseInt() < 0 -> "Cannot be less than 0"
+            else -> null
+        }
+
+    internal val generalError
+        get() = when {
+            dirty && totalSeconds == 0 -> "Cannot be 0"
+            else -> null
+        }
+
+    private val dirty
+        get() = minutesIsDirty || secondsIsDirty
+}
+
 @Composable
 fun TimePicker(
-        totalSeconds: Int,
-        timeChangedListener: (Int) -> Unit,
+        timePickerState: TimePickerState,
+        timeChangedListener: (TimePickerState) -> Unit,
         modifier: Modifier = Modifier,
+        showError: Boolean = true,
 ) {
-    // TODO Work on null display - it's a bit awkward
-    // TODO Tab in the first field clears the field...
-    val minutes = totalSeconds / 60
-    val seconds = totalSeconds % 60
-
-    fun String.parseInt() =
-            try {
-                if (isNullOrBlank()) 0 else Integer.parseInt(this)
-            }
-            catch (e: NumberFormatException) {
-                0
-            }
-
     Column {
         Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -51,24 +95,26 @@ fun TimePicker(
                 modifier = modifier.padding(horizontal = 10.dp)
         ) {
             NumericTextField(
-                    value = minutes.takeIf { it != 0 }?.toString() ?: "",
-                    placeholderText = "min",
-                    isError = minutes < 0,
+                    value = timePickerState.minutes,
+                    label = "min",
+                    placeholderText = timePickerState.initialMinutes,
+                    isError = (timePickerState.minutesError ?: timePickerState.generalError) != null,
                     goNext = true,
-                    onValueChange = { timeChangedListener(it.parseInt() * 60 + seconds) }
+                    onValueChange = { timeChangedListener(timePickerState.copy(minutes = it, minutesIsDirty = true)) },
             )
             Text(":")
             NumericTextField(
-                    value = seconds.toString().padStart(2, '0'),
-                    placeholderText = "sec",
-                    isError = seconds < 0,
+                    value = timePickerState.seconds,
+                    label = "sec",
+                    placeholderText = timePickerState.initialSeconds,
+                    isError = (timePickerState.secondsError ?: timePickerState.generalError) != null,
                     goNext = false,
-                    onValueChange = { timeChangedListener(it.parseInt() + minutes * 60) }
+                    onValueChange = { timeChangedListener(timePickerState.copy(seconds = it, secondsIsDirty = true)) },
             )
         }
-        if (minutes < 0 || seconds < 0) {
+        if (showError && timePickerState.error != null) {
             Text(
-                    text = "Cannot be less than 0",
+                    text = timePickerState.error!!,
                     color = MaterialTheme.colors.error,
                     modifier = Modifier.padding(start = 5.dp)
             )
@@ -84,6 +130,7 @@ fun TimePicker(
 private fun NumericTextField(
         value: String,
         onValueChange: (String) -> Unit,
+        label: String?,
         placeholderText: String?,
         isError: Boolean,
         modifier: Modifier = Modifier,
@@ -95,10 +142,10 @@ private fun NumericTextField(
 
     BasicTextField(
             value = value,
-            onValueChange = onValueChange,
-            modifier = modifier.width(IntrinsicSize.Min),
+            onValueChange = { onValueChange(it.trim().replace(Regex("[,.-]"), "")) },
+            modifier = modifier.width(50.dp),
             interactionSource = interactionSource,
-            textStyle = Typography.body1,
+            textStyle = Typography.body1.copy(textAlign = TextAlign.Center),
             singleLine = true,
             visualTransformation = VisualTransformation.None,
             keyboardOptions = KeyboardOptions.Default.copy(
@@ -119,9 +166,20 @@ private fun NumericTextField(
                 singleLine = true,
                 isError = isError,
                 visualTransformation = VisualTransformation.None,
+                label = label?.let {
+                    {
+                        Text(
+                                text = label,
+                        )
+                    }
+                },
                 placeholder = placeholderText?.let {
                     {
-                        Text(text = placeholderText)
+                        Text(
+                                text = placeholderText,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 },
         )
@@ -132,7 +190,7 @@ private fun NumericTextField(
 @Composable
 fun TimePicker_Preview() {
     TimePicker(
-            totalSeconds = (60 * 15.5).roundToInt(),
+            timePickerState = TimePickerState((60 * 15.5).roundToInt()),
             timeChangedListener = {},
     )
 }
