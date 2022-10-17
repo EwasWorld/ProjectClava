@@ -56,17 +56,6 @@ fun DatabaseMatchFull.asMatch(currentTime: Calendar) = Match(
             )
             MatchState.NotStarted::class.simpleName -> MatchState.NotStarted(match.stateDate)
             MatchState.Completed::class.simpleName -> MatchState.Completed(match.stateDate)
-            MatchState.InProgressOrComplete::class.simpleName -> {
-                if (match.stateDate.before(currentTime)) {
-                    MatchState.OnCourt(
-                            matchEndTime = match.stateDate,
-                            court = court!!.asCourt(),
-                    )
-                }
-                else {
-                    MatchState.Completed(match.stateDate)
-                }
-            }
             else -> throw IllegalStateException("Couldn't convert database match to match state")
         }
 )
@@ -104,7 +93,6 @@ data class Match(
         is MatchState.OnCourt -> if (state.matchEndTime.before(currentTime)) currentTime else state.matchEndTime
         is MatchState.Completed -> state.matchEndTime
         is MatchState.Paused -> state.matchPausedAt
-        is MatchState.InProgressOrComplete -> throw NotImplementedError()
     }
 
     val court
@@ -118,7 +106,6 @@ data class Match(
                 is MatchState.OnCourt -> state.matchEndTime
                 is MatchState.Completed -> state.matchEndTime
                 is MatchState.Paused -> state.matchPausedAt
-                is MatchState.InProgressOrComplete -> throw NotImplementedError()
             },
             stateSecondsLeft = state
                     .takeIf { it is MatchState.Paused }
@@ -260,17 +247,6 @@ sealed class MatchState : Comparable<MatchState> {
         }
 
         override fun isFinished(currentTime: Calendar): Boolean = false
-    }
-
-    // TODO Delete InProgressOrComplete
-    @Deprecated("Use OnCourt instead, keeping for database conversions")
-    data class InProgressOrComplete(
-            val matchEndTime: Calendar,
-            val court: Court,
-    ) : MatchState() {
-        override fun compareTo(other: MatchState) = throw NotImplementedError()
-        override fun getTimeLeft(currentTime: Calendar) = throw NotImplementedError()
-        override fun isFinished(currentTime: Calendar) = throw NotImplementedError()
     }
 
     data class OnCourt(

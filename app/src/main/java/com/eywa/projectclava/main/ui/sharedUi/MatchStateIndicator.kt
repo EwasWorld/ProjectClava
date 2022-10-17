@@ -23,7 +23,6 @@ fun MatchStateIndicator(match: Match?, currentTime: Calendar?) {
                 is MatchState.Paused,
                 is MatchState.OnCourt -> match.state.getTimeLeft(currentTime!!)!!.asTimeString()
                 is MatchState.Completed -> match.state.getFinishedTime()!!.asTimeString()
-                is MatchState.InProgressOrComplete -> throw NotImplementedError()
             },
             style = Typography.body1,
     )

@@ -199,11 +199,9 @@ private fun UpcomingMatchesScreenFooter(
                 is MatchState.NotStarted,
                 is MatchState.Completed -> null
                 is MatchState.Paused -> "${selectedPlayer?.name}'s match is paused"
-                is MatchState.InProgressOrComplete,
                 is MatchState.OnCourt -> {
-                    val matchState = (selectedMatchState as MatchState.OnCourt)
-                    "${selectedPlayer?.name} is on ${matchState.court.name}" +
-                            "\nTime remaining: " + matchState.getTimeLeft(currentTime).asTimeString()
+                    "${selectedPlayer?.name} is on ${selectedMatchState.court.name}" +
+                            "\nTime remaining: " + selectedMatchState.getTimeLeft(currentTime).asTimeString()
                 }
             }
         }
