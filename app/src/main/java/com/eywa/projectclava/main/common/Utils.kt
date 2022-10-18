@@ -35,8 +35,3 @@ fun asTimeString(minutes: Int?, seconds: Int?): String {
             ":" +
             abs(seconds).toString().padStart(2, '0')
 }
-
-/**
- * For the purposes of sorting, treat null as NoTime
- */
-fun MatchState?.transformForSorting(currentTime: Calendar) = this ?: MatchState.NotStarted(currentTime)

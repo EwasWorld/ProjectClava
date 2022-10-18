@@ -25,31 +25,23 @@ import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.DividerThickness
-import kotlinx.coroutines.delay
 import java.util.*
 
 @Composable
 fun UpcomingMatchesScreen(
         courts: Iterable<Court>?,
         matches: Iterable<Match> = listOf(),
+        getTimeRemaining: Match.() -> TimeRemaining?,
         startMatchOkListener: (Match, Court, totalTimeSeconds: Int) -> Unit,
         removeMatchListener: (Match) -> Unit,
         defaultTimeSeconds: Int,
 ) {
-    var currentTime by remember { mutableStateOf(Calendar.getInstance(Locale.getDefault())) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(1000)
-            currentTime = Calendar.getInstance(Locale.getDefault())
-        }
-    }
-
     var startMatchDialogOpenFor: Match? by remember { mutableStateOf(null) }
     var selectedMatch: Match? by remember { mutableStateOf(null) }
     UpcomingMatchesScreen(
-            currentTime = currentTime,
             courts = courts,
             matches = matches,
+            getTimeRemaining = getTimeRemaining,
             openStartMatchDialogListener = { startMatchDialogOpenFor = it },
             startMatchDialogOpenFor = startMatchDialogOpenFor,
             startMatchOkListener = { match, court, totalTimeSeconds ->
@@ -68,9 +60,9 @@ fun UpcomingMatchesScreen(
 
 @Composable
 fun UpcomingMatchesScreen(
-        currentTime: Calendar,
         courts: Iterable<Court>?,
         matches: Iterable<Match> = listOf(),
+        getTimeRemaining: Match.() -> TimeRemaining?,
         openStartMatchDialogListener: (Match) -> Unit,
         startMatchDialogOpenFor: Match?,
         startMatchOkListener: (Match, Court, totalTimeSeconds: Int) -> Unit,
@@ -95,10 +87,12 @@ fun UpcomingMatchesScreen(
     ClavaScreen(
             noContentText = "No matches planned",
             hasContent = sortedMatches.isNotEmpty(),
-            headerContent = { AvailableCourtsHeader(currentTime = currentTime, courts = courts, matches = matches) },
+            headerContent = {
+                AvailableCourtsHeader(courts = courts, matches = matches, getTimeRemaining = getTimeRemaining)
+            },
             footerContent = {
                 UpcomingMatchesScreenFooter(
-                        currentTime = currentTime,
+                        getTimeRemaining = getTimeRemaining,
                         openStartMatchDialogListener = openStartMatchDialogListener,
                         removeMatchListener = removeMatchListener,
                         selectedMatch = selectedMatch,
@@ -116,7 +110,6 @@ fun UpcomingMatchesScreen(
                     .takeIf { it.isNotEmpty() }
 
             SelectableListItem(
-                    currentTime = currentTime,
                     isSelected = selectedMatch == match,
                     enabled = match.players.all { it.isPresent },
                     matchState = match.players
@@ -127,7 +120,8 @@ fun UpcomingMatchesScreen(
                                 if (foundMatch.state !is MatchState.NotStarted) return@let foundMatch.state
                                 // If anyone is in an earlier upcoming mach, use the NotStarted colour
                                 matchingPlayersInEarlierUpcoming?.let { foundMatch.state }
-                            }
+                            },
+                    timeRemaining = { match.getTimeRemaining() },
             ) {
                 LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(5.dp),
@@ -140,23 +134,21 @@ fun UpcomingMatchesScreen(
                             match.players
                                     .map { it to playerMatchStates[it.name] }
                                     .partition {
-                                        it.second?.isCurrent != true || it.second?.state?.isFinished(
-                                                currentTime
-                                        ) != true
+                                        it.second?.isCurrent != true || it.second?.isFinished != true
                                     }
                                     .let { (noMatch, match) ->
                                         match.sortedBy { it.second?.state } + noMatch.sortedBy { it.first.name }
                                     }
-                    ) { (player, match) ->
+                    ) { (player, playerMatch) ->
                         SelectableListItem(
-                                currentTime = currentTime,
                                 enabled = player.enabled,
-                                matchState = match?.state?.let { matchState ->
+                                matchState = playerMatch?.state?.let { matchState ->
                                     if (matchState !is MatchState.NotStarted) return@let matchState
                                     matchingPlayersInEarlierUpcoming
                                             ?.takeIf { it.find { p -> p.name == player.name } != null }
                                             ?.let { matchState }
                                 },
+                                timeRemaining = { playerMatch?.getTimeRemaining() },
                         ) {
                             Text(
                                     text = player.name,
@@ -172,7 +164,7 @@ fun UpcomingMatchesScreen(
 
 @Composable
 private fun UpcomingMatchesScreenFooter(
-        currentTime: Calendar,
+        getTimeRemaining: Match.() -> TimeRemaining?,
         openStartMatchDialogListener: (Match) -> Unit,
         removeMatchListener: (Match) -> Unit,
         selectedMatch: Match?,
@@ -187,21 +179,23 @@ private fun UpcomingMatchesScreenFooter(
             color = ClavaColor.DisabledItemBackground
         }
         else {
-            val (selectedPlayer, selectedMatchState) = selectedMatch?.players
-                    ?.associateWith { playerMatchStates[it.name]?.state }
-                    ?.filter { it.value?.isFinished(currentTime) == false }
-                    ?.maxByOrNull { it.value!! }
+            // The latest-finishing match and the player in selectedMatch who is also in latestMatch
+            val (latestPlayer, latestMatch) = selectedMatch?.players
+                    ?.associateWith { playerMatchStates[it.name] }
+                    ?.filter { it.value?.isFinished == false }
+                    ?.maxByOrNull { it.value!!.state }
                     ?: mapOf(null to null).asIterable().first()
 
-            color = selectedMatchState?.takeIf { it !is MatchState.NotStarted }?.asColor(currentTime)
-            extraText = when (selectedMatchState) {
+            color = latestMatch?.state?.takeIf { it !is MatchState.NotStarted }
+                    ?.asColor(selectedMatch?.getTimeRemaining())
+            extraText = when (latestMatch?.state) {
                 null,
                 is MatchState.NotStarted,
                 is MatchState.Completed -> null
-                is MatchState.Paused -> "${selectedPlayer?.name}'s match is paused"
+                is MatchState.Paused -> "${latestPlayer?.name}'s match is paused"
                 is MatchState.OnCourt -> {
-                    "${selectedPlayer?.name} is on ${selectedMatchState.court.name}" +
-                            "\nTime remaining: " + selectedMatchState.getTimeLeft(currentTime).asTimeString()
+                    "${latestPlayer?.name} is on ${latestMatch.court!!.name}" +
+                            "\nTime remaining: " + selectedMatch?.getTimeRemaining().asTimeString()
                 }
             }
         }
@@ -284,9 +278,9 @@ fun UpcomingMatchesScreen_Preview(
     val matches = generateMatches(5, currentTime) + generateMatches(4, currentTime, GeneratableMatchState.NOT_STARTED)
 
     UpcomingMatchesScreen(
-            currentTime = currentTime,
             courts = generateCourts(4),
             matches = matches,
+            getTimeRemaining = { state.getTimeLeft(currentTime) },
             removeMatchListener = {},
             selectedMatch = params.selectedIndex?.let {
                 matches.filter { match -> match.state is MatchState.NotStarted }[it]

@@ -14,10 +14,10 @@ import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
+import com.eywa.projectclava.main.model.TimeRemaining
 import com.eywa.projectclava.main.model.getLatestMatchForCourt
 import com.eywa.projectclava.main.ui.sharedUi.SetupListScreen
 import com.eywa.projectclava.main.ui.sharedUi.SetupListTabSwitcherItem
-import kotlinx.coroutines.delay
 import java.util.*
 
 
@@ -25,27 +25,20 @@ import java.util.*
 fun SetupCourtsScreen(
         courts: Iterable<Court>?,
         matches: Iterable<Match>?,
+        getTimeRemaining: Match.() -> TimeRemaining?,
         itemAddedListener: (String) -> Unit,
         itemNameEditedListener: (Court, String) -> Unit,
         itemDeletedListener: (Court) -> Unit,
         toggleIsPresentListener: (Court) -> Unit,
         onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
 ) {
-    var currentTime by remember { mutableStateOf(Calendar.getInstance(Locale.getDefault())) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(1000)
-            currentTime = Calendar.getInstance(Locale.getDefault())
-        }
-    }
-
     val newItemName = rememberSaveable { mutableStateOf("") }
     var editDialogOpenFor: Court? by remember { mutableStateOf(null) }
     val addFieldTouched = rememberSaveable { mutableStateOf(false) }
 
     SetupCourtsScreen(
-            currentTime = currentTime,
             matches = matches,
+            getTimeRemaining = getTimeRemaining,
             courts = courts,
             addItemName = newItemName.value,
             showAddItemBlankError = addFieldTouched.value,
@@ -77,8 +70,8 @@ fun SetupCourtsScreen(
 
 @Composable
 fun SetupCourtsScreen(
-        currentTime: Calendar,
         matches: Iterable<Match>?,
+        getTimeRemaining: Match.() -> TimeRemaining?,
         courts: Iterable<Court>?,
         addItemName: String,
         showAddItemBlankError: Boolean,
@@ -94,10 +87,10 @@ fun SetupCourtsScreen(
         onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
 ) {
     SetupListScreen(
-            currentTime = currentTime,
             typeContentDescription = "court",
             items = courts,
-            getMatchState = { matches?.getLatestMatchForCourt(it)?.state },
+            getMatch = { matches?.getLatestMatchForCourt(it) },
+            getTimeRemaining = getTimeRemaining,
             addItemName = addItemName,
             showAddItemBlankError = showAddItemBlankError,
             addItemNameClearPressedListener = addItemNameClearPressedListener,
@@ -111,7 +104,7 @@ fun SetupCourtsScreen(
             itemClickedListener = toggleIsPresentListener,
             hasExtraContent = { matches?.getLatestMatchForCourt(it) != null },
             extraContent = {
-                ExtraContent(currentTime = currentTime, match = matches?.getLatestMatchForCourt(it)!!)
+                ExtraContent(match = matches?.getLatestMatchForCourt(it)!!, getTimeRemaining = getTimeRemaining)
             },
             selectedTab = SetupListTabSwitcherItem.COURTS,
             onTabSelectedListener = onTabSelectedListener,
@@ -119,7 +112,7 @@ fun SetupCourtsScreen(
 }
 
 @Composable
-fun RowScope.ExtraContent(currentTime: Calendar, match: Match) {
+fun RowScope.ExtraContent(match: Match, getTimeRemaining: Match.() -> TimeRemaining?) {
     if (match.court == null) return
 
     Text(
@@ -127,7 +120,7 @@ fun RowScope.ExtraContent(currentTime: Calendar, match: Match) {
             modifier = Modifier.weight(1f)
     )
     Text(
-            text = match.state.getTimeLeft(currentTime).asTimeString()
+            text = match.getTimeRemaining().asTimeString()
     )
     if (match.isPaused) {
         Icon(
@@ -142,9 +135,9 @@ fun RowScope.ExtraContent(currentTime: Calendar, match: Match) {
 fun SetupCourtsScreen_Preview() {
     val currentTime = Calendar.getInstance(Locale.getDefault())
     SetupCourtsScreen(
-            currentTime = currentTime,
             courts = generateCourts(10),
             matches = generateMatches(5, currentTime),
+            getTimeRemaining = { state.getTimeLeft(currentTime) },
             addItemName = "",
             addItemNameClearPressedListener = {},
             showAddItemBlankError = false,

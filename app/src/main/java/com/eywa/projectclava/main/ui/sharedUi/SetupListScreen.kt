@@ -25,8 +25,10 @@ import com.eywa.projectclava.main.NavRoute
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.common.generatePlayers
+import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.main.model.Player
+import com.eywa.projectclava.main.model.TimeRemaining
 import com.eywa.projectclava.main.ui.mainScreens.SetupCourtsScreen
 import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
@@ -52,9 +54,9 @@ fun <T : SetupListItem> String.isDuplicate(
 @Composable
 fun <T : SetupListItem> SetupListScreen(
         typeContentDescription: String,
-        currentTime: Calendar,
         items: Iterable<T>?,
-        getMatchState: (T) -> MatchState?,
+        getMatch: (T) -> Match?,
+        getTimeRemaining: Match.() -> TimeRemaining?,
         itemAddedListener: (String) -> Unit,
         itemNameEditedListener: (T, String) -> Unit,
         itemDeletedListener: (T) -> Unit,
@@ -70,9 +72,9 @@ fun <T : SetupListItem> SetupListScreen(
 
     SetupListScreen(
             typeContentDescription = typeContentDescription,
-            currentTime = currentTime,
             items = items,
-            getMatchState = getMatchState,
+            getMatch = getMatch,
+            getTimeRemaining = getTimeRemaining,
             addItemName = newItemName.value,
             showAddItemBlankError = addFieldTouched.value,
             addItemNameClearPressedListener = {
@@ -107,9 +109,9 @@ fun <T : SetupListItem> SetupListScreen(
 @Composable
 fun <T : SetupListItem> SetupListScreen(
         typeContentDescription: String,
-        currentTime: Calendar,
         items: Iterable<T>?,
-        getMatchState: (T) -> MatchState?,
+        getMatch: (T) -> Match?,
+        getTimeRemaining: Match.() -> TimeRemaining?,
         addItemName: String,
         showAddItemBlankError: Boolean,
         addItemNameClearPressedListener: () -> Unit,
@@ -161,10 +163,11 @@ fun <T : SetupListItem> SetupListScreen(
             }
     ) {
         items(items!!.sortedBy { it.name }) { item ->
+            val match = getMatch(item)
             SelectableListItem(
-                    currentTime = currentTime,
                     enabled = item.enabled,
-                    matchState = getMatchState(item),
+                    matchState = match?.state,
+                    timeRemaining = { match?.getTimeRemaining() },
             ) {
                 Column(
                         modifier = Modifier.clickable {
@@ -357,27 +360,27 @@ fun SetupListScreen_Preview() {
     val currentTime = Calendar.getInstance(Locale.getDefault())
     val players = generatePlayers(playersToGenerate)
     val courts = generateCourts(6)
-    val states = listOf(
+    val matches = listOf(
             MatchState.OnCourt(currentTime.apply { add(Calendar.HOUR_OF_DAY, -1) }, courts[0]), // Disabled
             MatchState.OnCourt(currentTime.apply { add(Calendar.HOUR_OF_DAY, -1) }, courts[1]),
             null,
             null, // Disabled
             MatchState.OnCourt(currentTime.apply { add(Calendar.MINUTE, 1) }, courts[2]),
             MatchState.Paused(5, currentTime)
-    )
+    ).mapIndexed { index, matchState ->
+        matchState?.let { Match(index, listOf(), matchState) }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         SetupListScreen(
                 typeContentDescription = "player",
-                currentTime = currentTime,
                 addItemName = "",
                 addItemNameChangedListener = {},
                 addItemNameClearPressedListener = {},
                 showAddItemBlankError = false,
                 items = players.sortedBy { it.name },
-                getMatchState = { player: Player ->
-                    states[players.sortedBy { it.name }.indexOf(player) % states.size]
-                },
+                getMatch = { player: Player -> matches[players.sortedBy { it.name }.indexOf(player) % matches.size] },
+                getTimeRemaining = { state.getTimeLeft(currentTime) },
                 editDialogOpenFor = null,
                 itemNameEditedListener = { _, _ -> },
                 itemNameEditCancelledListener = {},
@@ -396,9 +399,9 @@ fun SetupListScreen_Preview() {
 fun ExtraInfo_SetupListScreen_Preview() {
     val currentTime = Calendar.getInstance(Locale.getDefault())
     SetupCourtsScreen(
-            currentTime = currentTime,
             courts = generateCourts(10),
             matches = generateMatches(5, currentTime),
+            getTimeRemaining = { state.getTimeLeft(currentTime) },
             addItemName = "",
             addItemNameClearPressedListener = {},
             showAddItemBlankError = false,
@@ -420,14 +423,14 @@ fun Dialog_SetupListScreen_Preview() {
     val players = generatePlayers(20)
     Box(modifier = Modifier.fillMaxSize()) {
         SetupListScreen(
-                currentTime = Calendar.getInstance(Locale.getDefault()),
                 typeContentDescription = "player",
                 addItemName = "",
                 addItemNameChangedListener = {},
                 addItemNameClearPressedListener = {},
                 showAddItemBlankError = false,
                 items = players,
-                getMatchState = { null },
+                getMatch = { null },
+                getTimeRemaining = { null },
                 editDialogOpenFor = players[2],
                 itemNameEditedListener = { _, _ -> },
                 itemNameEditCancelledListener = {},
@@ -447,14 +450,14 @@ fun Error_SetupListScreen_Preview() {
     val generatePlayers = generatePlayers(5)
     Box(modifier = Modifier.fillMaxSize()) {
         SetupListScreen(
-                currentTime = Calendar.getInstance(Locale.getDefault()),
                 typeContentDescription = "player",
                 addItemName = generatePlayers.first().name,
                 addItemNameChangedListener = {},
                 addItemNameClearPressedListener = {},
                 showAddItemBlankError = false,
                 items = generatePlayers,
-                getMatchState = { null },
+                getMatch = { null },
+                getTimeRemaining = { null },
                 editDialogOpenFor = null,
                 itemNameEditedListener = { _, _ -> },
                 itemNameEditCancelledListener = {},

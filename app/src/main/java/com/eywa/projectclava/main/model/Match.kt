@@ -65,6 +65,9 @@ data class Match(
         val players: Iterable<Player>,
         val state: MatchState,
 ) {
+    val isNotStarted
+        get() = state is MatchState.NotStarted
+
     val isPaused
         get() = state is MatchState.Paused
 
@@ -83,14 +86,8 @@ data class Match(
     fun getFinishTime() = when (state) {
         is MatchState.Completed -> state.matchEndTime
         is MatchState.OnCourt -> state.matchEndTime
-        else -> null
-    }
-
-    fun getLastPlayedTime(currentTime: Calendar) = when (state) {
-        is MatchState.NotStarted -> null
-        is MatchState.OnCourt -> if (state.matchEndTime.before(currentTime)) currentTime else state.matchEndTime
-        is MatchState.Completed -> state.matchEndTime
         is MatchState.Paused -> state.matchPausedAt
+        else -> null
     }
 
     val court

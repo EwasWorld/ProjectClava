@@ -17,34 +17,29 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
 import androidx.compose.ui.unit.dp
-import com.eywa.projectclava.main.common.*
+import com.eywa.projectclava.main.common.GeneratableMatchState
+import com.eywa.projectclava.main.common.generateCourts
+import com.eywa.projectclava.main.common.generateMatches
+import com.eywa.projectclava.main.common.generatePlayers
 import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.Typography
-import kotlinx.coroutines.delay
 import java.util.*
 
 @Composable
 fun CreateMatchScreen(
         players: Iterable<Player>,
         matches: Iterable<Match> = listOf(),
+        getTimeRemaining: Match.() -> TimeRemaining?,
         courts: Iterable<Court>? = listOf(),
         createMatchListener: (Iterable<Player>) -> Unit,
 ) {
-    var currentTime by remember { mutableStateOf(Calendar.getInstance(Locale.getDefault())) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(1000)
-            currentTime = Calendar.getInstance(Locale.getDefault())
-        }
-    }
-
     var selectedPlayers: Set<Player> by remember { mutableStateOf(setOf()) }
 
     CreateMatchScreen(
-            currentTime = currentTime,
             players = players,
             matches = matches,
+            getTimeRemaining = getTimeRemaining,
             courts = courts,
             selectedPlayers = selectedPlayers,
             createMatchListener = {
@@ -68,9 +63,9 @@ fun CreateMatchScreen(
  */
 @Composable
 fun CreateMatchScreen(
-        currentTime: Calendar,
         players: Iterable<Player>,
         matches: Iterable<Match> = listOf(),
+        getTimeRemaining: Match.() -> TimeRemaining?,
         courts: Iterable<Court>? = listOf(),
         selectedPlayers: Iterable<Player>,
         createMatchListener: () -> Unit,
@@ -95,10 +90,12 @@ fun CreateMatchScreen(
     ClavaScreen(
             noContentText = "No players to match up",
             hasContent = availablePlayers.isNotEmpty(),
-            headerContent = { AvailableCourtsHeader(currentTime = currentTime, courts = courts, matches = matches) },
+            headerContent = {
+                AvailableCourtsHeader(courts = courts, matches = matches, getTimeRemaining = getTimeRemaining)
+            },
             footerContent = {
                 CreateMatchScreenFooter(
-                        currentTime = currentTime,
+                        getTimeRemaining = getTimeRemaining,
                         selectedPlayers = selectedPlayers,
                         playerMatches = playerMatches,
                         createMatchListener = createMatchListener,
@@ -111,21 +108,47 @@ fun CreateMatchScreen(
                 availablePlayers
                         .associateWith { playerMatches[it.name] }
                         .entries
-                        .sortedWith(Comparator { (player0, match0), (player1, match1) ->
-                            if (match0.isNullOrEmpty() && match1.isNullOrEmpty())
-                                return@Comparator player0.name.compareTo(player1.name)
-                            if (match0.isNullOrEmpty()) return@Comparator -1
-                            if (match1.isNullOrEmpty()) return@Comparator 1
+                        .sortedWith(Comparator { (player0, matches0), (player1, matches1) ->
+                            fun comparePredicate(
+                                    predicate: List<Match>?.() -> Boolean,
+                                    truePredToEnd: Boolean = false,
+                            ): Int? {
+                                val multiplier = if (truePredToEnd) -1 else 1
+                                if (matches0.predicate() && matches1.predicate())
+                                    return player0.name.compareTo(player1.name)
+                                if (matches0.predicate()) return -1 * multiplier
+                                if (matches1.predicate()) return 1 * multiplier
+                                return null
+                            }
 
-                            fun Match.asTimeInt() =
-                                    (getLastPlayedTime(currentTime)?.timeInMillis ?: 0) - currentTime.timeInMillis
-                            match0.maxOf { it.asTimeInt() }.compareTo(match1.maxOf { it.asTimeInt() })
+                            // Players with no queued matches to the start
+                            var comparison = comparePredicate({ isNullOrEmpty() })
+                            if (comparison != null) return@Comparator comparison
+
+                            matches0!!
+                            matches1!!
+
+                            // Players with only queued matches to the start
+                            comparison = comparePredicate({ this!!.all { it.isNotStarted } })
+                            if (comparison != null) return@Comparator comparison
+
+                            // Players with any in progress matches to the end
+                            comparison = comparePredicate({ this!!.any { it.isInProgress } }, true)
+                            if (comparison != null) return@Comparator comparison
+
+                            // Get the latest finish time of the set
+                            fun List<Match>.latestFinishTime() =
+                                    filter { !it.isNotStarted }.maxOf { it.getFinishTime()!! }
+                            matches0.latestFinishTime().compareTo(matches1.latestFinishTime())
                         })
         ) { (player, matches) ->
+            val match = matches?.getPlayerColouringMatch()
+            val timeRemaining = { match?.getTimeRemaining() }
+
             SelectableListItem(
-                    currentTime = currentTime,
-                    matchState = matches?.getPlayerColouringMatch()?.state,
+                    matchState = match?.state,
                     isSelected = selectedPlayerNames.contains(player.name),
+                    timeRemaining = timeRemaining,
             ) {
                 Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -149,7 +172,7 @@ fun CreateMatchScreen(
                     }
 
                     Spacer(modifier = Modifier.weight(1f))
-                    MatchStateIndicator(matches?.maxByOrNull { it.state }, currentTime)
+                    MatchStateIndicator(matches?.maxByOrNull { it.state }, timeRemaining)
                 }
             }
         }
@@ -158,7 +181,7 @@ fun CreateMatchScreen(
 
 @Composable
 private fun CreateMatchScreenFooter(
-        currentTime: Calendar,
+        getTimeRemaining: Match.() -> TimeRemaining?,
         selectedPlayers: Iterable<Player>,
         playerMatches: Map<String, List<Match>?>,
         createMatchListener: () -> Unit,
@@ -195,12 +218,14 @@ private fun CreateMatchScreenFooter(
             )
         }
         else {
-            val sortedPlayers = selectedPlayers
-                    .map { it to playerMatches[it.name] }
-                    // Show players who are already on court first
-                    .sortedByDescending { (_, matches) ->
-                        matches?.maxOfOrNull { it.state }.transformForSorting(currentTime)
-                    }
+            val sortedPlayers = Calendar.getInstance().let { currentTime ->
+                selectedPlayers
+                        .map { it to playerMatches[it.name] }
+                        // Show players who are already on court first
+                        .sortedByDescending { (_, matches) ->
+                            matches?.maxOfOrNull { it.state } ?: MatchState.NotStarted(currentTime)
+                        }
+            }
 
             // Map playerName to hasPlayedAnotherSelectedPlayerBefore
             val playedBefore = sortedPlayers.map { it.first.name }.toSortedSet().let { sortedPlayerNames ->
@@ -222,10 +247,12 @@ private fun CreateMatchScreenFooter(
                     modifier = Modifier.weight(1f)
             ) {
                 items(sortedPlayers) { (player, matches) ->
-                    // TODO Disabled colour if any player is disabled
+                    val match = matches?.getPlayerColouringMatch()
+
                     SelectableListItem(
-                            currentTime = currentTime,
-                            matchState = matches?.getPlayerColouringMatch()?.state,
+                            enabled = player.enabled,
+                            matchState = match?.state,
+                            timeRemaining = { match?.getTimeRemaining() }
                     ) {
                         Text(
                                 text = player.name + if (playedBefore[player.name] == true) "*" else "",
@@ -244,10 +271,11 @@ private fun CreateMatchScreenFooter(
 @Preview(showBackground = true)
 @Composable
 fun CreateMatchScreen_Preview() {
+    val currentTime = Calendar.getInstance(Locale.getDefault())
     CreateMatchScreen(
-            currentTime = Calendar.getInstance(Locale.getDefault()),
             players = generatePlayers(15),
             matches = generateMatches(5, Calendar.getInstance(Locale.getDefault())),
+            getTimeRemaining = { state.getTimeLeft(currentTime) },
             courts = generateCourts(5),
             selectedPlayers = generatePlayers(2),
             createMatchListener = {},
@@ -261,12 +289,13 @@ fun CreateMatchScreen_Preview() {
 fun Individual_CreateMatchScreen_Preview(
         @PreviewParameter(CreateMatchScreenPreviewParamProvider::class) params: CreateMatchScreenPreviewParam
 ) {
+    val currentTime = Calendar.getInstance(Locale.getDefault())
     val players = generatePlayers(2)
     val match = generateMatches(1, Calendar.getInstance(Locale.getDefault()), params.matchType)
     CreateMatchScreen(
-            currentTime = Calendar.getInstance(Locale.getDefault()),
             players = players,
             matches = match,
+            getTimeRemaining = { state.getTimeLeft(currentTime) },
             courts = generateCourts(1),
             selectedPlayers = listOf(),
             createMatchListener = {},

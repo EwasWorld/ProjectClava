@@ -50,14 +50,15 @@ fun AvailableCourtsHeader(
 fun AvailableCourtsHeader(
         courts: Iterable<Court>?,
         matches: Iterable<Match>?,
-        timeRemaining: () -> Map<Int, TimeRemaining?>?
+        getTimeRemaining: Match.() -> TimeRemaining?,
 ) {
     val availableCourtsString = courts
             ?.getAvailable(matches)
             ?.joinToString { it.number }
             ?.let { "Available courts: $it" }
     val nextAvailableCourt = {
-        timeRemaining()?.values?.filterNotNull()
+        matches
+                ?.mapNotNull { it.getTimeRemaining() }
                 ?.minByOrNull { it }
                 ?.let { "Next available court: " + it.asTimeString() }
     }

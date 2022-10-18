@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.R
 import com.eywa.projectclava.main.DEFAULT_ADD_TIME
 import com.eywa.projectclava.main.common.generateCourts
-import com.eywa.projectclava.main.common.generateMatchTimeRemaining
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.sharedUi.*
@@ -31,7 +30,7 @@ import java.util.*
 fun CurrentMatchesScreen(
         courts: Iterable<Court>?,
         matches: Iterable<Match>?,
-        matchIdToTimeRem: () -> Map<Int, TimeRemaining?>?,
+        getTimeRemaining: Match.() -> TimeRemaining?,
         addTimeListener: (Match, timeToAdd: Int) -> Unit,
         setCompletedListener: (Match) -> Unit,
         changeCourtListener: (Match, Court) -> Unit,
@@ -46,7 +45,7 @@ fun CurrentMatchesScreen(
     CurrentMatchesScreen(
             courts = courts,
             matches = matches,
-            matchIdToTimeRem = matchIdToTimeRem,
+            getTimeRemaining = getTimeRemaining,
             selectedMatch = selectedMatch,
             selectedMatchListener = { newSelection ->
                 selectedMatch = newSelection.takeIf { selectedMatch?.id != it.id }
@@ -72,7 +71,7 @@ fun CurrentMatchesScreen(
 fun CurrentMatchesScreen(
         courts: Iterable<Court>?,
         matches: Iterable<Match>?,
-        matchIdToTimeRem: () -> Map<Int, TimeRemaining?>?,
+        getTimeRemaining: Match.() -> TimeRemaining?,
         selectedMatch: Match?,
         selectedMatchListener: (Match) -> Unit,
         completeMatchListener: (Match) -> Unit,
@@ -107,7 +106,7 @@ fun CurrentMatchesScreen(
             noContentText = "No matches being played",
             hasContent = !matches?.filter { it.isCurrent }.isNullOrEmpty(),
             headerContent = {
-                AvailableCourtsHeader(courts = courts, matches = matches, timeRemaining = { matchIdToTimeRem() })
+                AvailableCourtsHeader(courts = courts, matches = matches, getTimeRemaining = getTimeRemaining)
             },
             footerContent = {
                 CurrentMatchesScreenFooter(
@@ -126,7 +125,7 @@ fun CurrentMatchesScreen(
                 ?: listOf()
         ) { match ->
             val isSelected = selectedMatch?.id == match.id
-            val timeRemaining = { matchIdToTimeRem()?.get(match.id) }
+            val timeRemaining = { match.getTimeRemaining() }
 
             SelectableListItem(
                     timeRemaining = timeRemaining,
@@ -316,7 +315,7 @@ fun CurrentMatchesScreen_Preview(
     CurrentMatchesScreen(
             courts = generateCourts(params.matchCount + params.availableCourtsCount),
             matches = matches,
-            matchIdToTimeRem = { generateMatchTimeRemaining(matches, currentTime) },
+            getTimeRemaining = { state.getTimeLeft(currentTime) },
             selectedMatch = params.selectedIndex?.let { index ->
                 matches.filter { it.isCurrent }.sortedBy { it.state }[index]
             },

@@ -14,7 +14,6 @@ import com.eywa.projectclava.main.database.player.PlayerRepo
 import com.eywa.projectclava.main.model.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.util.*
@@ -46,9 +45,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var courts = courtRepo.getAll().map { it.map { dbMatch -> dbMatch.asCourt() } }
     var players = playerRepo.getAll().map { it.map { dbMatch -> dbMatch.asPlayer() } }
     val matches = matchRepo.getAll().map { it.map { dbMatch -> dbMatch.asMatch() } }
-    val matchIdToTimeRem = matches.combine(currentTime) { matches, currentTime ->
-        matches.associate { it.id to it.state.getTimeLeft(currentTime) }
-    }
 
     fun updateDefaultMatchTime(timeInSeconds: Int) {
         defaultMatchTime = timeInSeconds

@@ -4,38 +4,30 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.Player
+import com.eywa.projectclava.main.model.TimeRemaining
 import com.eywa.projectclava.main.model.getPlayerColouringMatch
 import com.eywa.projectclava.main.ui.sharedUi.SetupListScreen
 import com.eywa.projectclava.main.ui.sharedUi.SetupListTabSwitcherItem
-import kotlinx.coroutines.delay
-import java.util.*
 
 @Composable
 fun SetupPlayersScreen(
         items: Iterable<Player>?,
         matches: Iterable<Match>?,
+        getTimeRemaining: Match.() -> TimeRemaining?,
         itemAddedListener: (String) -> Unit,
         itemNameEditedListener: (Player, String) -> Unit,
         itemDeletedListener: (Player) -> Unit,
         toggleIsPresentListener: (Player) -> Unit,
         onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
 ) {
-    var currentTime by remember { mutableStateOf(Calendar.getInstance(Locale.getDefault())) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(1000)
-            currentTime = Calendar.getInstance(Locale.getDefault())
-        }
-    }
-
     val newItemName = rememberSaveable { mutableStateOf("") }
     var editDialogOpenFor: Player? by remember { mutableStateOf(null) }
     val addFieldTouched = rememberSaveable { mutableStateOf(false) }
 
     SetupPlayersScreen(
-            currentTime = currentTime,
             items = items,
             matches = matches,
+            getTimeRemaining = getTimeRemaining,
             addItemName = newItemName.value,
             showAddItemBlankError = addFieldTouched.value,
             addItemNameClearPressedListener = {
@@ -66,9 +58,9 @@ fun SetupPlayersScreen(
 
 @Composable
 fun SetupPlayersScreen(
-        currentTime: Calendar,
         items: Iterable<Player>?,
         matches: Iterable<Match>?,
+        getTimeRemaining: Match.() -> TimeRemaining?,
         addItemName: String,
         showAddItemBlankError: Boolean,
         addItemNameClearPressedListener: () -> Unit,
@@ -83,15 +75,14 @@ fun SetupPlayersScreen(
         onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
 ) {
     SetupListScreen(
-            currentTime = currentTime,
             typeContentDescription = "player",
             items = items,
-            getMatchState = { player ->
+            getMatch = { player ->
                 matches
                         ?.filter { match -> match.players.any { player.name == it.name } }
                         ?.getPlayerColouringMatch()
-                        ?.state
             },
+            getTimeRemaining = getTimeRemaining,
             addItemName = addItemName,
             showAddItemBlankError = showAddItemBlankError,
             addItemNameClearPressedListener = addItemNameClearPressedListener,

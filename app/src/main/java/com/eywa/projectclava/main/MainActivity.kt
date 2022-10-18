@@ -41,6 +41,8 @@ import java.util.*
  * Time spent: 36 hrs
  */
 
+// TODO Add a cutoff where a match doesn't count for today
+
 // TODO Store like default match time
 const val DEFAULT_ADD_TIME = 60 * 2
 
@@ -75,7 +77,6 @@ fun Navigation(
     val currentTime by viewModel.currentTime.collectAsState(initial = Calendar.getInstance())
 
     val players by viewModel.players.collectAsState(initial = listOf())
-    val matchIdToTimeRem by viewModel.matchIdToTimeRem.collectAsState(initial = mapOf())
     val matches by viewModel.matches.collectAsState(initial = listOf())
     val courts by viewModel.courts.collectAsState(initial = listOf())
 
@@ -116,16 +117,16 @@ fun Navigation(
                         }
                 )
             },
-    ) {
+    ) { padding ->
         ClavaNavigation(
                 navController = navController,
                 currentTime = { currentTime },
                 players = players,
                 matches = matches,
-                matchIdToTimeRem = { matchIdToTimeRem },
+                getTimeRemaining = { state.getTimeLeft(currentTime) },
                 courts = courts,
                 viewModel = viewModel,
-                bottomPadding = it.calculateBottomPadding(),
+                bottomPadding = padding.calculateBottomPadding(),
         )
     }
 }
@@ -136,7 +137,7 @@ fun ClavaNavigation(
         currentTime: () -> Calendar,
         players: Iterable<Player>,
         matches: Iterable<Match>,
-        matchIdToTimeRem: () -> Map<Int, TimeRemaining?>?,
+        getTimeRemaining: Match.() -> TimeRemaining?,
         courts: Iterable<Court>,
         viewModel: MainViewModel,
         bottomPadding: Dp = 0.dp
@@ -150,6 +151,7 @@ fun ClavaNavigation(
             SetupPlayersScreen(
                     items = players,
                     matches = matches,
+                    getTimeRemaining = getTimeRemaining,
                     itemAddedListener = { viewModel.addPlayer(it) },
                     itemNameEditedListener = { player, newName ->
                         viewModel.updatePlayers(player.copy(name = newName))
@@ -163,6 +165,7 @@ fun ClavaNavigation(
             SetupCourtsScreen(
                     courts = courts,
                     matches = matches,
+                    getTimeRemaining = getTimeRemaining,
                     itemAddedListener = { viewModel.addCourt(it) },
                     itemNameEditedListener = { court, newName ->
                         viewModel.updateCourt(court.copy(number = newName))
@@ -176,6 +179,7 @@ fun ClavaNavigation(
             CreateMatchScreen(
                     players = players,
                     matches = matches,
+                    getTimeRemaining = getTimeRemaining,
                     courts = courts,
                     createMatchListener = { viewModel.addMatch(it, currentTime()) }
             )
@@ -184,6 +188,7 @@ fun ClavaNavigation(
             UpcomingMatchesScreen(
                     courts = courts,
                     matches = matches,
+                    getTimeRemaining = getTimeRemaining,
                     startMatchOkListener = { match, court, totalTimeSeconds ->
                         viewModel.updateMatch(
                                 match.startMatch(
@@ -201,7 +206,7 @@ fun ClavaNavigation(
             CurrentMatchesScreen(
                     courts = courts,
                     matches = matches,
-                    matchIdToTimeRem = matchIdToTimeRem,
+                    getTimeRemaining = getTimeRemaining,
                     addTimeListener = { match, timeToAdd ->
                         viewModel.updateMatch(
                                 match.addTime(
@@ -257,7 +262,7 @@ fun ClavaNavigation(
                         AvailableCourtsHeader(
                                 courts = courts,
                                 matches = matches,
-                                timeRemaining = matchIdToTimeRem
+                                getTimeRemaining = getTimeRemaining
                         )
                     },
                     footerContent = {
