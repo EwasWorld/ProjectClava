@@ -25,7 +25,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     val currentTime = MutableSharedFlow<Calendar>(1)
 
+    // TODO Store these in shared preferences
     var defaultMatchTime by mutableStateOf(15 * 60)
+        private set
+    var defaultTimeToAdd by mutableStateOf(2 * 60)
+        private set
+    var clubNightStartTime: Calendar by mutableStateOf(Calendar.getInstance(Locale.getDefault()))
         private set
 
     init {
@@ -48,6 +53,38 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun updateDefaultMatchTime(timeInSeconds: Int) {
         defaultMatchTime = timeInSeconds
+    }
+
+    fun updateDefaultTimeTimeToAdd(timeInSeconds: Int) {
+        defaultTimeToAdd = timeInSeconds
+    }
+
+    fun updateClubNightStartTime(calendar: Calendar) {
+        clubNightStartTime = calendar
+    }
+
+    fun updateClubNightStartTime(
+            day: Int? = null,
+            month: Int? = null,
+            year: Int? = null,
+            hours: Int? = null,
+            minutes: Int? = null,
+    ) {
+        require(
+                day != null
+                        || month != null
+                        || year != null
+                        || hours != null
+                        || minutes != null
+        ) { "No new values set" }
+
+        val newClubNightStartTime = clubNightStartTime.clone() as Calendar
+        day?.let { newClubNightStartTime.set(Calendar.DATE, day) }
+        month?.let { newClubNightStartTime.set(Calendar.MONTH, month) }
+        year?.let { newClubNightStartTime.set(Calendar.YEAR, year) }
+        hours?.let { newClubNightStartTime.set(Calendar.HOUR_OF_DAY, hours) }
+        minutes?.let { newClubNightStartTime.set(Calendar.MINUTE, minutes) }
+        clubNightStartTime = newClubNightStartTime
     }
 
     fun addPlayer(playerName: String) = viewModelScope.launch {

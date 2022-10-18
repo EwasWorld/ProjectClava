@@ -8,11 +8,14 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.abs
 
-fun Calendar.asDateString(): String = SimpleDateFormat("d MMM yy", Locale.getDefault()).format(this.time)
-fun Calendar.asTimeString(): String = SimpleDateFormat("HH:mm", Locale.getDefault()).format(this.time)
+private const val dateFormat = "d MMM yy"
+private const val timeFormat = "HH:mm"
 
-@Deprecated("Down with the current time!")
-fun MatchState.asColor(currentTime: Calendar) = asColor(getTimeLeft(currentTime))
+fun Calendar.asDateTimeString(): String =
+        SimpleDateFormat("$dateFormat $timeFormat", Locale.getDefault()).format(this.time)
+
+fun Calendar.asDateString(): String = SimpleDateFormat(dateFormat, Locale.getDefault()).format(this.time)
+fun Calendar.asTimeString(): String = SimpleDateFormat(timeFormat, Locale.getDefault()).format(this.time)
 
 fun MatchState.asColor(timeLeft: TimeRemaining?): Color? {
     if (this is MatchState.Paused) return ClavaColor.MatchPaused

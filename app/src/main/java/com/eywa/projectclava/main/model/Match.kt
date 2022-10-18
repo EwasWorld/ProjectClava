@@ -4,6 +4,7 @@ import com.eywa.projectclava.main.database.match.DatabaseMatch
 import com.eywa.projectclava.main.database.match.DatabaseMatchFull
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.math.abs
 
 fun Iterable<Match>.getPlayerMatches() =
         map { it.players.map { player -> player to it } }
@@ -141,8 +142,10 @@ data class Match(
 
         return copy(
                 state = MatchState.Paused(
-                        remainingTimeSeconds = TimeUnit.MILLISECONDS.toSeconds(
-                                currentTime.timeInMillis - state.matchEndTime.timeInMillis
+                        remainingTimeSeconds = abs(
+                                TimeUnit.MILLISECONDS.toSeconds(
+                                        currentTime.timeInMillis - state.matchEndTime.timeInMillis
+                                )
                         ),
                         matchPausedAt = currentTime,
                 )
@@ -170,7 +173,7 @@ data class Match(
         )
         is MatchState.OnCourt -> {
             copy(
-                    state = if (!state.isFinished(currentTime)) {
+                    state = if (state.matchEndTime.after(currentTime)) {
                         state.copy(
                                 matchEndTime = (state.matchEndTime.clone() as Calendar)
                                         .apply { add(Calendar.SECOND, timeToAdd) }
@@ -224,24 +227,28 @@ sealed class MatchState : Comparable<MatchState> {
     /**
      * Can be negative
      */
-    abstract fun getTimeLeft(currentTime: Calendar?): TimeRemaining?
-    abstract fun isFinished(currentTime: Calendar): Boolean
-    open fun getFinishedTime(): Calendar? = null
+    open fun getTimeLeft(currentTime: Calendar?): TimeRemaining? = null
 
-    fun compareClass(other: MatchState) =
-            order.indexOfFirst { it.isInstance(this) }.compareTo(order.indexOfFirst { it.isInstance(other) })
+    override fun compareTo(other: MatchState): Int {
+        val classComparison = order.indexOfFirst { it.isInstance(this) }
+                .compareTo(order.indexOfFirst { it.isInstance(other) })
+        if (classComparison != 0) return classComparison
+        return sameClassCompare(other)
+    }
+
+    /**
+     * Compare two [MatchState]s who have the same subclass
+     * @throws ClassCastException if [other] is not the same [MatchState] subtype as this
+     */
+    abstract fun sameClassCompare(other: MatchState): Int
 
     data class NotStarted(
             val createdAt: Calendar
     ) : MatchState() {
-        override fun getTimeLeft(currentTime: Calendar?): TimeRemaining? = null
-
-        override fun compareTo(other: MatchState): Int {
-            if (other is NotStarted) return createdAt.compareTo(other.createdAt)
-            return compareClass(other)
+        override fun sameClassCompare(other: MatchState): Int {
+            other as NotStarted
+            return createdAt.compareTo(other.createdAt)
         }
-
-        override fun isFinished(currentTime: Calendar): Boolean = false
     }
 
     data class OnCourt(
@@ -256,15 +263,10 @@ sealed class MatchState : Comparable<MatchState> {
             )
         }
 
-        override fun compareTo(other: MatchState): Int {
-            val classComparison = compareClass(other)
-            if (classComparison != 0) return classComparison
+        override fun sameClassCompare(other: MatchState): Int {
             other as OnCourt
-
             return matchEndTime.compareTo(other.matchEndTime)
         }
-
-        override fun isFinished(currentTime: Calendar): Boolean = matchEndTime.before(currentTime)
     }
 
     data class Paused(
@@ -273,32 +275,18 @@ sealed class MatchState : Comparable<MatchState> {
     ) : MatchState() {
         override fun getTimeLeft(currentTime: Calendar?): TimeRemaining = TimeRemaining(remainingTimeSeconds)
 
-        override fun compareTo(other: MatchState): Int {
-            val classComparison = compareClass(other)
-            if (classComparison != 0) return classComparison
+        override fun sameClassCompare(other: MatchState): Int {
             other as Paused
-
             return remainingTimeSeconds.compareTo(other.remainingTimeSeconds)
         }
-
-        override fun isFinished(currentTime: Calendar): Boolean = false
     }
 
     data class Completed(
             val matchEndTime: Calendar,
     ) : MatchState() {
-        override fun getTimeLeft(currentTime: Calendar?): TimeRemaining? = null
-
-        override fun compareTo(other: MatchState) =
-                when (other) {
-                    is Completed -> other.matchEndTime
-                    is OnCourt -> other.matchEndTime
-                    else -> null
-                }?.let { matchEndTime.compareTo(it) }
-                        ?: compareClass(other)
-
-        override fun isFinished(currentTime: Calendar): Boolean = true
-
-        override fun getFinishedTime() = matchEndTime
+        override fun sameClassCompare(other: MatchState): Int {
+            other as Completed
+            return matchEndTime.compareTo(other.matchEndTime)
+        }
     }
 }

@@ -9,22 +9,6 @@ import com.eywa.projectclava.main.common.asColor
 import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.main.model.TimeRemaining
 import com.eywa.projectclava.ui.theme.ClavaColor
-import java.util.*
-
-/**
- * @param currentTime required if [enabled] and [matchState] != null
- * @param matchState used to decide the color of the component
- * @param enabled changes the colour of the component to a disabled color and ignores [matchState]
- */
-@Deprecated("Down with the current time!")
-@Composable
-fun SelectableListItem(
-        currentTime: Calendar? = null,
-        enabled: Boolean = true,
-        matchState: MatchState? = null,
-        isSelected: Boolean = false,
-        content: @Composable () -> Unit
-) = SelectableListItem({ matchState?.getTimeLeft(currentTime) }, enabled, matchState, isSelected, content)
 
 /**
  * @param matchState used to decide the color of the component

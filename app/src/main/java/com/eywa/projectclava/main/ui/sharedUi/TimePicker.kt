@@ -142,7 +142,7 @@ private fun NumericTextField(
 
     BasicTextField(
             value = value,
-            onValueChange = { onValueChange(it.trim().replace(Regex("[,.-]"), "")) },
+            onValueChange = { onValueChange(it.trim().filter { char -> char.isDigit() }) },
             modifier = modifier.width(50.dp),
             interactionSource = interactionSource,
             textStyle = Typography.body1.copy(textAlign = TextAlign.Center),

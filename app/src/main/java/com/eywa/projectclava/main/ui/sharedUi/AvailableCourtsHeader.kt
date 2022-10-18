@@ -15,36 +15,12 @@ import com.eywa.projectclava.main.common.GeneratableMatchState
 import com.eywa.projectclava.main.common.asTimeString
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
-import com.eywa.projectclava.main.model.*
+import com.eywa.projectclava.main.model.Court
+import com.eywa.projectclava.main.model.Match
+import com.eywa.projectclava.main.model.TimeRemaining
+import com.eywa.projectclava.main.model.getAvailable
 import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
-
-@Deprecated("Down with the current time!")
-@Composable
-fun AvailableCourtsHeader(
-        currentTime: Calendar,
-        courts: Iterable<Court>?,
-        matches: Iterable<Match>?,
-) {
-    val availableCourtsString = courts
-            ?.getAvailable(matches)
-            ?.joinToString { it.number }
-            ?.let { "Available courts: $it" }
-    val nextAvailableCourt = matches
-            ?.getNextMatchToFinish()
-            ?.let { "Next available court: " + it.state.getTimeLeft(currentTime).asTimeString() }
-
-    Text(
-            text = availableCourtsString ?: nextAvailableCourt ?: "No courts found",
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            style = Typography.h4,
-            modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(10.dp)
-    )
-}
 
 @Composable
 fun AvailableCourtsHeader(
@@ -82,12 +58,12 @@ fun AvailableCourtsHeader_Preview(
 ) {
     val currentTime = Calendar.getInstance(Locale.getDefault())
     AvailableCourtsHeader(
-            currentTime = currentTime,
             courts = generateCourts(params.courtCount),
             matches = if (params.matchesCount > 0)
                 generateMatches(params.matchesCount, currentTime, forceState = params.matchesType)
             else
-                null
+                null,
+            getTimeRemaining = { state.getTimeLeft(currentTime) }
     )
 }
 

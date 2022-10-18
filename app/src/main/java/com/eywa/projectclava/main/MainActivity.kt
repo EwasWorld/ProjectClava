@@ -1,5 +1,7 @@
 package com.eywa.projectclava.main
 
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -7,14 +9,12 @@ import androidx.activity.viewModels
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -26,6 +26,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.eywa.projectclava.main.common.asDateTimeString
 import com.eywa.projectclava.main.common.asTimeString
 import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.mainScreens.*
@@ -40,11 +41,6 @@ import java.util.*
 /*
  * Time spent: 36 hrs
  */
-
-// TODO Add a cutoff where a match doesn't count for today
-
-// TODO Store like default match time
-const val DEFAULT_ADD_TIME = 60 * 2
 
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
@@ -102,6 +98,7 @@ fun Navigation(
             },
             drawerContent = {
                 Drawer(
+                        currentTime = { currentTime },
                         navController = navController,
                         viewModel = viewModel,
                         players = players,
@@ -142,6 +139,10 @@ fun ClavaNavigation(
         viewModel: MainViewModel,
         bottomPadding: Dp = 0.dp
 ) {
+    val filterToMatchesAfterCutoff = {
+        matches.filter { !it.isFinished && (it.getFinishTime()?.after(viewModel.clubNightStartTime) ?: true) }
+    }
+
     NavHost(
             navController = navController,
             startDestination = NavRoute.ADD_PLAYER.route,
@@ -178,7 +179,7 @@ fun ClavaNavigation(
         composable(NavRoute.CREATE_MATCH.route) {
             CreateMatchScreen(
                     players = players,
-                    matches = matches,
+                    matches = filterToMatchesAfterCutoff(),
                     getTimeRemaining = getTimeRemaining,
                     courts = courts,
                     createMatchListener = { viewModel.addMatch(it, currentTime()) }
@@ -207,6 +208,7 @@ fun ClavaNavigation(
                     courts = courts,
                     matches = matches,
                     getTimeRemaining = getTimeRemaining,
+                    defaultTimeToAddSeconds = viewModel.defaultTimeToAdd,
                     addTimeListener = { match, timeToAdd ->
                         viewModel.updateMatch(
                                 match.addTime(
@@ -234,6 +236,7 @@ fun ClavaNavigation(
         composable(NavRoute.PREVIOUS_MATCHES.route) {
             PreviousMatchesScreen(
                     matches = matches,
+                    defaultTimeToAddSeconds = viewModel.defaultTimeToAdd,
                     addTimeListener = { match, timeToAdd ->
                         viewModel.updateMatch(
                                 match.addTime(
@@ -286,6 +289,7 @@ fun ClavaNavigation(
 
 @Composable
 fun Drawer(
+        currentTime: () -> Calendar,
         navController: NavController,
         viewModel: MainViewModel,
         players: Iterable<Player>,
@@ -293,8 +297,14 @@ fun Drawer(
         isDrawerOpen: Boolean,
         closeDrawer: () -> Unit,
 ) {
+    val context = LocalContext.current
     val textStyle = Typography.h4
-    var timePickerState by remember(isDrawerOpen) { mutableStateOf(TimePickerState(viewModel.defaultMatchTime)) }
+    var matchTimePickerState by remember(isDrawerOpen) {
+        mutableStateOf(TimePickerState(viewModel.defaultMatchTime))
+    }
+    var timeToAddPickerState by remember(isDrawerOpen) {
+        mutableStateOf(TimePickerState(viewModel.defaultTimeToAdd))
+    }
 
     /**
      * Which expandable section is currently open
@@ -307,6 +317,37 @@ fun Drawer(
     var expanderUniquenessIndex = 0
 
     val expanderOnClick = { index: Int -> expandedItem = index.takeIf { expandedItem != index } }
+
+    val timePicker by lazy {
+        TimePickerDialog(
+                context,
+                { _, hours, minutes ->
+                    viewModel.updateClubNightStartTime(
+                            hours = hours,
+                            minutes = minutes,
+                    )
+                },
+                viewModel.clubNightStartTime.get(Calendar.HOUR_OF_DAY),
+                viewModel.clubNightStartTime.get(Calendar.MINUTE),
+                true,
+        )
+    }
+    val datePicker by lazy {
+        DatePickerDialog(
+                context,
+                { _, year, month, day ->
+                    viewModel.updateClubNightStartTime(
+                            day = day,
+                            month = month,
+                            year = year,
+                    )
+                    timePicker.show()
+                },
+                viewModel.clubNightStartTime.get(Calendar.YEAR),
+                viewModel.clubNightStartTime.get(Calendar.MONTH),
+                viewModel.clubNightStartTime.get(Calendar.DATE),
+        )
+    }
 
     @Composable
     fun DrawerTextButton(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
@@ -342,42 +383,71 @@ fun Drawer(
         )
     }
 
-    Column(
-            modifier = Modifier.padding(vertical = 15.dp)
+    @Composable
+    fun DefaultTimePicker(
+            title: String,
+            errorSuffix: String,
+            state: TimePickerState,
+            updateState: (TimePickerState) -> Unit
     ) {
         Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(horizontal = 25.dp),
         ) {
             Text(
-                    text = "Default match time:",
+                    text = title,
                     style = textStyle,
             )
             TimePicker(
-                    timePickerState = timePickerState,
-                    timeChangedListener = {
-                        timePickerState = it
-                        if (timePickerState.isValid) {
-                            viewModel.updateDefaultMatchTime(it.totalSeconds)
-                        }
-                    },
+                    timePickerState = state,
+                    timeChangedListener = updateState,
                     showError = false,
             )
         }
-        if (timePickerState.error != null) {
+        if (state.error != null) {
             Text(
-                    text = timePickerState.error!! +
-                            "\nDefault time is still " + viewModel.defaultMatchTime.asTimeString(),
+                    text = state.error!! + "\n" + errorSuffix,
                     color = MaterialTheme.colors.error,
                     modifier = Modifier.padding(horizontal = 30.dp),
             )
         }
+    }
 
-        DrawerDivider()
-        // TODO Create a build variant for this
-        DrawerTextButton(text = "Go to test page") {
-            navController.navigate(NavRoute.TEST_PAGE.route)
+    Column(
+            modifier = Modifier.padding(vertical = 15.dp)
+    ) {
+        DefaultTimePicker(
+                title = "Default match time:",
+                errorSuffix = "Default match time is still " + viewModel.defaultMatchTime.asTimeString(),
+                state = matchTimePickerState,
+                updateState = {
+                    matchTimePickerState = it
+                    if (matchTimePickerState.isValid) {
+                        viewModel.updateDefaultMatchTime(it.totalSeconds)
+                    }
+                }
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        DefaultTimePicker(
+                title = "Default add time:",
+                errorSuffix = "Default add time is still " + viewModel.defaultTimeToAdd.asTimeString(),
+                state = timeToAddPickerState,
+                updateState = {
+                    timeToAddPickerState = it
+                    if (timeToAddPickerState.isValid) {
+                        viewModel.updateDefaultTimeTimeToAdd(it.totalSeconds)
+                    }
+                }
+        )
+        DrawerTextButton(text = "Cut-off: " + viewModel.clubNightStartTime.asDateTimeString()) {
+            datePicker.show()
         }
+
+//        DrawerDivider()
+//        // TODO Create a build variant for this
+//        DrawerTextButton(text = "Go to test page") {
+//            navController.navigate(NavRoute.TEST_PAGE.route)
+//        }
 
         DrawerDivider()
         ExpandableSection(
@@ -389,14 +459,21 @@ fun Drawer(
                 navController.navigate(NavRoute.ADD_PLAYER.route)
                 closeDrawer()
             }
-            DrawerTextButton(text = "Mark all in progress matches as complete") {
+            DrawerTextButton(text = "Clear matches and set cut off to now") {
+                matches.forEach {
+                    when (it.state) {
+                        is MatchState.NotStarted -> viewModel.deleteMatch(it)
+                        is MatchState.Completed -> {}
+                        is MatchState.OnCourt -> viewModel.updateMatch(it.completeMatch(currentTime()))
+                        is MatchState.Paused -> viewModel.updateMatch(it.completeMatch(currentTime()))
+                    }
+                    viewModel.updateClubNightStartTime(currentTime())
+                }
+            }
+            DrawerTextButton(text = "Mark all ongoing matches as complete") {
                 matches.forEach {
                     if (it.state is MatchState.OnCourt) {
-                        viewModel.updateMatch(
-                                it.copy(
-                                        state = MatchState.Completed(it.state.matchEndTime)
-                                )
-                        )
+                        viewModel.updateMatch(it.completeMatch(currentTime()))
                     }
                 }
             }

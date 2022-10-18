@@ -10,26 +10,16 @@ import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.main.model.TimeRemaining
 import com.eywa.projectclava.ui.theme.Typography
-import java.util.*
-
-/**
- * @param currentTime required if match is [MatchState.OnCourt]
- */
-@Deprecated("Down with the current time!")
-@Composable
-fun MatchStateIndicator(match: Match?, currentTime: Calendar?) {
-    MatchStateIndicator(match = match, timeRemaining = { match?.state?.getTimeLeft(currentTime) })
-}
 
 @Composable
-fun MatchStateIndicator(match: Match?, timeRemaining: () -> TimeRemaining?) {
+fun MatchStateIndicator(match: Match?, timeRemaining: () -> TimeRemaining? = { null }) {
     Text(
             text = when (match?.state) {
                 null,
                 is MatchState.NotStarted -> "Not played"
                 is MatchState.Paused,
                 is MatchState.OnCourt -> timeRemaining()!!.asTimeString()
-                is MatchState.Completed -> match.state.getFinishedTime()!!.asTimeString()
+                is MatchState.Completed -> match.getFinishTime()!!.asTimeString()
             },
             style = Typography.body1,
     )

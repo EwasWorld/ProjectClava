@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.R
-import com.eywa.projectclava.main.DEFAULT_ADD_TIME
 import com.eywa.projectclava.main.NavRoute
 import com.eywa.projectclava.main.common.GeneratableMatchState
 import com.eywa.projectclava.main.common.asDateString
@@ -32,6 +31,7 @@ enum class HistoryTabSwitcherItem(
 @Composable
 fun PreviousMatchesScreen(
         matches: Iterable<Match>?,
+        defaultTimeToAddSeconds: Int,
         addTimeListener: (Match, timeToAdd: Int) -> Unit,
         deleteMatchListener: (Match) -> Unit,
         onTabSelectedListener: (HistoryTabSwitcherItem) -> Unit,
@@ -41,6 +41,7 @@ fun PreviousMatchesScreen(
 
     PreviousMatchesScreen(
             matches = matches,
+            defaultTimeToAddSeconds = defaultTimeToAddSeconds,
             selectedMatch = selectedMatch,
             selectedMatchListener = { newSelection ->
                 selectedMatch = newSelection.takeIf { selectedMatch?.id != it.id }
@@ -57,6 +58,7 @@ fun PreviousMatchesScreen(
 @Composable
 fun PreviousMatchesScreen(
         matches: Iterable<Match>?,
+        defaultTimeToAddSeconds: Int,
         selectedMatch: Match?,
         selectedMatchListener: (Match) -> Unit,
         addTimeDialogOpenFor: Match?,
@@ -67,6 +69,7 @@ fun PreviousMatchesScreen(
         onTabSelectedListener: (HistoryTabSwitcherItem) -> Unit,
 ) {
     PreviousMatchesScreenDialogs(
+            defaultTimeToAddSeconds = defaultTimeToAddSeconds,
             addTimeDialogOpenFor = addTimeDialogOpenFor,
             closeAddTimeDialogListener = closeAddTimeDialogListener,
             addTimeListener = addTimeListener,
@@ -113,8 +116,7 @@ fun PreviousMatchesScreen(
                                     .padding(horizontal = 5.dp)
                     )
                 }
-                // TODO Remove timeRemaining (use default param)
-                SelectableListItem(timeRemaining = { null }, isSelected = isSelected) {
+                SelectableListItem(isSelected = isSelected) {
                     Row(
                             modifier = Modifier
                                     .fillMaxWidth()
@@ -130,7 +132,7 @@ fun PreviousMatchesScreen(
                                 modifier = Modifier.weight(1f)
                         )
                         Spacer(modifier = Modifier.width(10.dp))
-                        MatchStateIndicator(match = match, currentTime = null)
+                        MatchStateIndicator(match = match)
                     }
                 }
             }
@@ -169,11 +171,12 @@ private fun PreviousMatchesScreenFooter(
 
 @Composable
 private fun PreviousMatchesScreenDialogs(
+        defaultTimeToAddSeconds: Int,
         addTimeDialogOpenFor: Match?,
         closeAddTimeDialogListener: () -> Unit,
         addTimeListener: (Match, timeToAdd: Int) -> Unit,
 ) {
-    var timeToAdd by remember(addTimeDialogOpenFor) { mutableStateOf(TimePickerState(DEFAULT_ADD_TIME)) }
+    var timeToAdd by remember(addTimeDialogOpenFor) { mutableStateOf(TimePickerState(defaultTimeToAddSeconds)) }
 
     ClavaDialog(
             isShown = addTimeDialogOpenFor != null,
@@ -196,6 +199,7 @@ fun PreviousMatchesScreen_Preview() {
     val currentTime = Calendar.getInstance(Locale.getDefault())
     PreviousMatchesScreen(
             matches = generateMatches(4, currentTime, GeneratableMatchState.COMPLETE),
+            defaultTimeToAddSeconds = 2 * 60,
             selectedMatch = null,
             selectedMatchListener = { },
             addTimeListener = { _, _ -> },

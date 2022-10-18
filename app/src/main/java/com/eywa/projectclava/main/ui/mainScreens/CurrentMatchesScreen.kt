@@ -17,7 +17,6 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.R
-import com.eywa.projectclava.main.DEFAULT_ADD_TIME
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.model.*
@@ -31,6 +30,7 @@ fun CurrentMatchesScreen(
         courts: Iterable<Court>?,
         matches: Iterable<Match>?,
         getTimeRemaining: Match.() -> TimeRemaining?,
+        defaultTimeToAddSeconds: Int,
         addTimeListener: (Match, timeToAdd: Int) -> Unit,
         setCompletedListener: (Match) -> Unit,
         changeCourtListener: (Match, Court) -> Unit,
@@ -46,6 +46,7 @@ fun CurrentMatchesScreen(
             courts = courts,
             matches = matches,
             getTimeRemaining = getTimeRemaining,
+            defaultTimeToAddSeconds = defaultTimeToAddSeconds,
             selectedMatch = selectedMatch,
             selectedMatchListener = { newSelection ->
                 selectedMatch = newSelection.takeIf { selectedMatch?.id != it.id }
@@ -72,6 +73,7 @@ fun CurrentMatchesScreen(
         courts: Iterable<Court>?,
         matches: Iterable<Match>?,
         getTimeRemaining: Match.() -> TimeRemaining?,
+        defaultTimeToAddSeconds: Int,
         selectedMatch: Match?,
         selectedMatchListener: (Match) -> Unit,
         completeMatchListener: (Match) -> Unit,
@@ -92,6 +94,7 @@ fun CurrentMatchesScreen(
     CurrentMatchesScreenDialogs(
             availableCourts = courts?.getAvailable(matches),
             addTimeDialogOpenFor = addTimeDialogOpenFor,
+            defaultTimeToAddSeconds = defaultTimeToAddSeconds,
             closeAddTimeDialogListener = closeAddTimeDialogListener,
             changeCourtDialogOpenFor = changeCourtDialogOpenFor,
             addTimeListener = addTimeListener,
@@ -232,6 +235,7 @@ private fun CurrentMatchesScreenFooter(
 private fun CurrentMatchesScreenDialogs(
         availableCourts: Iterable<Court>?,
         addTimeDialogOpenFor: Match?,
+        defaultTimeToAddSeconds: Int,
         closeAddTimeDialogListener: () -> Unit,
         changeCourtDialogOpenFor: Match?,
         addTimeListener: (Match, timeToAdd: Int) -> Unit,
@@ -241,15 +245,17 @@ private fun CurrentMatchesScreenDialogs(
         closeResumeDialogListener: () -> Unit,
         resumeListener: (Match, Court, resumeTime: Int) -> Unit,
 ) {
-    // TODO Caching issue with these. Pause match, resume with random time - A, then pause, resume again will time A
-    var timeToAdd by remember(addTimeDialogOpenFor) { mutableStateOf(TimePickerState(DEFAULT_ADD_TIME)) }
-    val remainingTime = addTimeDialogOpenFor?.state?.let { it as MatchState.Paused }
+    var timeToAdd by remember(addTimeDialogOpenFor) { mutableStateOf(TimePickerState(defaultTimeToAddSeconds)) }
+    val remainingTime = resumeDialogOpenFor?.state
+            ?.let { it as MatchState.Paused }
             ?.remainingTimeSeconds?.toInt()
             ?.takeIf { it > 0 }
-    var resumeTime by remember(addTimeDialogOpenFor) {
-        mutableStateOf(TimePickerState(remainingTime ?: DEFAULT_ADD_TIME))
+    var resumeTime by remember(resumeDialogOpenFor) {
+        mutableStateOf(TimePickerState(remainingTime ?: defaultTimeToAddSeconds))
     }
-    var selectedCourt by remember(addTimeDialogOpenFor) { mutableStateOf(availableCourts?.minByOrNull { it.name }) }
+    var selectedCourt by remember(changeCourtDialogOpenFor, resumeDialogOpenFor) {
+        mutableStateOf(availableCourts?.minByOrNull { it.name })
+    }
 
     ClavaDialog(
             isShown = addTimeDialogOpenFor != null,
@@ -316,6 +322,7 @@ fun CurrentMatchesScreen_Preview(
             courts = generateCourts(params.matchCount + params.availableCourtsCount),
             matches = matches,
             getTimeRemaining = { state.getTimeLeft(currentTime) },
+            defaultTimeToAddSeconds = 2 * 60,
             selectedMatch = params.selectedIndex?.let { index ->
                 matches.filter { it.isCurrent }.sortedBy { it.state }[index]
             },
