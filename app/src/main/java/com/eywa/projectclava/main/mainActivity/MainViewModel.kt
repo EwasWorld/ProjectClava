@@ -1,4 +1,4 @@
-package com.eywa.projectclava.main
+package com.eywa.projectclava.main.mainActivity
 
 import android.app.Application
 import androidx.compose.runtime.getValue

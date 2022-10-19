@@ -14,7 +14,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.eywa.projectclava.R
-import com.eywa.projectclava.main.NavRoute
+import com.eywa.projectclava.main.mainActivity.NavRoute
 
 @Composable
 fun ClavaBottomNav(

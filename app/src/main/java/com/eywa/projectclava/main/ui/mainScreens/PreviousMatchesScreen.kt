@@ -11,10 +11,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.R
-import com.eywa.projectclava.main.NavRoute
 import com.eywa.projectclava.main.common.GeneratableMatchState
 import com.eywa.projectclava.main.common.asDateString
 import com.eywa.projectclava.main.common.generateMatches
+import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.Typography

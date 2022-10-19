@@ -21,10 +21,10 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.eywa.projectclava.main.NavRoute
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.common.generatePlayers
+import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.main.model.Player
