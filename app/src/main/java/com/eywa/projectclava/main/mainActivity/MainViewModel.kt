@@ -26,6 +26,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val currentTime = MutableSharedFlow<Calendar>(1)
 
     // TODO Store these in shared preferences
+    var overrunIndicatorThreshold by mutableStateOf(10)
+        private set
     var defaultMatchTime by mutableStateOf(15 * 60)
         private set
     var defaultTimeToAdd by mutableStateOf(2 * 60)
@@ -64,6 +66,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             is MainIntent.DrawerIntent.UpdateClubNightStartTimeCalendar -> clubNightStartTime = action.value
             is MainIntent.DrawerIntent.UpdateDefaultMatchTime -> defaultMatchTime = action.value
             is MainIntent.DrawerIntent.UpdateDefaultTimeToAdd -> defaultTimeToAdd = action.value
+            is MainIntent.DrawerIntent.UpdateOverrunIndicatorThreshold -> overrunIndicatorThreshold = action.value
             MainIntent.DrawerIntent.DeleteAllMatches -> viewModelScope.launch {
                 matchRepo.deleteAll()
             }

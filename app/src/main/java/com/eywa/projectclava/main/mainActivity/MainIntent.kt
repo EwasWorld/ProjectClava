@@ -23,6 +23,7 @@ sealed class MainIntent {
         }
 
         data class UpdateClubNightStartTimeCalendar(val value: Calendar) : DrawerIntent()
+        data class UpdateOverrunIndicatorThreshold(val value: Int) : DrawerIntent()
         data class UpdateDefaultMatchTime(val value: Int) : DrawerIntent()
         data class UpdateDefaultTimeToAdd(val value: Int) : DrawerIntent()
         data class UpdatePlayers(val players: Iterable<Player>) : DrawerIntent()

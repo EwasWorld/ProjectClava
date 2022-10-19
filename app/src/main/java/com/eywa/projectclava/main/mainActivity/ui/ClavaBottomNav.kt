@@ -1,9 +1,7 @@
-package com.eywa.projectclava.main.ui.sharedUi
+package com.eywa.projectclava.main.mainActivity.ui
 
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.material.BottomNavigation
-import androidx.compose.material.BottomNavigationItem
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -15,14 +13,17 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.eywa.projectclava.R
 import com.eywa.projectclava.main.mainActivity.NavRoute
+import com.eywa.projectclava.main.ui.sharedUi.ClavaIconInfo
 
 @Composable
 fun ClavaBottomNav(
         navController: NavController,
+        hasOverrunningMatch: Boolean,
 ) {
     val current by navController.currentBackStackEntryAsState()
     ClavaBottomNav(
             currentRoute = current?.destination?.route,
+            hasOverrunningMatch = hasOverrunningMatch,
             onClick = { navController.navigate(it) }
     )
 }
@@ -30,6 +31,7 @@ fun ClavaBottomNav(
 @Composable
 fun ClavaBottomNav(
         currentRoute: String?,
+        hasOverrunningMatch: Boolean,
         onClick: (destination: String) -> Unit,
 ) {
     BottomNavigation {
@@ -60,11 +62,11 @@ fun ClavaBottomNav(
                 currentRoute = currentRoute,
                 onClick = onClick,
         )
-        // TODO Add an icon if a match has finished
         ClavaBottomNavItem(
                 icon = ClavaIconInfo.PainterIcon(R.drawable.baseline_timelapse_24),
                 label = "Ongoing",
                 contentDescription = "Ongoing matches",
+                badgeContent = if (hasOverrunningMatch) "" else null,
                 destination = NavRoute.CURRENT_MATCHES.route,
                 currentRoute = currentRoute,
                 onClick = onClick,
@@ -86,6 +88,7 @@ fun RowScope.ClavaBottomNavItem(
         selectedIcon: ClavaIconInfo = icon,
         label: String,
         contentDescription: String,
+        badgeContent: String? = null,
         destination: String,
         currentRoute: String?,
         onClick: (destination: String) -> Unit,
@@ -94,6 +97,7 @@ fun RowScope.ClavaBottomNavItem(
         selectedIcon = selectedIcon,
         label = label,
         contentDescription = contentDescription,
+        badgeContent = badgeContent,
         destinations = listOf(destination),
         currentRoute = currentRoute,
         onClick = onClick,
@@ -109,6 +113,7 @@ fun RowScope.ClavaBottomNavItem(
         selectedIcon: ClavaIconInfo = icon,
         label: String,
         contentDescription: String,
+        badgeContent: String? = null,
         destinations: Iterable<String>,
         currentRoute: String?,
         onClick: (destination: String) -> Unit,
@@ -118,7 +123,20 @@ fun RowScope.ClavaBottomNavItem(
     BottomNavigationItem(
             selected = isSelected,
             onClick = { onClick(destinations.first()) },
-            icon = { (if (isSelected) selectedIcon else icon).ClavaIcon() },
+            icon = {
+                val displayIcon = if (isSelected) selectedIcon else icon
+                if (badgeContent != null) {
+                    BadgedBox(
+                            badge = {
+                                Badge(content = badgeContent.takeIf { it.isNotBlank() }?.let { { Text(badgeContent) } })
+                            },
+                            content = { displayIcon.ClavaIcon() },
+                    )
+                }
+                else {
+                    displayIcon.ClavaIcon()
+                }
+            },
             label = {
                 Text(
                         text = label,
@@ -135,6 +153,7 @@ fun A_ClavaBottomNav_Preview() {
     ClavaBottomNav(
             currentRoute = NavRoute.CREATE_MATCH.route,
             onClick = {},
+            hasOverrunningMatch = false,
     )
 }
 
@@ -144,5 +163,6 @@ fun B_ClavaBottomNav_Preview() {
     ClavaBottomNav(
             currentRoute = NavRoute.ADD_COURT.route,
             onClick = {},
+            hasOverrunningMatch = true,
     )
 }

@@ -33,6 +33,7 @@ fun DrawerContent(
         currentTime: () -> Calendar,
         defaultMatchTime: Int,
         defaultTimeToAdd: Int,
+        overrunIndicatorThreshold: Int,
         clubNightStartTime: Calendar,
         players: Iterable<Player>,
         matches: Iterable<Match>,
@@ -46,6 +47,9 @@ fun DrawerContent(
     }
     var timeToAddPickerState by remember(isDrawerOpen) {
         mutableStateOf(TimePickerState(defaultTimeToAdd))
+    }
+    var overrunThresholdPickerState by remember(isDrawerOpen) {
+        mutableStateOf(TimePickerState(overrunIndicatorThreshold))
     }
 
     /**
@@ -116,6 +120,18 @@ fun DrawerContent(
                     timeToAddPickerState = it
                     if (timeToAddPickerState.isValid) {
                         listener(DrawerIntent.UpdateDefaultTimeToAdd(it.totalSeconds))
+                    }
+                }
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        DefaultTimePicker(
+                title = "Overrun indicator:",
+                errorSuffix = "Threshold is still " + overrunIndicatorThreshold.asTimeString(),
+                state = overrunThresholdPickerState,
+                updateState = {
+                    overrunThresholdPickerState = it
+                    if (overrunThresholdPickerState.isValid) {
+                        listener(DrawerIntent.UpdateOverrunIndicatorThreshold(it.totalSeconds))
                     }
                 }
         )
@@ -252,6 +268,7 @@ fun DrawerContent_Preview() {
             currentTime = { currentTime },
             defaultMatchTime = 15 * 60,
             defaultTimeToAdd = 2 * 60,
+            overrunIndicatorThreshold = 10,
             clubNightStartTime = currentTime,
             players = listOf(),
             matches = listOf(),

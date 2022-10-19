@@ -215,8 +215,7 @@ data class TimeRemaining(
     val isNegative
         get() = totalTimeInSeconds < 0
 
-    fun isEndingSoon(minutesThreshold: Int = 2) =
-            minutes < minutesThreshold || (minutes == minutesThreshold && seconds == 0)
+    fun isEndingSoon(secondsThreshold: Int = 2 * 60) = totalTimeInSeconds < secondsThreshold
 
     override fun compareTo(other: TimeRemaining) = totalTimeInSeconds.compareTo(other.totalTimeInSeconds)
 }

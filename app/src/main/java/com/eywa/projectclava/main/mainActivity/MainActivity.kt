@@ -17,8 +17,8 @@ import androidx.core.view.WindowInsetsCompat.toWindowInsetsCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.eywa.projectclava.main.mainActivity.ui.ClavaBottomNav
 import com.eywa.projectclava.main.mainActivity.ui.DrawerContent
-import com.eywa.projectclava.main.ui.sharedUi.ClavaBottomNav
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.ProjectClavaTheme
 import kotlinx.coroutines.launch
@@ -69,7 +69,14 @@ class MainActivity : ComponentActivity() {
                         scaffoldState = rememberScaffoldState(drawerState = drawerState),
                         bottomBar = {
                             if (isBottomNavVisible) {
-                                ClavaBottomNav(navController = navController)
+                                ClavaBottomNav(
+                                        hasOverrunningMatch = matches.any {
+                                            if (!it.isInProgress) return@any false
+                                            val remaining = it.state.getTimeLeft(currentTime) ?: return@any false
+                                            remaining.isEndingSoon(viewModel.overrunIndicatorThreshold)
+                                        },
+                                        navController = navController,
+                                )
                             }
                         },
                         drawerContent = {
@@ -78,6 +85,7 @@ class MainActivity : ComponentActivity() {
                                     defaultMatchTime = viewModel.defaultMatchTime,
                                     defaultTimeToAdd = viewModel.defaultTimeToAdd,
                                     clubNightStartTime = viewModel.clubNightStartTime,
+                                    overrunIndicatorThreshold = viewModel.overrunIndicatorThreshold,
                                     players = players,
                                     matches = matches,
                                     isDrawerOpen = drawerState.isOpen,
