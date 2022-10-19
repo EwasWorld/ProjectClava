@@ -1,11 +1,17 @@
 package com.eywa.projectclava.main.mainActivity
 
 import android.app.Application
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.eywa.projectclava.main.common.asCalendar
 import com.eywa.projectclava.main.database.ClavaDatabase
 import com.eywa.projectclava.main.database.court.CourtRepo
 import com.eywa.projectclava.main.database.match.DatabaseMatchPlayer
@@ -18,21 +24,36 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.util.*
 
+private const val USER_PREFERENCES_NAME = "clava_user_preferences"
+
+// TODO Dependency injection?
+private val Context.dataStore by preferencesDataStore(name = USER_PREFERENCES_NAME)
+
+private object PreferencesKeys {
+    val OVERRUN_INDICATOR_THRESHOLD = intPreferencesKey("overrun_indicator_threshold")
+    val DEFAULT_MATCH_TIME = intPreferencesKey("default_match_time")
+    val DEFAULT_TIME_TO_ADD = intPreferencesKey("default_time_to_add")
+    val CLUB_NIGHT_START_TIME = longPreferencesKey("club_night_start_time")
+}
+
 class MainViewModel(application: Application) : AndroidViewModel(application) {
+    private val dataStore = (application.applicationContext).dataStore
+
     private val playerRepo: PlayerRepo
     private val courtRepo: CourtRepo
     private val matchRepo: MatchRepo
 
     val currentTime = MutableSharedFlow<Calendar>(1)
 
-    // TODO Store these in shared preferences
     var overrunIndicatorThreshold by mutableStateOf(10)
         private set
     var defaultMatchTime by mutableStateOf(15 * 60)
         private set
     var defaultTimeToAdd by mutableStateOf(2 * 60)
         private set
-    var clubNightStartTime: Calendar by mutableStateOf(Calendar.getInstance(Locale.getDefault()))
+    var clubNightStartTime: Calendar by mutableStateOf(
+            Calendar.getInstance(Locale.getDefault()).apply { set(Calendar.SECOND, 0) }
+    )
         private set
 
     init {
@@ -42,6 +63,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         matchRepo = db.matchRepo()
 
         viewModelScope.launch {
+            dataStore.data.collect { preference ->
+                preference[PreferencesKeys.OVERRUN_INDICATOR_THRESHOLD]?.let {
+                    overrunIndicatorThreshold = it
+                }
+                preference[PreferencesKeys.DEFAULT_MATCH_TIME]?.let {
+                    defaultMatchTime = it
+                }
+                preference[PreferencesKeys.DEFAULT_TIME_TO_ADD]?.let {
+                    defaultTimeToAdd = it
+                }
+                preference[PreferencesKeys.CLUB_NIGHT_START_TIME]?.let {
+                    clubNightStartTime = it.asCalendar()!!
+                }
+            }
+
             while (true) {
                 currentTime.emit(Calendar.getInstance(Locale.getDefault()))
                 delay(1000)
@@ -63,10 +99,38 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         when (action) {
             is MainIntent.DrawerIntent.Navigate -> throw NotImplementedError()
             is MainIntent.DrawerIntent.UpdateClubNightStartTime -> updateClubNightStartTime(action)
-            is MainIntent.DrawerIntent.UpdateClubNightStartTimeCalendar -> clubNightStartTime = action.value
-            is MainIntent.DrawerIntent.UpdateDefaultMatchTime -> defaultMatchTime = action.value
-            is MainIntent.DrawerIntent.UpdateDefaultTimeToAdd -> defaultTimeToAdd = action.value
-            is MainIntent.DrawerIntent.UpdateOverrunIndicatorThreshold -> overrunIndicatorThreshold = action.value
+            is MainIntent.DrawerIntent.UpdateClubNightStartTimeCalendar -> {
+                clubNightStartTime = action.value
+                viewModelScope.launch {
+                    dataStore.edit {
+                        it[PreferencesKeys.CLUB_NIGHT_START_TIME] = action.value.timeInMillis
+                    }
+                }
+            }
+            is MainIntent.DrawerIntent.UpdateDefaultMatchTime -> {
+                defaultMatchTime = action.value
+                viewModelScope.launch {
+                    dataStore.edit {
+                        it[PreferencesKeys.DEFAULT_MATCH_TIME] = action.value
+                    }
+                }
+            }
+            is MainIntent.DrawerIntent.UpdateDefaultTimeToAdd -> {
+                defaultTimeToAdd = action.value
+                viewModelScope.launch {
+                    dataStore.edit {
+                        it[PreferencesKeys.DEFAULT_TIME_TO_ADD] = action.value
+                    }
+                }
+            }
+            is MainIntent.DrawerIntent.UpdateOverrunIndicatorThreshold -> {
+                overrunIndicatorThreshold = action.value
+                viewModelScope.launch {
+                    dataStore.edit {
+                        it[PreferencesKeys.OVERRUN_INDICATOR_THRESHOLD] = action.value
+                    }
+                }
+            }
             MainIntent.DrawerIntent.DeleteAllMatches -> viewModelScope.launch {
                 matchRepo.deleteAll()
             }
@@ -89,7 +153,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         value.year?.let { newClubNightStartTime.set(Calendar.YEAR, value.year) }
         value.hours?.let { newClubNightStartTime.set(Calendar.HOUR_OF_DAY, value.hours) }
         value.minutes?.let { newClubNightStartTime.set(Calendar.MINUTE, value.minutes) }
-        clubNightStartTime = newClubNightStartTime
+        handle(MainIntent.DrawerIntent.UpdateClubNightStartTimeCalendar(newClubNightStartTime))
     }
 
     fun addPlayer(playerName: String) = viewModelScope.launch {

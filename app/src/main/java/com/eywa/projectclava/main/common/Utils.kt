@@ -1,5 +1,6 @@
 package com.eywa.projectclava.main.common
 
+import android.os.Build
 import androidx.compose.ui.graphics.Color
 import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.main.model.TimeRemaining
@@ -37,4 +38,23 @@ fun asTimeString(minutes: Int?, seconds: Int?): String {
             abs(minutes) +
             ":" +
             abs(seconds).toString().padStart(2, '0')
+}
+
+fun Long?.asCalendar(): Calendar? = this?.let {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        Calendar.Builder().setInstant(it).build()
+    }
+    else {
+        val date = Date(it)
+        Calendar.getInstance(Locale.getDefault()).apply {
+            set(
+                    date.year,
+                    date.month,
+                    date.date,
+                    date.hours,
+                    date.minutes,
+                    date.seconds,
+            )
+        }
+    }
 }

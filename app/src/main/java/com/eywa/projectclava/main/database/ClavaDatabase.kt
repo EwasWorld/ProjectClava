@@ -1,8 +1,8 @@
 package com.eywa.projectclava.main.database
 
 import android.content.Context
-import android.os.Build
 import androidx.room.*
+import com.eywa.projectclava.main.common.asCalendar
 import com.eywa.projectclava.main.database.court.CourtDao
 import com.eywa.projectclava.main.database.court.CourtRepo
 import com.eywa.projectclava.main.database.court.DatabaseCourt
@@ -36,26 +36,7 @@ abstract class ClavaDatabase : RoomDatabase() {
 
     class Converters {
         @TypeConverter
-        fun fromTimestamp(value: Long?): Calendar? {
-            return value?.let {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    Calendar.Builder().setInstant(it).build()
-                }
-                else {
-                    val date = Date(it)
-                    Calendar.getInstance(Locale.getDefault()).apply {
-                        set(
-                                date.year,
-                                date.month,
-                                date.date,
-                                date.hours,
-                                date.minutes,
-                                date.seconds,
-                        )
-                    }
-                }
-            }
-        }
+        fun fromTimestamp(value: Long?): Calendar? = value.asCalendar()
 
         @TypeConverter
         fun dateToTimestamp(date: Calendar?): Long? {
@@ -69,6 +50,7 @@ abstract class ClavaDatabase : RoomDatabase() {
         private var dbLock = Object()
         private var INSTANCE: ClavaDatabase? = null
 
+        // TODO Dependency injection
         fun getInstance(applicationContext: Context): ClavaDatabase {
             synchronized(dbLock) {
                 if (INSTANCE == null) {

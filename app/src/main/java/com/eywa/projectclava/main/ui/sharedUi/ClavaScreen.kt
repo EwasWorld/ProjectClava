@@ -41,6 +41,7 @@ fun ClavaScreen(
 
         if (!hasContent) {
             Spacer(modifier = Modifier.weight(1f))
+            // TODO Add more information on what to do first
             Text(
                     text = noContentText,
                     style = Typography.h4
