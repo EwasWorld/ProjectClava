@@ -17,6 +17,7 @@ import androidx.core.view.WindowInsetsCompat.toWindowInsetsCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.eywa.projectclava.main.mainActivity.ui.DrawerContent
 import com.eywa.projectclava.main.ui.sharedUi.ClavaBottomNav
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.ProjectClavaTheme
@@ -74,8 +75,9 @@ class MainActivity : ComponentActivity() {
                         drawerContent = {
                             DrawerContent(
                                     currentTime = { currentTime },
-                                    navController = navController,
-                                    viewModel = viewModel,
+                                    defaultMatchTime = viewModel.defaultMatchTime,
+                                    defaultTimeToAdd = viewModel.defaultTimeToAdd,
+                                    clubNightStartTime = viewModel.clubNightStartTime,
                                     players = players,
                                     matches = matches,
                                     isDrawerOpen = drawerState.isOpen,
@@ -85,6 +87,14 @@ class MainActivity : ComponentActivity() {
                                                     DrawerValue.Closed,
                                                     tween(300, easing = FastOutLinearInEasing)
                                             )
+                                        }
+                                    },
+                                    listener = {
+                                        if (it is MainIntent.DrawerIntent.Navigate) {
+                                            navController.navigate(it.route.route)
+                                        }
+                                        else {
+                                            viewModel.mainHandle(it)
                                         }
                                     }
                             )

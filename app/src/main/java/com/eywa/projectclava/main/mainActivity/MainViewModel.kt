@@ -51,39 +51,41 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var players = playerRepo.getAll().map { it.map { dbMatch -> dbMatch.asPlayer() } }
     val matches = matchRepo.getAll().map { it.map { dbMatch -> dbMatch.asMatch() } }
 
-    fun updateDefaultMatchTime(timeInSeconds: Int) {
-        defaultMatchTime = timeInSeconds
+    fun mainHandle(action: MainIntent) {
+        when (action) {
+            is MainIntent.DrawerIntent -> handle(action)
+        }
     }
 
-    fun updateDefaultTimeTimeToAdd(timeInSeconds: Int) {
-        defaultTimeToAdd = timeInSeconds
+    private fun handle(action: MainIntent.DrawerIntent) {
+        when (action) {
+            is MainIntent.DrawerIntent.Navigate -> throw NotImplementedError()
+            is MainIntent.DrawerIntent.UpdateClubNightStartTime -> updateClubNightStartTime(action)
+            is MainIntent.DrawerIntent.UpdateClubNightStartTimeCalendar -> clubNightStartTime = action.value
+            is MainIntent.DrawerIntent.UpdateDefaultMatchTime -> defaultMatchTime = action.value
+            is MainIntent.DrawerIntent.UpdateDefaultTimeToAdd -> defaultTimeToAdd = action.value
+            MainIntent.DrawerIntent.DeleteAllMatches -> viewModelScope.launch {
+                matchRepo.deleteAll()
+            }
+            is MainIntent.DrawerIntent.DeleteMatch -> viewModelScope.launch {
+                matchRepo.delete(action.match.asDatabaseMatch())
+            }
+            is MainIntent.DrawerIntent.UpdatePlayers -> viewModelScope.launch {
+                playerRepo.update(*action.players.map { it.asDatabasePlayer() }.toTypedArray())
+            }
+            is MainIntent.DrawerIntent.UpdateMatch -> viewModelScope.launch {
+                matchRepo.update(action.match.asDatabaseMatch())
+            }
+        }
     }
 
-    fun updateClubNightStartTime(calendar: Calendar) {
-        clubNightStartTime = calendar
-    }
-
-    fun updateClubNightStartTime(
-            day: Int? = null,
-            month: Int? = null,
-            year: Int? = null,
-            hours: Int? = null,
-            minutes: Int? = null,
-    ) {
-        require(
-                day != null
-                        || month != null
-                        || year != null
-                        || hours != null
-                        || minutes != null
-        ) { "No new values set" }
-
+    private fun updateClubNightStartTime(value: MainIntent.DrawerIntent.UpdateClubNightStartTime) {
         val newClubNightStartTime = clubNightStartTime.clone() as Calendar
-        day?.let { newClubNightStartTime.set(Calendar.DATE, day) }
-        month?.let { newClubNightStartTime.set(Calendar.MONTH, month) }
-        year?.let { newClubNightStartTime.set(Calendar.YEAR, year) }
-        hours?.let { newClubNightStartTime.set(Calendar.HOUR_OF_DAY, hours) }
-        minutes?.let { newClubNightStartTime.set(Calendar.MINUTE, minutes) }
+        value.day?.let { newClubNightStartTime.set(Calendar.DATE, value.day) }
+        value.month?.let { newClubNightStartTime.set(Calendar.MONTH, value.month) }
+        value.year?.let { newClubNightStartTime.set(Calendar.YEAR, value.year) }
+        value.hours?.let { newClubNightStartTime.set(Calendar.HOUR_OF_DAY, value.hours) }
+        value.minutes?.let { newClubNightStartTime.set(Calendar.MINUTE, value.minutes) }
         clubNightStartTime = newClubNightStartTime
     }
 
@@ -124,6 +126,4 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun deleteMatch(match: Match) = viewModelScope.launch {
         matchRepo.delete(match.asDatabaseMatch())
     }
-
-    fun deleteAllMatches() = viewModelScope.launch { matchRepo.deleteAll() }
 }
