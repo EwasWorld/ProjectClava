@@ -1,10 +1,17 @@
 package com.eywa.projectclava.ui.theme
 
 import androidx.compose.material.Typography
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.sp
+
+fun TextStyle.asClickableStyle() = copy(
+        color = Color(0xFF0D47A1),
+        textDecoration = TextDecoration.Underline,
+)
 
 // Set of Material typography styles to start with
 val Typography = Typography(

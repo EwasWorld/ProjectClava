@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.R
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
+import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.DividerThickness
@@ -36,6 +37,8 @@ fun CurrentMatchesScreen(
         changeCourtListener: (Match, Court) -> Unit,
         pauseListener: (Match) -> Unit,
         resumeListener: (Match, Court, resumeTime: Int) -> Unit,
+        missingContentNextStep: Iterable<MissingContentNextStep>?,
+        navigateListener: (NavRoute) -> Unit,
 ) {
     var selectedMatch: Match? by remember(matches) { mutableStateOf(null) }
     var addTimeDialogOpenFor: Match? by remember(matches) { mutableStateOf(null) }
@@ -65,6 +68,8 @@ fun CurrentMatchesScreen(
             openResumeDialogListener = { resumeDialogOpenFor = it },
             closeResumeDialogListener = { resumeDialogOpenFor = null },
             resumeListener = resumeListener,
+            missingContentNextStep = missingContentNextStep,
+            navigateListener = navigateListener,
     )
 }
 
@@ -90,6 +95,8 @@ fun CurrentMatchesScreen(
         openResumeDialogListener: (Match) -> Unit,
         closeResumeDialogListener: () -> Unit,
         resumeListener: (Match, Court, resumeTime: Int) -> Unit,
+        missingContentNextStep: Iterable<MissingContentNextStep>?,
+        navigateListener: (NavRoute) -> Unit,
 ) {
     CurrentMatchesScreenDialogs(
             availableCourts = courts?.getAvailable(matches),
@@ -107,7 +114,16 @@ fun CurrentMatchesScreen(
 
     ClavaScreen(
             noContentText = "No matches being played",
-            hasContent = !matches?.filter { it.isCurrent }.isNullOrEmpty(),
+            missingContentNextStep = setOf(
+                    MissingContentNextStep.ADD_PLAYERS, MissingContentNextStep.ENABLE_PLAYERS,
+                    MissingContentNextStep.ADD_COURTS, MissingContentNextStep.ENABLE_COURTS,
+                    MissingContentNextStep.SETUP_A_MATCH, MissingContentNextStep.START_A_MATCH
+            ).let { allowed ->
+                missingContentNextStep
+                        ?.takeIf { states -> states.any { it == MissingContentNextStep.START_A_MATCH } }
+                        ?.filter { allowed.contains(it) }
+            },
+            navigateListener = navigateListener,
             headerContent = {
                 AvailableCourtsHeader(courts = courts, matches = matches, getTimeRemaining = getTimeRemaining)
             },
@@ -341,6 +357,8 @@ fun CurrentMatchesScreen_Preview(
             openResumeDialogListener = {},
             closeResumeDialogListener = {},
             resumeListener = { _, _, _ -> },
+            missingContentNextStep = null,
+            navigateListener = {},
     )
 }
 

@@ -12,10 +12,8 @@ import com.eywa.projectclava.R
 import com.eywa.projectclava.main.common.asTimeString
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
-import com.eywa.projectclava.main.model.Court
-import com.eywa.projectclava.main.model.Match
-import com.eywa.projectclava.main.model.TimeRemaining
-import com.eywa.projectclava.main.model.getLatestMatchForCourt
+import com.eywa.projectclava.main.mainActivity.NavRoute
+import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.sharedUi.SetupListScreen
 import com.eywa.projectclava.main.ui.sharedUi.SetupListTabSwitcherItem
 import java.util.*
@@ -31,6 +29,8 @@ fun SetupCourtsScreen(
         itemDeletedListener: (Court) -> Unit,
         toggleIsPresentListener: (Court) -> Unit,
         onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
+        missingContentNextStep: Iterable<MissingContentNextStep>?,
+        navigateListener: (NavRoute) -> Unit,
 ) {
     val newItemName = rememberSaveable { mutableStateOf("") }
     var editDialogOpenFor: Court? by remember { mutableStateOf(null) }
@@ -65,6 +65,8 @@ fun SetupCourtsScreen(
             itemDeletedListener = { itemDeletedListener(it) },
             toggleIsPresentListener = toggleIsPresentListener,
             onTabSelectedListener = onTabSelectedListener,
+            missingContentNextStep = missingContentNextStep,
+            navigateListener = navigateListener,
     )
 }
 
@@ -85,9 +87,13 @@ fun SetupCourtsScreen(
         itemDeletedListener: (Court) -> Unit,
         toggleIsPresentListener: (Court) -> Unit,
         onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
+        missingContentNextStep: Iterable<MissingContentNextStep>?,
+        navigateListener: (NavRoute) -> Unit,
 ) {
+    // TODO Name already exists doesn't work properly due to court prefix
     SetupListScreen(
             typeContentDescription = "court",
+            textPlaceholder = "1",
             items = courts,
             getMatch = { matches?.getLatestMatchForCourt(it) },
             getTimeRemaining = getTimeRemaining,
@@ -108,6 +114,8 @@ fun SetupCourtsScreen(
             },
             selectedTab = SetupListTabSwitcherItem.COURTS,
             onTabSelectedListener = onTabSelectedListener,
+            missingContentNextStep = missingContentNextStep?.find { it == MissingContentNextStep.ADD_COURTS },
+            navigateListener = navigateListener,
     )
 }
 
@@ -150,5 +158,7 @@ fun SetupCourtsScreen_Preview() {
             itemDeletedListener = {},
             toggleIsPresentListener = {},
             onTabSelectedListener = {},
+            missingContentNextStep = null,
+            navigateListener = {},
     )
 }

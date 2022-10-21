@@ -88,11 +88,13 @@ fun TimePicker(
         modifier: Modifier = Modifier,
         showError: Boolean = true,
 ) {
-    Column {
+    Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = modifier.padding(horizontal = 10.dp)
+    ) {
         Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterHorizontally),
-                modifier = modifier.padding(horizontal = 10.dp)
         ) {
             NumericTextField(
                     value = timePickerState.minutes,
@@ -191,6 +193,18 @@ private fun NumericTextField(
 fun TimePicker_Preview() {
     TimePicker(
             timePickerState = TimePickerState((60 * 15.5).roundToInt()),
+            timeChangedListener = {},
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun Error_TimePicker_Preview() {
+    TimePicker(
+            timePickerState = TimePickerState(
+                    minutes = "-5",
+                    seconds = "00"
+            ),
             timeChangedListener = {},
     )
 }

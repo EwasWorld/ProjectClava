@@ -16,6 +16,7 @@ import com.eywa.projectclava.main.common.asDateString
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.model.Match
+import com.eywa.projectclava.main.model.MissingContentNextStep
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
@@ -35,6 +36,8 @@ fun PreviousMatchesScreen(
         addTimeListener: (Match, timeToAdd: Int) -> Unit,
         deleteMatchListener: (Match) -> Unit,
         onTabSelectedListener: (HistoryTabSwitcherItem) -> Unit,
+        missingContentNextStep: Iterable<MissingContentNextStep>?,
+        navigateListener: (NavRoute) -> Unit,
 ) {
     var selectedMatch: Match? by remember(matches) { mutableStateOf(null) }
     var addTimeDialogOpenFor: Match? by remember(matches) { mutableStateOf(null) }
@@ -52,6 +55,8 @@ fun PreviousMatchesScreen(
             closeAddTimeDialogListener = { addTimeDialogOpenFor = null },
             deleteMatchListener = deleteMatchListener,
             onTabSelectedListener = onTabSelectedListener,
+            missingContentNextStep = missingContentNextStep,
+            navigateListener = navigateListener,
     )
 }
 
@@ -67,6 +72,8 @@ fun PreviousMatchesScreen(
         addTimeListener: (Match, timeToAdd: Int) -> Unit,
         deleteMatchListener: (Match) -> Unit,
         onTabSelectedListener: (HistoryTabSwitcherItem) -> Unit,
+        missingContentNextStep: Iterable<MissingContentNextStep>?,
+        navigateListener: (NavRoute) -> Unit,
 ) {
     PreviousMatchesScreenDialogs(
             defaultTimeToAddSeconds = defaultTimeToAddSeconds,
@@ -78,7 +85,9 @@ fun PreviousMatchesScreen(
     val finishedMatches = matches?.filter { it.isFinished }?.sortedByDescending { it.state }
     ClavaScreen(
             noContentText = "No matches have been completed",
-            hasContent = !finishedMatches.isNullOrEmpty(),
+            missingContentNextStep = missingContentNextStep
+                    ?.takeIf { states -> states.any { it == MissingContentNextStep.COMPLETE_A_MATCH } },
+            navigateListener = navigateListener,
             footerContent = {
                 PreviousMatchesScreenFooter(
                         selectedMatch = selectedMatch,
@@ -208,5 +217,7 @@ fun PreviousMatchesScreen_Preview() {
             closeAddTimeDialogListener = { },
             deleteMatchListener = { },
             onTabSelectedListener = {},
+            missingContentNextStep = null,
+            navigateListener = {},
     )
 }

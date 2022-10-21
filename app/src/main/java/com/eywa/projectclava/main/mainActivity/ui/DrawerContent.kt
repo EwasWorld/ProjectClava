@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.eywa.projectclava.main.common.asDateTimeString
+import com.eywa.projectclava.main.common.asDateString
 import com.eywa.projectclava.main.common.asTimeString
 import com.eywa.projectclava.main.mainActivity.MainIntent.DrawerIntent
 import com.eywa.projectclava.main.mainActivity.NavRoute
@@ -24,6 +24,7 @@ import com.eywa.projectclava.main.ui.sharedUi.TimePicker
 import com.eywa.projectclava.main.ui.sharedUi.TimePickerState
 import com.eywa.projectclava.ui.theme.DividerThickness
 import com.eywa.projectclava.ui.theme.Typography
+import com.eywa.projectclava.ui.theme.asClickableStyle
 import java.util.*
 
 private val drawerTextStyle = Typography.h4
@@ -89,7 +90,6 @@ fun DrawerContent(
                                     year = year,
                             )
                     )
-                    timePicker.show()
                 },
                 clubNightStartTime.get(Calendar.YEAR),
                 clubNightStartTime.get(Calendar.MONTH),
@@ -100,43 +100,66 @@ fun DrawerContent(
     Column(
             modifier = Modifier.padding(vertical = 15.dp)
     ) {
-        DefaultTimePicker(
-                title = "Default match time:",
-                errorSuffix = "Default match time is still " + defaultMatchTime.asTimeString(),
-                state = matchTimePickerState,
-                updateState = {
-                    matchTimePickerState = it
-                    if (matchTimePickerState.isValid) {
-                        listener(DrawerIntent.UpdateDefaultMatchTime(it.totalSeconds))
+        Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                modifier = Modifier.padding(horizontal = 25.dp, vertical = 10.dp)
+        ) {
+            Text(
+                    text = "Cut-off:",
+                    style = drawerTextStyle,
+            )
+            Text(
+                    text = clubNightStartTime.asTimeString(),
+                    style = drawerTextStyle.asClickableStyle(),
+                    modifier = Modifier.clickable { timePicker.show() }
+            )
+            Text(
+                    text = clubNightStartTime.asDateString(),
+                    style = drawerTextStyle.asClickableStyle(),
+                    modifier = Modifier.clickable { datePicker.show() }
+            )
+        }
+
+        DrawerDivider()
+
+        Column(
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.padding(vertical = 10.dp)
+        ) {
+            DefaultTimePicker(
+                    title = "Default match duration:",
+                    errorSuffix = "Default match time is still " + defaultMatchTime.asTimeString(),
+                    state = matchTimePickerState,
+                    updateState = {
+                        matchTimePickerState = it
+                        if (matchTimePickerState.isValid) {
+                            listener(DrawerIntent.UpdateDefaultMatchTime(it.totalSeconds))
+                        }
                     }
-                }
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-        DefaultTimePicker(
-                title = "Default add time:",
-                errorSuffix = "Default add time is still " + defaultTimeToAdd.asTimeString(),
-                state = timeToAddPickerState,
-                updateState = {
-                    timeToAddPickerState = it
-                    if (timeToAddPickerState.isValid) {
-                        listener(DrawerIntent.UpdateDefaultTimeToAdd(it.totalSeconds))
+            )
+            DefaultTimePicker(
+                    title = "Default additional time:",
+                    errorSuffix = "Default add time is still " + defaultTimeToAdd.asTimeString(),
+                    state = timeToAddPickerState,
+                    updateState = {
+                        timeToAddPickerState = it
+                        if (timeToAddPickerState.isValid) {
+                            listener(DrawerIntent.UpdateDefaultTimeToAdd(it.totalSeconds))
+                        }
                     }
-                }
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-        DefaultTimePicker(
-                title = "Overrun indicator:",
-                errorSuffix = "Threshold is still " + overrunIndicatorThreshold.asTimeString(),
-                state = overrunThresholdPickerState,
-                updateState = {
-                    overrunThresholdPickerState = it
-                    if (overrunThresholdPickerState.isValid) {
-                        listener(DrawerIntent.UpdateOverrunIndicatorThreshold(it.totalSeconds))
+            )
+            DefaultTimePicker(
+                    title = "Overrun indicator threshold:",
+                    errorSuffix = "Threshold is still " + overrunIndicatorThreshold.asTimeString(),
+                    state = overrunThresholdPickerState,
+                    updateState = {
+                        overrunThresholdPickerState = it
+                        if (overrunThresholdPickerState.isValid) {
+                            listener(DrawerIntent.UpdateOverrunIndicatorThreshold(it.totalSeconds))
+                        }
                     }
-                }
-        )
-        DrawerTextButton(text = "Cut-off: " + clubNightStartTime.asDateTimeString()) {
-            datePicker.show()
+            )
         }
 
 //        DrawerDivider()
@@ -237,18 +260,19 @@ fun DefaultTimePicker(
         state: TimePickerState,
         updateState: (TimePickerState) -> Unit
 ) {
-    Row(
-            verticalAlignment = Alignment.CenterVertically,
+    Column(
             modifier = Modifier.padding(horizontal = 25.dp),
     ) {
         Text(
                 text = title,
                 style = drawerTextStyle,
         )
+        Spacer(modifier = Modifier.height(10.dp))
         TimePicker(
                 timePickerState = state,
                 timeChangedListener = updateState,
                 showError = false,
+                modifier = Modifier.fillMaxWidth()
         )
     }
     if (state.error != null) {

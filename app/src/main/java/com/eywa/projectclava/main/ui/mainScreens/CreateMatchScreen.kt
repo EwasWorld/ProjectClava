@@ -21,6 +21,7 @@ import com.eywa.projectclava.main.common.GeneratableMatchState
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.common.generatePlayers
+import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.Typography
@@ -33,6 +34,8 @@ fun CreateMatchScreen(
         getTimeRemaining: Match.() -> TimeRemaining?,
         courts: Iterable<Court>? = listOf(),
         createMatchListener: (Iterable<Player>) -> Unit,
+        missingContentNextStep: Iterable<MissingContentNextStep>?,
+        navigateListener: (NavRoute) -> Unit,
 ) {
     var selectedPlayers: Set<Player> by remember { mutableStateOf(setOf()) }
 
@@ -54,7 +57,9 @@ fun CreateMatchScreen(
                 else {
                     selectedPlayers.plus(it)
                 }
-            }
+            },
+            missingContentNextStep = missingContentNextStep,
+            navigateListener = navigateListener,
     )
 }
 
@@ -71,6 +76,8 @@ fun CreateMatchScreen(
         createMatchListener: () -> Unit,
         removeAllFromMatchListener: () -> Unit,
         playerClickedListener: (Player) -> Unit,
+        missingContentNextStep: Iterable<MissingContentNextStep>?,
+        navigateListener: (NavRoute) -> Unit,
 ) {
     val playerMatches = matches.getPlayerMatches()
     val selectedPlayerNames = selectedPlayers.map { it.name }
@@ -89,7 +96,10 @@ fun CreateMatchScreen(
 
     ClavaScreen(
             noContentText = "No players to match up",
-            hasContent = availablePlayers.isNotEmpty(),
+            missingContentNextStep = setOf(
+                    MissingContentNextStep.ADD_PLAYERS, MissingContentNextStep.ENABLE_PLAYERS
+            ).let { allowed -> missingContentNextStep?.filter { allowed.contains(it) } },
+            navigateListener = navigateListener,
             headerContent = {
                 AvailableCourtsHeader(courts = courts, matches = matches, getTimeRemaining = getTimeRemaining)
             },
@@ -133,7 +143,7 @@ fun CreateMatchScreen(
                             if (comparison != null) return@Comparator comparison
 
                             // Players with any in progress matches to the end
-                            comparison = comparePredicate({ this!!.any { it.isInProgress } }, true)
+                            comparison = comparePredicate({ this!!.any { it.isOnCourt } }, true)
                             if (comparison != null) return@Comparator comparison
 
                             // Get the latest finish time of the set
@@ -281,6 +291,8 @@ fun CreateMatchScreen_Preview() {
             createMatchListener = {},
             removeAllFromMatchListener = {},
             playerClickedListener = {},
+            missingContentNextStep = null,
+            navigateListener = {},
     )
 }
 
@@ -301,6 +313,8 @@ fun Individual_CreateMatchScreen_Preview(
             createMatchListener = {},
             removeAllFromMatchListener = {},
             playerClickedListener = {},
+            missingContentNextStep = null,
+            navigateListener = {},
     )
 }
 

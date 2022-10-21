@@ -14,7 +14,9 @@ import com.eywa.projectclava.main.common.GeneratableMatchState
 import com.eywa.projectclava.main.common.asDateString
 import com.eywa.projectclava.main.common.asTimeString
 import com.eywa.projectclava.main.common.generateMatches
+import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.model.Match
+import com.eywa.projectclava.main.model.MissingContentNextStep
 import com.eywa.projectclava.main.ui.sharedUi.ClavaScreen
 import com.eywa.projectclava.main.ui.sharedUi.TabSwitcher
 import com.eywa.projectclava.main.ui.sharedUi.WrappingRow
@@ -25,6 +27,8 @@ import java.util.*
 fun DaysReportScreen(
         matches: Iterable<Match>?,
         onTabSelectedListener: (HistoryTabSwitcherItem) -> Unit,
+        missingContentNextStep: Iterable<MissingContentNextStep>?,
+        navigateListener: (NavRoute) -> Unit,
 ) {
     // Most recent first
     val matchesGroupedByDate = matches
@@ -35,7 +39,9 @@ fun DaysReportScreen(
 
     ClavaScreen(
             noContentText = "No matches have been completed",
-            hasContent = !matchesGroupedByDate.isNullOrEmpty(),
+            missingContentNextStep = missingContentNextStep
+                    ?.takeIf { states -> states.any { it == MissingContentNextStep.COMPLETE_A_MATCH } },
+            navigateListener = navigateListener,
             headerContent = {
                 TabSwitcher(
                         items = HistoryTabSwitcherItem.values().toList(),
@@ -120,5 +126,7 @@ fun DaysReportScreen_Preview() {
     DaysReportScreen(
             matches = matches,
             onTabSelectedListener = {},
+            missingContentNextStep = null,
+            navigateListener = {},
     )
 }

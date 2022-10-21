@@ -52,7 +52,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var defaultTimeToAdd by mutableStateOf(2 * 60)
         private set
     var clubNightStartTime: Calendar by mutableStateOf(
-            Calendar.getInstance(Locale.getDefault()).apply { set(Calendar.SECOND, 0) }
+            // Default to 4am today
+            Calendar.getInstance(Locale.getDefault()).apply {
+                set(Calendar.HOUR_OF_DAY, 4)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+            }
     )
         private set
 
@@ -77,7 +82,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     clubNightStartTime = it.asCalendar()!!
                 }
             }
+        }
 
+        viewModelScope.launch {
             while (true) {
                 currentTime.emit(Calendar.getInstance(Locale.getDefault()))
                 delay(1000)

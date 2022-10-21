@@ -25,10 +25,7 @@ import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.common.generatePlayers
 import com.eywa.projectclava.main.mainActivity.NavRoute
-import com.eywa.projectclava.main.model.Match
-import com.eywa.projectclava.main.model.MatchState
-import com.eywa.projectclava.main.model.Player
-import com.eywa.projectclava.main.model.TimeRemaining
+import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.mainScreens.SetupCourtsScreen
 import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
@@ -54,6 +51,7 @@ fun <T : SetupListItem> String.isDuplicate(
 @Composable
 fun <T : SetupListItem> SetupListScreen(
         typeContentDescription: String,
+        textPlaceholder: String,
         items: Iterable<T>?,
         getMatch: (T) -> Match?,
         getTimeRemaining: Match.() -> TimeRemaining?,
@@ -65,6 +63,8 @@ fun <T : SetupListItem> SetupListScreen(
         selectedTab: SetupListTabSwitcherItem,
         onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
         extraContent: @Composable RowScope.(T) -> Unit = {},
+        missingContentNextStep: MissingContentNextStep?,
+        navigateListener: (NavRoute) -> Unit,
 ) {
     val newItemName = rememberSaveable { mutableStateOf("") }
     var editDialogOpenFor: T? by remember { mutableStateOf(null) }
@@ -72,6 +72,7 @@ fun <T : SetupListItem> SetupListScreen(
 
     SetupListScreen(
             typeContentDescription = typeContentDescription,
+            textPlaceholder = textPlaceholder,
             items = items,
             getMatch = getMatch,
             getTimeRemaining = getTimeRemaining,
@@ -103,12 +104,15 @@ fun <T : SetupListItem> SetupListScreen(
             selectedTab = selectedTab,
             onTabSelectedListener = onTabSelectedListener,
             extraContent = extraContent,
+            missingContentNextStep = missingContentNextStep,
+            navigateListener = navigateListener,
     )
 }
 
 @Composable
 fun <T : SetupListItem> SetupListScreen(
         typeContentDescription: String,
+        textPlaceholder: String,
         items: Iterable<T>?,
         getMatch: (T) -> Match?,
         getTimeRemaining: Match.() -> TimeRemaining?,
@@ -127,6 +131,8 @@ fun <T : SetupListItem> SetupListScreen(
         selectedTab: SetupListTabSwitcherItem,
         onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
         extraContent: @Composable RowScope.(T) -> Unit = {},
+        missingContentNextStep: MissingContentNextStep?,
+        navigateListener: (NavRoute) -> Unit,
 ) {
     // TODO Add a search FAB
     // TODO Add an are you sure to deletion
@@ -134,6 +140,7 @@ fun <T : SetupListItem> SetupListScreen(
 
     EditDialog(
             typeContentDescription = typeContentDescription,
+            textPlaceholder = textPlaceholder,
             items = items,
             editDialogOpenFor = editDialogOpenFor,
             itemEditedListener = itemNameEditedListener,
@@ -141,11 +148,14 @@ fun <T : SetupListItem> SetupListScreen(
     )
 
     ClavaScreen(
-            noContentText = "No ${typeContentDescription}s to show",
-            hasContent = items?.any() ?: false,
+            noContentText = "No ${typeContentDescription}s yet,\n\nType a name into the box below\nthen press enter!",
+            missingContentNextStep = missingContentNextStep?.let { setOf(it) },
+            showMissingContentNextStep = false,
+            navigateListener = navigateListener,
             footerContent = {
                 SetupListScreenFooter(
                         typeContentDescription = typeContentDescription,
+                        textPlaceholder = textPlaceholder,
                         items = items,
                         addItemName = addItemName,
                         showAddItemBlankError = showAddItemBlankError,
@@ -227,6 +237,7 @@ fun <T : SetupListItem> SetupListScreen(
 @Composable
 private fun <T : SetupListItem> SetupListScreenFooter(
         typeContentDescription: String,
+        textPlaceholder: String,
         items: Iterable<T>?,
         addItemName: String,
         showAddItemBlankError: Boolean,
@@ -238,6 +249,7 @@ private fun <T : SetupListItem> SetupListScreenFooter(
 
     ListItemNameTextField(
             typeContentDescription = typeContentDescription,
+            textPlaceholder = textPlaceholder,
             existingItems = items,
             proposedItemName = addItemName,
             showBlankError = showAddItemBlankError,
@@ -254,6 +266,7 @@ private fun <T : SetupListItem> SetupListScreenFooter(
 @Composable
 fun <T : SetupListItem> ListItemNameTextField(
         typeContentDescription: String,
+        textPlaceholder: String,
         existingItems: Iterable<T>?,
         proposedItemName: String,
         showBlankError: Boolean,
@@ -266,7 +279,7 @@ fun <T : SetupListItem> ListItemNameTextField(
 ) {
     val isDuplicate = proposedItemName.isDuplicate(existingItems, itemBeingEdited)
     val errorMessage = when {
-        isDuplicate -> "A person with already exists"
+        isDuplicate -> "A $typeContentDescription with already exists"
         showBlankError && proposedItemName.isBlank() -> "Cannot be empty"
         else -> null
     }
@@ -281,7 +294,7 @@ fun <T : SetupListItem> ListItemNameTextField(
                 value = proposedItemName,
                 onValueChange = onValueChangedListener,
                 label = label.takeIf { itemBeingEdited == null },
-                placeholder = { Text("John Doe") },
+                placeholder = { Text(textPlaceholder) },
                 trailingIcon = {
                     IconButton(onClick = onClearPressedListener) {
                         Icon(
@@ -316,6 +329,7 @@ fun <T : SetupListItem> ListItemNameTextField(
 @Composable
 fun <T : SetupListItem> EditDialog(
         typeContentDescription: String,
+        textPlaceholder: String,
         items: Iterable<T>?,
         editDialogOpenFor: T?,
         itemEditedListener: (T, String) -> Unit,
@@ -336,6 +350,7 @@ fun <T : SetupListItem> EditDialog(
     ) {
         ListItemNameTextField(
                 typeContentDescription = typeContentDescription,
+                textPlaceholder = textPlaceholder,
                 existingItems = items,
                 proposedItemName = editName.value,
                 onValueChangedListener = {
@@ -374,6 +389,7 @@ fun SetupListScreen_Preview() {
     Box(modifier = Modifier.fillMaxSize()) {
         SetupListScreen(
                 typeContentDescription = "player",
+                textPlaceholder = "John Doe",
                 addItemName = "",
                 addItemNameChangedListener = {},
                 addItemNameClearPressedListener = {},
@@ -390,6 +406,8 @@ fun SetupListScreen_Preview() {
                 itemDeletedListener = {},
                 selectedTab = SetupListTabSwitcherItem.PLAYERS,
                 onTabSelectedListener = {},
+                missingContentNextStep = null,
+                navigateListener = {},
         )
     }
 }
@@ -414,6 +432,8 @@ fun ExtraInfo_SetupListScreen_Preview() {
             itemDeletedListener = {},
             toggleIsPresentListener = {},
             onTabSelectedListener = {},
+            missingContentNextStep = null,
+            navigateListener = {},
     )
 }
 
@@ -424,6 +444,7 @@ fun Dialog_SetupListScreen_Preview() {
     Box(modifier = Modifier.fillMaxSize()) {
         SetupListScreen(
                 typeContentDescription = "player",
+                textPlaceholder = "John Doe",
                 addItemName = "",
                 addItemNameChangedListener = {},
                 addItemNameClearPressedListener = {},
@@ -440,6 +461,8 @@ fun Dialog_SetupListScreen_Preview() {
                 itemDeletedListener = {},
                 selectedTab = SetupListTabSwitcherItem.PLAYERS,
                 onTabSelectedListener = {},
+                missingContentNextStep = null,
+                navigateListener = {},
         )
     }
 }
@@ -451,6 +474,7 @@ fun Error_SetupListScreen_Preview() {
     Box(modifier = Modifier.fillMaxSize()) {
         SetupListScreen(
                 typeContentDescription = "player",
+                textPlaceholder = "John Doe",
                 addItemName = generatePlayers.first().name,
                 addItemNameChangedListener = {},
                 addItemNameClearPressedListener = {},
@@ -467,6 +491,8 @@ fun Error_SetupListScreen_Preview() {
                 itemDeletedListener = {},
                 selectedTab = SetupListTabSwitcherItem.PLAYERS,
                 onTabSelectedListener = {},
+                missingContentNextStep = null,
+                navigateListener = {},
         )
     }
 }

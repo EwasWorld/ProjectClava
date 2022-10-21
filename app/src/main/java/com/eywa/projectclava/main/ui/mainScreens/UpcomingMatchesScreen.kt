@@ -21,6 +21,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.main.common.*
+import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.ClavaColor
@@ -35,6 +36,8 @@ fun UpcomingMatchesScreen(
         startMatchOkListener: (Match, Court, totalTimeSeconds: Int) -> Unit,
         removeMatchListener: (Match) -> Unit,
         defaultTimeSeconds: Int,
+        missingContentNextStep: Iterable<MissingContentNextStep>?,
+        navigateListener: (NavRoute) -> Unit,
 ) {
     var startMatchDialogOpenFor: Match? by remember { mutableStateOf(null) }
     var selectedMatch: Match? by remember { mutableStateOf(null) }
@@ -55,6 +58,8 @@ fun UpcomingMatchesScreen(
             selectMatchListener = { newSelection ->
                 selectedMatch = newSelection.takeIf { selectedMatch?.id != newSelection.id }
             },
+            missingContentNextStep = missingContentNextStep,
+            navigateListener = navigateListener,
     )
 }
 
@@ -71,10 +76,25 @@ fun UpcomingMatchesScreen(
         selectedMatch: Match?,
         defaultTimeSeconds: Int,
         selectMatchListener: (Match) -> Unit,
+        missingContentNextStep: Iterable<MissingContentNextStep>?,
+        navigateListener: (NavRoute) -> Unit,
 ) {
     val availableCourts = courts?.getAvailable(matches)
     val playerMatchStates = matches.getPlayerStates()
     val sortedMatches = matches.filter { it.state is MatchState.NotStarted }.sortedBy { it.state }
+
+    val missingCourts = missingContentNextStep?.filter {
+        it == MissingContentNextStep.ADD_COURTS || it == MissingContentNextStep.ENABLE_COURTS
+    }
+    val missingContentMain = setOf(
+            MissingContentNextStep.ADD_PLAYERS, MissingContentNextStep.ENABLE_PLAYERS,
+            MissingContentNextStep.ADD_COURTS, MissingContentNextStep.ENABLE_COURTS,
+            MissingContentNextStep.SETUP_A_MATCH
+    ).let { allowed ->
+        missingContentNextStep
+                ?.takeIf { states -> states.any { it == MissingContentNextStep.SETUP_A_MATCH } }
+                ?.filter { allowed.contains(it) }
+    }
 
     StartMatchDialog(
             availableCourts = availableCourts,
@@ -85,8 +105,9 @@ fun UpcomingMatchesScreen(
     )
 
     ClavaScreen(
-            noContentText = "No matches planned",
-            hasContent = sortedMatches.isNotEmpty(),
+            noContentText = if (missingContentMain != null) "No matches planned" else "No courts to put the matches on!",
+            missingContentNextStep = missingContentMain ?: missingCourts,
+            navigateListener = navigateListener,
             headerContent = {
                 AvailableCourtsHeader(courts = courts, matches = matches, getTimeRemaining = getTimeRemaining)
             },
@@ -223,7 +244,7 @@ private fun UpcomingMatchesScreenFooter(
                                     && hasAvailableCourts
                                     && selectedMatch.players
                                     .all {
-                                        (playerMatchStates[it.name]?.isInProgress?.not() ?: true)
+                                        (playerMatchStates[it.name]?.isOnCourt?.not() ?: true)
                                                 && it.isPresent
                                     },
                             onClick = { selectedMatch?.let { openStartMatchDialogListener(it) } },
@@ -291,6 +312,8 @@ fun UpcomingMatchesScreen_Preview(
             startMatchOkListener = { _, _, _ -> },
             startMatchCancelListener = {},
             defaultTimeSeconds = 15 * 60,
+            missingContentNextStep = null,
+            navigateListener = {},
     )
 }
 

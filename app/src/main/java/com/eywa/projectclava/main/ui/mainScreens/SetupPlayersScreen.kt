@@ -2,10 +2,8 @@ package com.eywa.projectclava.main.ui.mainScreens
 
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import com.eywa.projectclava.main.model.Match
-import com.eywa.projectclava.main.model.Player
-import com.eywa.projectclava.main.model.TimeRemaining
-import com.eywa.projectclava.main.model.getPlayerColouringMatch
+import com.eywa.projectclava.main.mainActivity.NavRoute
+import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.sharedUi.SetupListScreen
 import com.eywa.projectclava.main.ui.sharedUi.SetupListTabSwitcherItem
 
@@ -19,6 +17,8 @@ fun SetupPlayersScreen(
         itemDeletedListener: (Player) -> Unit,
         toggleIsPresentListener: (Player) -> Unit,
         onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
+        missingContentNextStep: Iterable<MissingContentNextStep>?,
+        navigateListener: (NavRoute) -> Unit,
 ) {
     val newItemName = rememberSaveable { mutableStateOf("") }
     var editDialogOpenFor: Player? by remember { mutableStateOf(null) }
@@ -53,6 +53,8 @@ fun SetupPlayersScreen(
             itemDeletedListener = { itemDeletedListener(it) },
             toggleIsPresentListener = toggleIsPresentListener,
             onTabSelectedListener = onTabSelectedListener,
+            missingContentNextStep = missingContentNextStep,
+            navigateListener = navigateListener,
     )
 }
 
@@ -73,9 +75,12 @@ fun SetupPlayersScreen(
         itemDeletedListener: (Player) -> Unit,
         toggleIsPresentListener: (Player) -> Unit,
         onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
+        missingContentNextStep: Iterable<MissingContentNextStep>?,
+        navigateListener: (NavRoute) -> Unit,
 ) {
     SetupListScreen(
             typeContentDescription = "player",
+            textPlaceholder = "John Doe",
             items = items,
             getMatch = { player ->
                 matches
@@ -96,5 +101,7 @@ fun SetupPlayersScreen(
             itemClickedListener = toggleIsPresentListener,
             selectedTab = SetupListTabSwitcherItem.PLAYERS,
             onTabSelectedListener = onTabSelectedListener,
+            missingContentNextStep = missingContentNextStep?.find { it == MissingContentNextStep.ADD_PLAYERS },
+            navigateListener = navigateListener,
     )
 }

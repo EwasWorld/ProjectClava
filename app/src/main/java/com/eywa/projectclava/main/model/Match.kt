@@ -34,9 +34,9 @@ fun Iterable<Match>.getPlayerColouringMatch() = (
                 ?: this
         ).maxByOrNull { it.state }
 
-fun Iterable<Match>.getCourtsInUse() = filter { it.isInProgress }.map { it.court!! }
+fun Iterable<Match>.getCourtsInUse() = filter { it.isOnCourt }.map { it.court!! }
 
-fun Iterable<Match>.getNextMatchToFinish() = filter { it.isInProgress }.minByOrNull { it.state }
+fun Iterable<Match>.getNextMatchToFinish() = filter { it.isOnCourt }.minByOrNull { it.state }
 
 fun Iterable<Match>.getLatestMatchForCourt(court: Court) =
         filter { it.court?.name == court.name }.getLatestFinishingMatch()
@@ -72,7 +72,7 @@ data class Match(
     val isPaused
         get() = state is MatchState.Paused
 
-    val isInProgress
+    val isOnCourt
         get() = state is MatchState.OnCourt
 
     val isFinished
@@ -82,7 +82,7 @@ data class Match(
      * true if the match is paused, in progress, or overrunning
      */
     val isCurrent
-        get() = isPaused || isInProgress
+        get() = isPaused || isOnCourt
 
     fun getFinishTime() = when (state) {
         is MatchState.Completed -> state.matchEndTime

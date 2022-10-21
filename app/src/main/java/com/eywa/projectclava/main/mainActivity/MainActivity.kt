@@ -27,7 +27,7 @@ import java.util.*
 /*
  * Time spent: 38 hrs
  */
-
+// TODO What happens if a player is deleted - their matches aren't cleared but then the match doesn't have any players
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
 
@@ -71,7 +71,7 @@ class MainActivity : ComponentActivity() {
                             if (isBottomNavVisible) {
                                 ClavaBottomNav(
                                         hasOverrunningMatch = matches.any {
-                                            if (!it.isInProgress) return@any false
+                                            if (!it.isOnCourt) return@any false
                                             val remaining = it.state.getTimeLeft(currentTime) ?: return@any false
                                             remaining.isEndingSoon(viewModel.overrunIndicatorThreshold)
                                         },

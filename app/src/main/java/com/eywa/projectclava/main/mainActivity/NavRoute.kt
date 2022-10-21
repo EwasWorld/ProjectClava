@@ -2,10 +2,7 @@ package com.eywa.projectclava.main.mainActivity
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
-import com.eywa.projectclava.main.model.Court
-import com.eywa.projectclava.main.model.Match
-import com.eywa.projectclava.main.model.Player
-import com.eywa.projectclava.main.model.TimeRemaining
+import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.mainScreens.*
 import com.eywa.projectclava.main.ui.sharedUi.AvailableCourtsHeader
 import com.eywa.projectclava.main.ui.sharedUi.ClavaScreen
@@ -34,6 +31,8 @@ enum class NavRoute(val route: String) {
                     itemDeletedListener = { viewModel.deletePlayer(it) },
                     toggleIsPresentListener = { viewModel.updatePlayers(it.copy(isPresent = !it.isPresent)) },
                     onTabSelectedListener = { navController.navigate(it.destination.route) },
+                    navigateListener = { navController.navigate(it.route) },
+                    missingContentNextStep = MissingContentNextStep.getMissingContent(players, courts, matches),
             )
         }
     },
@@ -60,6 +59,8 @@ enum class NavRoute(val route: String) {
                     itemDeletedListener = { viewModel.deleteCourt(it) },
                     toggleIsPresentListener = { viewModel.updateCourt(it.copy(canBeUsed = !it.canBeUsed)) },
                     onTabSelectedListener = { navController.navigate(it.destination.route) },
+                    navigateListener = { navController.navigate(it.route) },
+                    missingContentNextStep = MissingContentNextStep.getMissingContent(players, courts, matches),
             )
         }
     },
@@ -80,7 +81,9 @@ enum class NavRoute(val route: String) {
                     matches = matches.filterToAfterCutoff(viewModel.clubNightStartTime),
                     getTimeRemaining = getTimeRemaining,
                     courts = courts,
-                    createMatchListener = { viewModel.addMatch(it, currentTime()) }
+                    createMatchListener = { viewModel.addMatch(it, currentTime()) },
+                    navigateListener = { navController.navigate(it.route) },
+                    missingContentNextStep = MissingContentNextStep.getMissingContent(players, courts, matches),
             )
         }
     },
@@ -111,6 +114,8 @@ enum class NavRoute(val route: String) {
                     },
                     removeMatchListener = { viewModel.deleteMatch(it) },
                     defaultTimeSeconds = viewModel.defaultMatchTime,
+                    navigateListener = { navController.navigate(it.route) },
+                    missingContentNextStep = MissingContentNextStep.getMissingContent(players, courts, matches),
             )
         }
     },
@@ -153,6 +158,8 @@ enum class NavRoute(val route: String) {
                                 )
                         )
                     },
+                    navigateListener = { navController.navigate(it.route) },
+                    missingContentNextStep = MissingContentNextStep.getMissingContent(players, courts, matches),
             )
         }
     },
@@ -181,6 +188,8 @@ enum class NavRoute(val route: String) {
                     },
                     deleteMatchListener = { viewModel.deleteMatch(it) },
                     onTabSelectedListener = { navController.navigate(it.destination.route) },
+                    navigateListener = { navController.navigate(it.route) },
+                    missingContentNextStep = MissingContentNextStep.getMissingContent(players, courts, matches),
             )
         }
     },
@@ -199,6 +208,8 @@ enum class NavRoute(val route: String) {
             DaysReportScreen(
                     matches = matches,
                     onTabSelectedListener = { navController.navigate(it.destination.route) },
+                    navigateListener = { navController.navigate(it.route) },
+                    missingContentNextStep = MissingContentNextStep.getMissingContent(players, courts, matches),
             )
         }
     },
@@ -218,7 +229,8 @@ enum class NavRoute(val route: String) {
 
             ClavaScreen(
                     noContentText = "No content",
-                    hasContent = true,
+                    navigateListener = { },
+                    missingContentNextStep = null,
                     headerContent = {
                         AvailableCourtsHeader(
                                 courts = courts,
