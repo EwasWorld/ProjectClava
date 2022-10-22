@@ -14,6 +14,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.eywa.projectclava.R
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.ui.sharedUi.ClavaIconInfo
+import com.eywa.projectclava.ui.theme.ClavaColor
 
 @Composable
 fun ClavaBottomNav(
@@ -34,7 +35,10 @@ fun ClavaBottomNav(
         hasOverrunningMatch: Boolean,
         onClick: (destination: String) -> Unit,
 ) {
-    BottomNavigation {
+    BottomNavigation(
+            backgroundColor = ClavaColor.BottomNavBackground,
+            contentColor = ClavaColor.BottomNavIcon,
+    ) {
         ClavaBottomNavItem(
                 icon = ClavaIconInfo.PainterIcon(R.drawable.outline_assignment_24),
                 selectedIcon = ClavaIconInfo.PainterIcon(R.drawable.baseline_assignment_24),

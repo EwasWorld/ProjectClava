@@ -1,23 +1,37 @@
 package com.eywa.projectclava.main.ui.sharedUi
 
 import android.view.KeyEvent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.expandIn
+import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -27,6 +41,7 @@ import com.eywa.projectclava.main.common.generatePlayers
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.mainScreens.SetupCourtsScreen
+import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
 
@@ -134,9 +149,21 @@ fun <T : SetupListItem> SetupListScreen(
         missingContentNextStep: MissingContentNextStep?,
         navigateListener: (NavRoute) -> Unit,
 ) {
-    // TODO Add a search FAB
     // TODO Add an are you sure to deletion
     val focusManager = LocalFocusManager.current
+    var isSearchExpanded by remember { mutableStateOf(false) }
+    var searchText: String? by remember { mutableStateOf(null) }
+    val noContentString = if (searchText == null) {
+        "No ${typeContentDescription}s yet,\n\nType a name into the box below\nthen press enter!"
+    }
+    else {
+        "No matches found for '$searchText'"
+    }
+
+    val itemsToShow = searchText
+            .takeIf { !it.isNullOrBlank() }
+            ?.let { searchTxt -> items?.filter { it.name.contains(searchTxt, ignoreCase = true) } }
+            ?: items
 
     EditDialog(
             typeContentDescription = typeContentDescription,
@@ -148,10 +175,27 @@ fun <T : SetupListItem> SetupListScreen(
     )
 
     ClavaScreen(
-            noContentText = "No ${typeContentDescription}s yet,\n\nType a name into the box below\nthen press enter!",
+            noContentText = noContentString,
             missingContentNextStep = missingContentNextStep?.let { setOf(it) },
             showMissingContentNextStep = false,
             navigateListener = navigateListener,
+            fabs = { modifier ->
+                SearchFab(
+                        isExpanded = isSearchExpanded,
+                        textPlaceholder = textPlaceholder,
+                        typeContentDescription = typeContentDescription,
+                        toggleExpanded = {
+                            isSearchExpanded = !isSearchExpanded
+                            if (!isSearchExpanded) {
+                                searchText = null
+                            }
+                        },
+                        searchText = searchText ?: "",
+                        onValueChangedListener = { searchText = it },
+                        modifier = modifier
+                )
+            },
+            footerIsVisible = !isSearchExpanded,
             footerContent = {
                 SetupListScreenFooter(
                         typeContentDescription = typeContentDescription,
@@ -172,60 +216,73 @@ fun <T : SetupListItem> SetupListScreen(
                 )
             }
     ) {
-        items(items!!.sortedBy { it.name }) { item ->
-            val match = getMatch(item)
-            SelectableListItem(
-                    enabled = item.enabled,
-                    matchState = match?.state,
-                    timeRemaining = { match?.getTimeRemaining() },
-            ) {
-                Column(
-                        modifier = Modifier.clickable {
-                            itemClickedListener(item)
-                            focusManager.clearFocus()
-                        }
+        if (itemsToShow?.any() != true) {
+            // No search results
+            item {
+                Text(
+                        text = "No matches found for '$searchText'",
+                        style = Typography.h4,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+        else {
+            items(itemsToShow.sortedBy { it.name }) { item ->
+                val match = getMatch(item)
+                SelectableListItem(
+                        enabled = item.enabled,
+                        matchState = match?.state,
+                        timeRemaining = { match?.getTimeRemaining() },
                 ) {
-                    Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(start = 15.dp)
+                    Column(
+                            modifier = Modifier.clickable {
+                                itemClickedListener(item)
+                                focusManager.clearFocus()
+                            }
                     ) {
-                        val decoration = if (item.enabled) TextDecoration.None else TextDecoration.LineThrough
-                        Text(
-                                text = item.name,
-                                style = Typography.h4.copy(textDecoration = decoration),
-                                modifier = Modifier.weight(1f)
-                        )
-                        IconButton(
-                                onClick = {
-                                    itemNameEditStartedListener(item)
-                                    focusManager.clearFocus()
-                                }
-                        ) {
-                            Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = "Edit ${item.name}"
-                            )
-                        }
-                        IconButton(
-                                onClick = {
-                                    itemDeletedListener(item)
-                                    focusManager.clearFocus()
-                                }
-                        ) {
-                            Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Delete ${item.name}"
-                            )
-                        }
-                    }
-                    if (hasExtraContent(item)) {
                         Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                        .padding(horizontal = 15.dp)
-                                        .padding(bottom = 10.dp)
+                                modifier = Modifier.padding(start = 15.dp)
                         ) {
-                            extraContent(item)
+                            val decoration = if (item.enabled) TextDecoration.None else TextDecoration.LineThrough
+                            Text(
+                                    text = item.name,
+                                    style = Typography.h4.copy(textDecoration = decoration),
+                                    modifier = Modifier.weight(1f)
+                            )
+                            IconButton(
+                                    onClick = {
+                                        itemNameEditStartedListener(item)
+                                        focusManager.clearFocus()
+                                    }
+                            ) {
+                                Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = "Edit ${item.name}"
+                                )
+                            }
+                            IconButton(
+                                    onClick = {
+                                        itemDeletedListener(item)
+                                        focusManager.clearFocus()
+                                    }
+                            ) {
+                                Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Delete ${item.name}"
+                                )
+                            }
+                        }
+                        if (hasExtraContent(item)) {
+                            Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                            .padding(horizontal = 15.dp)
+                                            .padding(bottom = 10.dp)
+                            ) {
+                                extraContent(item)
+                            }
                         }
                     }
                 }
@@ -365,6 +422,101 @@ fun <T : SetupListItem> EditDialog(
                 onDoneListener = okListener,
                 itemBeingEdited = editDialogOpenFor,
         )
+    }
+}
+
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterialApi::class)
+@Composable
+private fun SearchFab(
+        isExpanded: Boolean,
+        typeContentDescription: String,
+        textPlaceholder: String,
+        toggleExpanded: () -> Unit,
+        searchText: String,
+        onValueChangedListener: (String) -> Unit,
+        modifier: Modifier = Modifier
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(key1 = isExpanded) {
+        if (isExpanded) {
+            focusRequester.requestFocus()
+        }
+    }
+
+    Surface(
+            color = ClavaColor.FabBackground,
+            shape = RoundedCornerShape(100, 0, 0, 100),
+            contentColor = ClavaColor.FabIcon,
+            modifier = modifier
+    ) {
+        Row(
+                verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AnimatedVisibility(
+                    visible = isExpanded,
+                    enter = expandIn(),
+                    exit = shrinkOut(),
+            ) {
+                BasicTextField(
+                        value = searchText,
+                        onValueChange = onValueChangedListener,
+                        interactionSource = interactionSource,
+                        textStyle = Typography.body1.copy(color = ClavaColor.FabIcon),
+                        singleLine = true,
+                        visualTransformation = VisualTransformation.None,
+                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
+                        modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 10.dp)
+                                .focusRequester(focusRequester)
+                ) { innerTextField ->
+                    TextFieldDefaults.TextFieldDecorationBox(
+                            value = searchText,
+                            innerTextField = innerTextField,
+                            contentPadding = PaddingValues(10.dp),
+                            interactionSource = interactionSource,
+                            enabled = true,
+                            singleLine = true,
+                            visualTransformation = VisualTransformation.None,
+                            label = {
+                                Text(
+                                        text = "Search ${typeContentDescription}s",
+                                        color = ClavaColor.FabIcon,
+                                )
+                            },
+                            placeholder = {
+                                Text(
+                                        text = textPlaceholder,
+                                        color = ClavaColor.FabIcon.copy(alpha = 0.6f),
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                        imageVector = Icons.Default.Search,
+                                        contentDescription = null,
+                                        tint = ClavaColor.FabIcon,
+                                )
+                            },
+                    )
+                }
+            }
+            Crossfade(targetState = isExpanded) { expanded ->
+                IconButton(
+                        onClick = toggleExpanded,
+                        modifier = Modifier
+                                .defaultMinSize(minWidth = 56.dp, minHeight = 56.dp)
+                ) {
+                    Icon(
+                            imageVector = if (expanded) Icons.Default.Close else Icons.Default.Search,
+                            contentDescription = if (expanded) "Close search" else "Search $typeContentDescription",
+                    )
+                }
+            }
+        }
     }
 }
 

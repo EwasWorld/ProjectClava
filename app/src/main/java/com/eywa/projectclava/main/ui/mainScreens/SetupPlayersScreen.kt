@@ -7,6 +7,8 @@ import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.sharedUi.SetupListScreen
 import com.eywa.projectclava.main.ui.sharedUi.SetupListTabSwitcherItem
 
+// TODO Archive players instead of deleting them?
+// TODO On delete, delete any matches associated with them
 @Composable
 fun SetupPlayersScreen(
         items: Iterable<Player>?,
