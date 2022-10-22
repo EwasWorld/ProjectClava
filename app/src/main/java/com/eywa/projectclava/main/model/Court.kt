@@ -13,13 +13,11 @@ fun Iterable<Court>.getAvailable(matches: Iterable<Match>?) =
 
 data class Court(
         val id: Int,
-        val number: String,
+        override val name: String,
         val canBeUsed: Boolean = true,
 ) : SetupListItem {
-    override val name: String
-        get() = "Court $number"
     override val enabled: Boolean
         get() = canBeUsed
 
-    fun asDatabaseCourt() = DatabaseCourt(id, number, canBeUsed)
+    fun asDatabaseCourt() = DatabaseCourt(id, name, canBeUsed)
 }

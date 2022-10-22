@@ -89,6 +89,9 @@ fun SetupPlayersScreen(
                         ?.filter { match -> match.players.any { player.name == it.name } }
                         ?.getPlayerColouringMatch()
             },
+            nameIsDuplicate = { newName, editItemName ->
+                newName != editItemName && items?.any { it.name == newName } == true
+            },
             getTimeRemaining = getTimeRemaining,
             addItemName = addItemName,
             showAddItemBlankError = showAddItemBlankError,

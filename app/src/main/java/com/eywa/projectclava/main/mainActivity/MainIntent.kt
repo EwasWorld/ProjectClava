@@ -26,6 +26,7 @@ sealed class MainIntent {
         data class UpdateOverrunIndicatorThreshold(val value: Int) : DrawerIntent()
         data class UpdateDefaultMatchTime(val value: Int) : DrawerIntent()
         data class UpdateDefaultTimeToAdd(val value: Int) : DrawerIntent()
+        object TogglePrependCourt : DrawerIntent()
         data class UpdatePlayers(val players: Iterable<Player>) : DrawerIntent()
         data class Navigate(val route: NavRoute) : DrawerIntent()
         data class UpdateMatch(val match: Match) : DrawerIntent()

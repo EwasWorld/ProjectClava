@@ -58,11 +58,6 @@ enum class SetupListTabSwitcherItem(
     COURTS("Courts", NavRoute.ADD_COURT),
 }
 
-fun <T : SetupListItem> String.isDuplicate(
-        existingItems: Iterable<T>?,
-        itemBeingEdited: T? = null,
-) = this != itemBeingEdited?.name && existingItems?.any { it.name == this } == true
-
 @Composable
 fun <T : SetupListItem> SetupListScreen(
         typeContentDescription: String,
@@ -70,6 +65,7 @@ fun <T : SetupListItem> SetupListScreen(
         items: Iterable<T>?,
         getMatch: (T) -> Match?,
         getTimeRemaining: Match.() -> TimeRemaining?,
+        nameIsDuplicate: (newName: String, editItemName: String?) -> Boolean,
         itemAddedListener: (String) -> Unit,
         itemNameEditedListener: (T, String) -> Unit,
         itemDeletedListener: (T) -> Unit,
@@ -92,6 +88,7 @@ fun <T : SetupListItem> SetupListScreen(
             getMatch = getMatch,
             getTimeRemaining = getTimeRemaining,
             addItemName = newItemName.value,
+            nameIsDuplicate = nameIsDuplicate,
             showAddItemBlankError = addFieldTouched.value,
             addItemNameClearPressedListener = {
                 newItemName.value = ""
@@ -132,6 +129,7 @@ fun <T : SetupListItem> SetupListScreen(
         getMatch: (T) -> Match?,
         getTimeRemaining: Match.() -> TimeRemaining?,
         addItemName: String,
+        nameIsDuplicate: (newName: String, editItemName: String?) -> Boolean,
         showAddItemBlankError: Boolean,
         addItemNameClearPressedListener: () -> Unit,
         addItemNameChangedListener: (String) -> Unit,
@@ -168,7 +166,7 @@ fun <T : SetupListItem> SetupListScreen(
     EditDialog(
             typeContentDescription = typeContentDescription,
             textPlaceholder = textPlaceholder,
-            items = items,
+            nameIsDuplicate = nameIsDuplicate,
             editDialogOpenFor = editDialogOpenFor,
             itemEditedListener = itemNameEditedListener,
             itemEditCancelledListener = itemNameEditCancelledListener,
@@ -197,10 +195,10 @@ fun <T : SetupListItem> SetupListScreen(
             },
             footerIsVisible = !isSearchExpanded,
             footerContent = {
-                SetupListScreenFooter(
+                SetupListScreenFooter<T>(
                         typeContentDescription = typeContentDescription,
                         textPlaceholder = textPlaceholder,
-                        items = items,
+                        nameIsDuplicate = nameIsDuplicate,
                         addItemName = addItemName,
                         showAddItemBlankError = showAddItemBlankError,
                         addItemNameClearPressedListener = addItemNameClearPressedListener,
@@ -295,7 +293,7 @@ fun <T : SetupListItem> SetupListScreen(
 private fun <T : SetupListItem> SetupListScreenFooter(
         typeContentDescription: String,
         textPlaceholder: String,
-        items: Iterable<T>?,
+        nameIsDuplicate: (newName: String, editItemName: String?) -> Boolean,
         addItemName: String,
         showAddItemBlankError: Boolean,
         addItemNameClearPressedListener: () -> Unit,
@@ -304,10 +302,10 @@ private fun <T : SetupListItem> SetupListScreenFooter(
 ) {
     val onAddPressed = { itemAddedListener(addItemName.trim()) }
 
-    ListItemNameTextField(
+    ListItemNameTextField<T>(
             typeContentDescription = typeContentDescription,
             textPlaceholder = textPlaceholder,
-            existingItems = items,
+            nameIsDuplicate = nameIsDuplicate,
             proposedItemName = addItemName,
             showBlankError = showAddItemBlankError,
             onValueChangedListener = addItemNameChangedListener,
@@ -324,7 +322,7 @@ private fun <T : SetupListItem> SetupListScreenFooter(
 fun <T : SetupListItem> ListItemNameTextField(
         typeContentDescription: String,
         textPlaceholder: String,
-        existingItems: Iterable<T>?,
+        nameIsDuplicate: (newName: String, editItemName: String?) -> Boolean,
         proposedItemName: String,
         showBlankError: Boolean,
         onValueChangedListener: (String) -> Unit,
@@ -334,13 +332,22 @@ fun <T : SetupListItem> ListItemNameTextField(
         textFieldModifier: Modifier = Modifier,
         itemBeingEdited: T? = null,
 ) {
-    val isDuplicate = proposedItemName.isDuplicate(existingItems, itemBeingEdited)
+    val isDuplicate = nameIsDuplicate(proposedItemName, itemBeingEdited?.name)
     val errorMessage = when {
         isDuplicate -> "A $typeContentDescription with already exists"
         showBlankError && proposedItemName.isBlank() -> "Cannot be empty"
         else -> null
     }
     val label: @Composable () -> Unit = { Text("Add $typeContentDescription") }
+    val onDone = {
+        if (errorMessage == null && proposedItemName.isNotBlank()) {
+            onDoneListener()
+        }
+        else {
+            // Force dirty state
+            onValueChangedListener(proposedItemName)
+        }
+    }
 
     Column(
             verticalArrangement = Arrangement.spacedBy(3.dp),
@@ -365,11 +372,11 @@ fun <T : SetupListItem> ListItemNameTextField(
                         imeAction = ImeAction.Done,
                         capitalization = KeyboardCapitalization.Words,
                 ),
-                keyboardActions = KeyboardActions(onDone = { onDoneListener() }),
+                keyboardActions = KeyboardActions(onDone = { onDone() }),
                 modifier = textFieldModifier.onKeyEvent {
                     if (it.nativeKeyEvent.keyCode != KeyEvent.KEYCODE_ENTER) return@onKeyEvent false
 
-                    onDoneListener()
+                    onDone()
                     true
                 }
         )
@@ -387,14 +394,14 @@ fun <T : SetupListItem> ListItemNameTextField(
 fun <T : SetupListItem> EditDialog(
         typeContentDescription: String,
         textPlaceholder: String,
-        items: Iterable<T>?,
+        nameIsDuplicate: (newName: String, editItemName: String?) -> Boolean,
         editDialogOpenFor: T?,
         itemEditedListener: (T, String) -> Unit,
         itemEditCancelledListener: () -> Unit,
 ) {
     val editName = rememberSaveable(editDialogOpenFor) { mutableStateOf(editDialogOpenFor?.name ?: "") }
     val fieldTouched = rememberSaveable(editDialogOpenFor) { mutableStateOf(false) }
-    val isDuplicate = editName.value.isDuplicate(items, editDialogOpenFor)
+    val isDuplicate = nameIsDuplicate(editName.value, editDialogOpenFor?.name)
     val okListener = { itemEditedListener(editDialogOpenFor!!, editName.value.trim()) }
 
     ClavaDialog(
@@ -408,7 +415,7 @@ fun <T : SetupListItem> EditDialog(
         ListItemNameTextField(
                 typeContentDescription = typeContentDescription,
                 textPlaceholder = textPlaceholder,
-                existingItems = items,
+                nameIsDuplicate = nameIsDuplicate,
                 proposedItemName = editName.value,
                 onValueChangedListener = {
                     fieldTouched.value = true
@@ -543,6 +550,7 @@ fun SetupListScreen_Preview() {
                 typeContentDescription = "player",
                 textPlaceholder = "John Doe",
                 addItemName = "",
+                nameIsDuplicate = { name, _ -> players.any { it.name == name } },
                 addItemNameChangedListener = {},
                 addItemNameClearPressedListener = {},
                 showAddItemBlankError = false,
@@ -599,6 +607,7 @@ fun Dialog_SetupListScreen_Preview() {
                 textPlaceholder = "John Doe",
                 addItemName = "",
                 addItemNameChangedListener = {},
+                nameIsDuplicate = { name, _ -> players.any { it.name == name } },
                 addItemNameClearPressedListener = {},
                 showAddItemBlankError = false,
                 items = players,
@@ -622,16 +631,17 @@ fun Dialog_SetupListScreen_Preview() {
 @Preview(showBackground = true)
 @Composable
 fun Error_SetupListScreen_Preview() {
-    val generatePlayers = generatePlayers(5)
+    val players = generatePlayers(5)
     Box(modifier = Modifier.fillMaxSize()) {
         SetupListScreen(
                 typeContentDescription = "player",
                 textPlaceholder = "John Doe",
-                addItemName = generatePlayers.first().name,
+                addItemName = players.first().name,
                 addItemNameChangedListener = {},
+                nameIsDuplicate = { name, _ -> players.any { it.name == name } },
                 addItemNameClearPressedListener = {},
                 showAddItemBlankError = false,
-                items = generatePlayers,
+                items = players,
                 getMatch = { null },
                 getTimeRemaining = { null },
                 editDialogOpenFor = null,

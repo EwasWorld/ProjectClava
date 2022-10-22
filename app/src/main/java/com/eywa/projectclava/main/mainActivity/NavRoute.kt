@@ -54,8 +54,9 @@ enum class NavRoute(val route: String) {
                     getTimeRemaining = getTimeRemaining,
                     itemAddedListener = { viewModel.addCourt(it) },
                     itemNameEditedListener = { court, newName ->
-                        viewModel.updateCourt(court.copy(number = newName))
+                        viewModel.updateCourt(court.copy(name = newName))
                     },
+                    prependCourt = viewModel.prependCourt,
                     itemDeletedListener = { viewModel.deleteCourt(it) },
                     toggleIsPresentListener = { viewModel.updateCourt(it.copy(canBeUsed = !it.canBeUsed)) },
                     onTabSelectedListener = { navController.navigate(it.destination.route) },

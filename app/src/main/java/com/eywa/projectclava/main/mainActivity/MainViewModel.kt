@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
@@ -34,6 +35,7 @@ private object PreferencesKeys {
     val DEFAULT_MATCH_TIME = intPreferencesKey("default_match_time")
     val DEFAULT_TIME_TO_ADD = intPreferencesKey("default_time_to_add")
     val CLUB_NIGHT_START_TIME = longPreferencesKey("club_night_start_time")
+    val PREPEND_COURT = booleanPreferencesKey("prepend_court")
 }
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -60,6 +62,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
     )
         private set
+    var prependCourt by mutableStateOf(true)
+        private set
 
     init {
         val db = ClavaDatabase.getInstance(application)
@@ -80,6 +84,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 preference[PreferencesKeys.CLUB_NIGHT_START_TIME]?.let {
                     clubNightStartTime = it.asCalendar()!!
+                }
+                preference[PreferencesKeys.PREPEND_COURT]?.let {
+                    prependCourt = it
                 }
             }
         }
@@ -135,6 +142,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 viewModelScope.launch {
                     dataStore.edit {
                         it[PreferencesKeys.OVERRUN_INDICATOR_THRESHOLD] = action.value
+                    }
+                }
+            }
+            is MainIntent.DrawerIntent.TogglePrependCourt -> {
+                val value = !prependCourt
+                prependCourt = value
+                viewModelScope.launch {
+                    dataStore.edit {
+                        it[PreferencesKeys.PREPEND_COURT] = value
                     }
                 }
             }

@@ -85,6 +85,7 @@ class MainActivity : ComponentActivity() {
                                     defaultMatchTime = viewModel.defaultMatchTime,
                                     defaultTimeToAdd = viewModel.defaultTimeToAdd,
                                     clubNightStartTime = viewModel.clubNightStartTime,
+                                    prependCourt = viewModel.prependCourt,
                                     overrunIndicatorThreshold = viewModel.overrunIndicatorThreshold,
                                     players = players,
                                     matches = matches,

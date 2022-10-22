@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Switch
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,6 +37,7 @@ fun DrawerContent(
         defaultTimeToAdd: Int,
         overrunIndicatorThreshold: Int,
         clubNightStartTime: Calendar,
+        prependCourt: Boolean,
         players: Iterable<Player>,
         matches: Iterable<Match>,
         isDrawerOpen: Boolean,
@@ -160,6 +162,23 @@ fun DrawerContent(
                         }
                     }
             )
+            Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                            .clickable { listener(DrawerIntent.TogglePrependCourt) }
+                            .fillMaxWidth()
+                            .padding(horizontal = 25.dp)
+            ) {
+                Text(
+                        text = "Prepend 'Court' to new courts",
+                        style = drawerTextStyle,
+                        modifier = Modifier.weight(1f)
+                )
+                Switch(
+                        checked = prependCourt,
+                        onCheckedChange = { listener(DrawerIntent.TogglePrependCourt) }
+                )
+            }
         }
 
 //        DrawerDivider()
@@ -294,6 +313,7 @@ fun DrawerContent_Preview() {
             defaultTimeToAdd = 2 * 60,
             overrunIndicatorThreshold = 10,
             clubNightStartTime = currentTime,
+            prependCourt = true,
             players = listOf(),
             matches = listOf(),
             isDrawerOpen = true,

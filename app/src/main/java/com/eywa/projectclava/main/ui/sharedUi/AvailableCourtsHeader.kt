@@ -30,7 +30,7 @@ fun AvailableCourtsHeader(
 ) {
     val availableCourtsString = courts
             ?.getAvailable(matches)
-            ?.joinToString { it.number }
+            ?.joinToString { it.name }
             ?.let { "Available courts: $it" }
     val nextAvailableCourt = {
         matches

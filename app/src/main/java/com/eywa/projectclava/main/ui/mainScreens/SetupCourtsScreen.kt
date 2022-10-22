@@ -18,12 +18,14 @@ import com.eywa.projectclava.main.ui.sharedUi.SetupListScreen
 import com.eywa.projectclava.main.ui.sharedUi.SetupListTabSwitcherItem
 import java.util.*
 
-
+// TODO Sort by number (plus on court-picking dialogs)
+// TODO Court picking dialogs: no courts available
 @Composable
 fun SetupCourtsScreen(
         courts: Iterable<Court>?,
         matches: Iterable<Match>?,
         getTimeRemaining: Match.() -> TimeRemaining?,
+        prependCourt: Boolean = true,
         itemAddedListener: (String) -> Unit,
         itemNameEditedListener: (Court, String) -> Unit,
         itemDeletedListener: (Court) -> Unit,
@@ -41,6 +43,7 @@ fun SetupCourtsScreen(
             getTimeRemaining = getTimeRemaining,
             courts = courts,
             addItemName = newItemName.value,
+            prependCourt = prependCourt,
             showAddItemBlankError = addFieldTouched.value,
             addItemNameClearPressedListener = {
                 newItemName.value = ""
@@ -51,7 +54,7 @@ fun SetupCourtsScreen(
                 addFieldTouched.value = true
             },
             itemAddedListener = {
-                itemAddedListener(it)
+                itemAddedListener(if (prependCourt) "Court $it" else it)
                 newItemName.value = ""
                 addFieldTouched.value = false
             },
@@ -76,6 +79,7 @@ fun SetupCourtsScreen(
         getTimeRemaining: Match.() -> TimeRemaining?,
         courts: Iterable<Court>?,
         addItemName: String,
+        prependCourt: Boolean = true,
         showAddItemBlankError: Boolean,
         addItemNameClearPressedListener: () -> Unit,
         addItemNameChangedListener: (String) -> Unit,
@@ -90,11 +94,17 @@ fun SetupCourtsScreen(
         missingContentNextStep: Iterable<MissingContentNextStep>?,
         navigateListener: (NavRoute) -> Unit,
 ) {
-    // TODO Name already exists doesn't work properly due to court prefix
     SetupListScreen(
             typeContentDescription = "court",
-            textPlaceholder = "1",
+            textPlaceholder = if (prependCourt) "1" else "Court 1",
             items = courts,
+            nameIsDuplicate = { newName, editItemName ->
+                if (newName == editItemName) return@SetupListScreen true
+                if (courts == null) return@SetupListScreen false
+
+                val checkName = if (prependCourt) "Court $newName" else newName
+                courts.any { it.name == checkName }
+            },
             getMatch = { matches?.getLatestMatchForCourt(it) },
             getTimeRemaining = getTimeRemaining,
             addItemName = addItemName,
