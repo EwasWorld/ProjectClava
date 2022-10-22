@@ -13,7 +13,7 @@ import java.util.*
                     entity = DatabaseCourt::class,
                     parentColumns = ["id"],
                     childColumns = ["courtId"],
-                    onDelete = ForeignKey.SET_NULL,
+                    onDelete = ForeignKey.RESTRICT,
             )
         ],
 )
