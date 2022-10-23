@@ -122,9 +122,9 @@ fun DrawerContent(
                     modifier = Modifier.clickable { datePicker.show() }
             )
         }
+        DrawerTextButton(text = "Archived players") { listener(DrawerIntent.Navigate(NavRoute.ARCHIVED_PLAYERS)) }
 
         DrawerDivider()
-
         Column(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.padding(vertical = 10.dp)

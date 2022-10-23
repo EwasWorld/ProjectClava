@@ -28,11 +28,34 @@ enum class NavRoute(val route: String) {
                     itemNameEditedListener = { player, newName ->
                         viewModel.updatePlayers(player.copy(name = newName))
                     },
-                    itemDeletedListener = { viewModel.deletePlayer(it) },
+                    itemArchivedListener = { viewModel.updatePlayers(it.copy(isArchived = true)) },
                     toggleIsPresentListener = { viewModel.updatePlayers(it.copy(isPresent = !it.isPresent)) },
                     onTabSelectedListener = { navController.navigate(it.destination.route) },
                     navigateListener = { navController.navigate(it.route) },
                     missingContentNextStep = MissingContentNextStep.getMissingContent(players, courts, matches),
+            )
+        }
+    },
+
+    ARCHIVED_PLAYERS("archived_players") {
+        @Composable
+        override fun ClavaNavigation(
+                navController: NavHostController,
+                currentTime: () -> Calendar,
+                players: Iterable<Player>,
+                matches: Iterable<Match>,
+                getTimeRemaining: Match.() -> TimeRemaining?,
+                courts: Iterable<Court>,
+                viewModel: MainViewModel
+        ) {
+            ArchivedPlayersScreen(
+                    players = players,
+                    matches = matches,
+                    itemNameEditedListener = { player, newName ->
+                        viewModel.updatePlayers(player.copy(name = newName))
+                    },
+                    itemDeletedListener = { viewModel.deletePlayer(it) },
+                    itemUnarchivedListener = { viewModel.updatePlayers(it.copy(isArchived = false)) },
             )
         }
     },

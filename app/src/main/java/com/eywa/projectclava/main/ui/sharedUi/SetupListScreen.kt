@@ -1,6 +1,5 @@
 package com.eywa.projectclava.main.ui.sharedUi
 
-import android.view.KeyEvent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.expandIn
@@ -19,17 +18,14 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -45,8 +41,7 @@ import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
 
-interface SetupListItem {
-    val name: String
+interface SetupListItem : NamedItem {
     val enabled: Boolean
 }
 
@@ -56,69 +51,6 @@ enum class SetupListTabSwitcherItem(
 ) : TabSwitcherItem {
     PLAYERS("Players", NavRoute.ADD_PLAYER),
     COURTS("Courts", NavRoute.ADD_COURT),
-}
-
-@Composable
-fun <T : SetupListItem> SetupListScreen(
-        typeContentDescription: String,
-        textPlaceholder: String,
-        items: Iterable<T>?,
-        getMatch: (T) -> Match?,
-        getTimeRemaining: Match.() -> TimeRemaining?,
-        nameIsDuplicate: (newName: String, editItemName: String?) -> Boolean,
-        itemAddedListener: (String) -> Unit,
-        itemNameEditedListener: (T, String) -> Unit,
-        itemDeletedListener: (T) -> Unit,
-        itemClickedListener: (T) -> Unit,
-        hasExtraContent: (T) -> Boolean = { false },
-        selectedTab: SetupListTabSwitcherItem,
-        onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
-        extraContent: @Composable RowScope.(T) -> Unit = {},
-        missingContentNextStep: MissingContentNextStep?,
-        navigateListener: (NavRoute) -> Unit,
-) {
-    val newItemName = rememberSaveable { mutableStateOf("") }
-    var editDialogOpenFor: T? by remember { mutableStateOf(null) }
-    val addFieldTouched = rememberSaveable { mutableStateOf(false) }
-
-    SetupListScreen(
-            typeContentDescription = typeContentDescription,
-            textPlaceholder = textPlaceholder,
-            items = items,
-            getMatch = getMatch,
-            getTimeRemaining = getTimeRemaining,
-            addItemName = newItemName.value,
-            nameIsDuplicate = nameIsDuplicate,
-            showAddItemBlankError = addFieldTouched.value,
-            addItemNameClearPressedListener = {
-                newItemName.value = ""
-                addFieldTouched.value = false
-            },
-            addItemNameChangedListener = {
-                newItemName.value = it
-                addFieldTouched.value = true
-            },
-            itemAddedListener = {
-                itemAddedListener(it)
-                newItemName.value = ""
-                addFieldTouched.value = false
-            },
-            editDialogOpenFor = editDialogOpenFor,
-            itemNameEditedListener = { item, newName ->
-                editDialogOpenFor = null
-                itemNameEditedListener(item, newName)
-            },
-            itemNameEditCancelledListener = { editDialogOpenFor = null },
-            itemNameEditStartedListener = { editDialogOpenFor = it },
-            itemDeletedListener = itemDeletedListener,
-            itemClickedListener = itemClickedListener,
-            hasExtraContent = hasExtraContent,
-            selectedTab = selectedTab,
-            onTabSelectedListener = onTabSelectedListener,
-            extraContent = extraContent,
-            missingContentNextStep = missingContentNextStep,
-            navigateListener = navigateListener,
-    )
 }
 
 @Composable
@@ -138,6 +70,7 @@ fun <T : SetupListItem> SetupListScreen(
         itemNameEditedListener: (T, String) -> Unit,
         itemNameEditCancelledListener: () -> Unit,
         itemNameEditStartedListener: (T) -> Unit,
+        deleteIconInfo: ClavaIconInfo = ClavaIconInfo.VectorIcon(Icons.Default.Close, "Delete"),
         itemDeletedListener: (T) -> Unit,
         itemClickedListener: (T) -> Unit,
         hasExtraContent: (T) -> Boolean = { false },
@@ -163,7 +96,7 @@ fun <T : SetupListItem> SetupListScreen(
             ?.let { searchTxt -> items?.filter { it.name.contains(searchTxt, ignoreCase = true) } }
             ?: items
 
-    EditDialog(
+    EditNameDialog(
             typeContentDescription = typeContentDescription,
             textPlaceholder = textPlaceholder,
             nameIsDuplicate = nameIsDuplicate,
@@ -195,15 +128,19 @@ fun <T : SetupListItem> SetupListScreen(
             },
             footerIsVisible = !isSearchExpanded,
             footerContent = {
-                SetupListScreenFooter<T>(
+                NamedItemTextField<T>(
                         typeContentDescription = typeContentDescription,
                         textPlaceholder = textPlaceholder,
                         nameIsDuplicate = nameIsDuplicate,
-                        addItemName = addItemName,
-                        showAddItemBlankError = showAddItemBlankError,
-                        addItemNameClearPressedListener = addItemNameClearPressedListener,
-                        addItemNameChangedListener = addItemNameChangedListener,
-                        itemAddedListener = itemAddedListener
+                        proposedItemName = addItemName,
+                        showBlankError = showAddItemBlankError,
+                        onValueChangedListener = addItemNameChangedListener,
+                        onClearPressedListener = addItemNameClearPressedListener,
+                        onDoneListener = { itemAddedListener(addItemName.trim()) },
+                        textFieldModifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                                .padding(horizontal = 20.dp, vertical = 10.dp)
+                                .padding(bottom = 5.dp)
                 )
             },
             headerContent = {
@@ -267,8 +204,8 @@ fun <T : SetupListItem> SetupListScreen(
                                     }
                             ) {
                                 Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "Delete ${item.name}"
+                                        painter = deleteIconInfo.asPainter(),
+                                        contentDescription = "${deleteIconInfo.contentDescription!!} ${item.name}"
                                 )
                             }
                         }
@@ -286,149 +223,6 @@ fun <T : SetupListItem> SetupListScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun <T : SetupListItem> SetupListScreenFooter(
-        typeContentDescription: String,
-        textPlaceholder: String,
-        nameIsDuplicate: (newName: String, editItemName: String?) -> Boolean,
-        addItemName: String,
-        showAddItemBlankError: Boolean,
-        addItemNameClearPressedListener: () -> Unit,
-        addItemNameChangedListener: (String) -> Unit,
-        itemAddedListener: (String) -> Unit,
-) {
-    val onAddPressed = { itemAddedListener(addItemName.trim()) }
-
-    ListItemNameTextField<T>(
-            typeContentDescription = typeContentDescription,
-            textPlaceholder = textPlaceholder,
-            nameIsDuplicate = nameIsDuplicate,
-            proposedItemName = addItemName,
-            showBlankError = showAddItemBlankError,
-            onValueChangedListener = addItemNameChangedListener,
-            onClearPressedListener = addItemNameClearPressedListener,
-            onDoneListener = onAddPressed,
-            textFieldModifier = Modifier.fillMaxWidth(),
-            modifier = Modifier
-                    .padding(horizontal = 20.dp, vertical = 10.dp)
-                    .padding(bottom = 5.dp)
-    )
-}
-
-@Composable
-fun <T : SetupListItem> ListItemNameTextField(
-        typeContentDescription: String,
-        textPlaceholder: String,
-        nameIsDuplicate: (newName: String, editItemName: String?) -> Boolean,
-        proposedItemName: String,
-        showBlankError: Boolean,
-        onValueChangedListener: (String) -> Unit,
-        onClearPressedListener: () -> Unit,
-        onDoneListener: () -> Unit,
-        modifier: Modifier = Modifier,
-        textFieldModifier: Modifier = Modifier,
-        itemBeingEdited: T? = null,
-) {
-    val isDuplicate = nameIsDuplicate(proposedItemName, itemBeingEdited?.name)
-    val errorMessage = when {
-        isDuplicate -> "A $typeContentDescription with already exists"
-        showBlankError && proposedItemName.isBlank() -> "Cannot be empty"
-        else -> null
-    }
-    val label: @Composable () -> Unit = { Text("Add $typeContentDescription") }
-    val onDone = {
-        if (errorMessage == null && proposedItemName.isNotBlank()) {
-            onDoneListener()
-        }
-        else {
-            // Force dirty state
-            onValueChangedListener(proposedItemName)
-        }
-    }
-
-    Column(
-            verticalArrangement = Arrangement.spacedBy(3.dp),
-            modifier = modifier
-    ) {
-        // TODO Use a basic text field to get around the weird top padding?
-        OutlinedTextField(
-                value = proposedItemName,
-                onValueChange = onValueChangedListener,
-                label = label.takeIf { itemBeingEdited == null },
-                placeholder = { Text(textPlaceholder) },
-                trailingIcon = {
-                    IconButton(onClick = onClearPressedListener) {
-                        Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Clear"
-                        )
-                    }
-                },
-                isError = isDuplicate,
-                keyboardOptions = KeyboardOptions.Default.copy(
-                        imeAction = ImeAction.Done,
-                        capitalization = KeyboardCapitalization.Words,
-                ),
-                keyboardActions = KeyboardActions(onDone = { onDone() }),
-                modifier = textFieldModifier.onKeyEvent {
-                    if (it.nativeKeyEvent.keyCode != KeyEvent.KEYCODE_ENTER) return@onKeyEvent false
-
-                    onDone()
-                    true
-                }
-        )
-        errorMessage?.let {
-            Text(
-                    text = errorMessage,
-                    color = MaterialTheme.colors.error,
-                    modifier = Modifier.padding(start = 5.dp)
-            )
-        }
-    }
-}
-
-@Composable
-fun <T : SetupListItem> EditDialog(
-        typeContentDescription: String,
-        textPlaceholder: String,
-        nameIsDuplicate: (newName: String, editItemName: String?) -> Boolean,
-        editDialogOpenFor: T?,
-        itemEditedListener: (T, String) -> Unit,
-        itemEditCancelledListener: () -> Unit,
-) {
-    val editName = rememberSaveable(editDialogOpenFor) { mutableStateOf(editDialogOpenFor?.name ?: "") }
-    val fieldTouched = rememberSaveable(editDialogOpenFor) { mutableStateOf(false) }
-    val isDuplicate = nameIsDuplicate(editName.value, editDialogOpenFor?.name)
-    val okListener = { itemEditedListener(editDialogOpenFor!!, editName.value.trim()) }
-
-    ClavaDialog(
-            isShown = editDialogOpenFor != null,
-            title = "Edit ${editDialogOpenFor?.name}",
-            okButtonText = "Edit",
-            okButtonEnabled = !isDuplicate && editName.value.isNotBlank(),
-            onCancelListener = itemEditCancelledListener,
-            onOkListener = okListener
-    ) {
-        ListItemNameTextField(
-                typeContentDescription = typeContentDescription,
-                textPlaceholder = textPlaceholder,
-                nameIsDuplicate = nameIsDuplicate,
-                proposedItemName = editName.value,
-                onValueChangedListener = {
-                    fieldTouched.value = true
-                    editName.value = it
-                },
-                onClearPressedListener = {
-                    fieldTouched.value = false
-                    editName.value = ""
-                },
-                showBlankError = fieldTouched.value,
-                onDoneListener = okListener,
-                itemBeingEdited = editDialogOpenFor,
-        )
     }
 }
 

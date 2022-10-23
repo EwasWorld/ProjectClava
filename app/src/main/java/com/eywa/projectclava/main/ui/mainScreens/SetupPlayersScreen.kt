@@ -2,8 +2,10 @@ package com.eywa.projectclava.main.ui.mainScreens
 
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import com.eywa.projectclava.R
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.model.*
+import com.eywa.projectclava.main.ui.sharedUi.ClavaIconInfo
 import com.eywa.projectclava.main.ui.sharedUi.SetupListScreen
 import com.eywa.projectclava.main.ui.sharedUi.SetupListTabSwitcherItem
 
@@ -16,7 +18,7 @@ fun SetupPlayersScreen(
         getTimeRemaining: Match.() -> TimeRemaining?,
         itemAddedListener: (String) -> Unit,
         itemNameEditedListener: (Player, String) -> Unit,
-        itemDeletedListener: (Player) -> Unit,
+        itemArchivedListener: (Player) -> Unit,
         toggleIsPresentListener: (Player) -> Unit,
         onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
         missingContentNextStep: Iterable<MissingContentNextStep>?,
@@ -52,7 +54,7 @@ fun SetupPlayersScreen(
             },
             itemNameEditCancelledListener = { editDialogOpenFor = null },
             itemNameEditStartedListener = { editDialogOpenFor = it },
-            itemDeletedListener = { itemDeletedListener(it) },
+            itemArchivedListener = { itemArchivedListener(it) },
             toggleIsPresentListener = toggleIsPresentListener,
             onTabSelectedListener = onTabSelectedListener,
             missingContentNextStep = missingContentNextStep,
@@ -74,7 +76,7 @@ fun SetupPlayersScreen(
         itemNameEditedListener: (Player, String) -> Unit,
         itemNameEditCancelledListener: () -> Unit,
         itemNameEditStartedListener: (Player) -> Unit,
-        itemDeletedListener: (Player) -> Unit,
+        itemArchivedListener: (Player) -> Unit,
         toggleIsPresentListener: (Player) -> Unit,
         onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
         missingContentNextStep: Iterable<MissingContentNextStep>?,
@@ -83,7 +85,7 @@ fun SetupPlayersScreen(
     SetupListScreen(
             typeContentDescription = "player",
             textPlaceholder = "John Doe",
-            items = items,
+            items = items?.filter { !it.isArchived },
             getMatch = { player ->
                 matches
                         ?.filter { match -> match.players.any { player.name == it.name } }
@@ -102,7 +104,8 @@ fun SetupPlayersScreen(
             itemNameEditedListener = itemNameEditedListener,
             itemNameEditCancelledListener = itemNameEditCancelledListener,
             itemNameEditStartedListener = itemNameEditStartedListener,
-            itemDeletedListener = { itemDeletedListener(it) },
+            deleteIconInfo = ClavaIconInfo.PainterIcon(R.drawable.baseline_archive_24, "Archive"),
+            itemDeletedListener = { itemArchivedListener(it) },
             itemClickedListener = toggleIsPresentListener,
             selectedTab = SetupListTabSwitcherItem.PLAYERS,
             onTabSelectedListener = onTabSelectedListener,

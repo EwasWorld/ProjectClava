@@ -35,6 +35,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        check(NavRoute.values().map { it.route }.distinct().size == NavRoute.values().size) {
+            "Duplicate NavRoute found"
+        }
+
         var isBottomNavVisible by mutableStateOf(true)
 
         // Hide the nav bar when the keyboard is showing
@@ -56,6 +60,15 @@ class MainActivity : ComponentActivity() {
                 val scope = rememberCoroutineScope()
 
                 val focusManager = LocalFocusManager.current
+
+                val closeDrawer = {
+                    scope.launch {
+                        drawerState.animateTo(
+                                DrawerValue.Closed,
+                                tween(300, easing = FastOutLinearInEasing)
+                        )
+                    }
+                }
 
                 // Hide the soft keyboard on closing the drawer
                 LaunchedEffect(drawerState.isOpen) {
@@ -90,17 +103,11 @@ class MainActivity : ComponentActivity() {
                                     players = players,
                                     matches = matches,
                                     isDrawerOpen = drawerState.isOpen,
-                                    closeDrawer = {
-                                        scope.launch {
-                                            drawerState.animateTo(
-                                                    DrawerValue.Closed,
-                                                    tween(300, easing = FastOutLinearInEasing)
-                                            )
-                                        }
-                                    },
+                                    closeDrawer = { closeDrawer() },
                                     listener = {
                                         if (it is MainIntent.DrawerIntent.Navigate) {
                                             navController.navigate(it.route.route)
+                                            closeDrawer()
                                         }
                                         else {
                                             viewModel.mainHandle(it)
