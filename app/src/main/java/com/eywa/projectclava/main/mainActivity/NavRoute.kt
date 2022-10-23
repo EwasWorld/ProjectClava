@@ -2,7 +2,10 @@ package com.eywa.projectclava.main.mainActivity
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
-import com.eywa.projectclava.main.model.*
+import com.eywa.projectclava.main.model.DatabaseState
+import com.eywa.projectclava.main.model.Match
+import com.eywa.projectclava.main.model.MissingContentNextStep
+import com.eywa.projectclava.main.model.TimeRemaining
 import com.eywa.projectclava.main.ui.mainScreens.*
 import com.eywa.projectclava.main.ui.sharedUi.AvailableCourtsHeader
 import com.eywa.projectclava.main.ui.sharedUi.ClavaScreen
@@ -14,15 +17,14 @@ enum class NavRoute(val route: String) {
         override fun ClavaNavigation(
                 navController: NavHostController,
                 currentTime: () -> Calendar,
-                players: Iterable<Player>,
-                matches: Iterable<Match>,
                 getTimeRemaining: Match.() -> TimeRemaining?,
-                courts: Iterable<Court>,
-                viewModel: MainViewModel
+                viewModel: MainViewModel,
+                databaseState: DatabaseState,
+                preferencesState: DatastoreState,
         ) {
             SetupPlayersScreen(
-                    items = players,
-                    matches = matches,
+                    items = databaseState.players,
+                    matches = databaseState.matches,
                     getTimeRemaining = getTimeRemaining,
                     itemAddedListener = { viewModel.addPlayer(it) },
                     itemNameEditedListener = { player, newName ->
@@ -32,7 +34,7 @@ enum class NavRoute(val route: String) {
                     toggleIsPresentListener = { viewModel.updatePlayers(it.copy(isPresent = !it.isPresent)) },
                     onTabSelectedListener = { navController.navigate(it.destination.route) },
                     navigateListener = { navController.navigate(it.route) },
-                    missingContentNextStep = MissingContentNextStep.getMissingContent(players, courts, matches),
+                    missingContentNextStep = MissingContentNextStep.getMissingContent(databaseState),
             )
         }
     },
@@ -42,15 +44,14 @@ enum class NavRoute(val route: String) {
         override fun ClavaNavigation(
                 navController: NavHostController,
                 currentTime: () -> Calendar,
-                players: Iterable<Player>,
-                matches: Iterable<Match>,
                 getTimeRemaining: Match.() -> TimeRemaining?,
-                courts: Iterable<Court>,
-                viewModel: MainViewModel
+                viewModel: MainViewModel,
+                databaseState: DatabaseState,
+                preferencesState: DatastoreState,
         ) {
             ArchivedPlayersScreen(
-                    players = players,
-                    matches = matches,
+                    players = databaseState.players,
+                    matches = databaseState.matches,
                     itemNameEditedListener = { player, newName ->
                         viewModel.updatePlayers(player.copy(name = newName))
                     },
@@ -65,26 +66,25 @@ enum class NavRoute(val route: String) {
         override fun ClavaNavigation(
                 navController: NavHostController,
                 currentTime: () -> Calendar,
-                players: Iterable<Player>,
-                matches: Iterable<Match>,
                 getTimeRemaining: Match.() -> TimeRemaining?,
-                courts: Iterable<Court>,
-                viewModel: MainViewModel
+                viewModel: MainViewModel,
+                databaseState: DatabaseState,
+                preferencesState: DatastoreState,
         ) {
             SetupCourtsScreen(
-                    courts = courts,
-                    matches = matches,
+                    courts = databaseState.courts,
+                    matches = databaseState.matches,
                     getTimeRemaining = getTimeRemaining,
                     itemAddedListener = { viewModel.addCourt(it) },
                     itemNameEditedListener = { court, newName ->
                         viewModel.updateCourt(court.copy(name = newName))
                     },
-                    prependCourt = viewModel.prependCourt,
+                    prependCourt = preferencesState.prependCourt,
                     itemDeletedListener = { viewModel.deleteCourt(it) },
                     toggleIsPresentListener = { viewModel.updateCourt(it.copy(canBeUsed = !it.canBeUsed)) },
                     onTabSelectedListener = { navController.navigate(it.destination.route) },
                     navigateListener = { navController.navigate(it.route) },
-                    missingContentNextStep = MissingContentNextStep.getMissingContent(players, courts, matches),
+                    missingContentNextStep = MissingContentNextStep.getMissingContent(databaseState),
             )
         }
     },
@@ -94,20 +94,19 @@ enum class NavRoute(val route: String) {
         override fun ClavaNavigation(
                 navController: NavHostController,
                 currentTime: () -> Calendar,
-                players: Iterable<Player>,
-                matches: Iterable<Match>,
                 getTimeRemaining: Match.() -> TimeRemaining?,
-                courts: Iterable<Court>,
-                viewModel: MainViewModel
+                viewModel: MainViewModel,
+                databaseState: DatabaseState,
+                preferencesState: DatastoreState,
         ) {
             CreateMatchScreen(
-                    players = players,
-                    matches = matches.filterToAfterCutoff(viewModel.clubNightStartTime),
+                    players = databaseState.players,
+                    matches = databaseState.matches.filterToAfterCutoff(preferencesState.clubNightStartTime),
                     getTimeRemaining = getTimeRemaining,
-                    courts = courts,
+                    courts = databaseState.courts,
                     createMatchListener = { viewModel.addMatch(it, currentTime()) },
                     navigateListener = { navController.navigate(it.route) },
-                    missingContentNextStep = MissingContentNextStep.getMissingContent(players, courts, matches),
+                    missingContentNextStep = MissingContentNextStep.getMissingContent(databaseState),
             )
         }
     },
@@ -117,15 +116,14 @@ enum class NavRoute(val route: String) {
         override fun ClavaNavigation(
                 navController: NavHostController,
                 currentTime: () -> Calendar,
-                players: Iterable<Player>,
-                matches: Iterable<Match>,
                 getTimeRemaining: Match.() -> TimeRemaining?,
-                courts: Iterable<Court>,
-                viewModel: MainViewModel
+                viewModel: MainViewModel,
+                databaseState: DatabaseState,
+                preferencesState: DatastoreState,
         ) {
             UpcomingMatchesScreen(
-                    courts = courts,
-                    matches = matches,
+                    courts = databaseState.courts,
+                    matches = databaseState.matches,
                     getTimeRemaining = getTimeRemaining,
                     startMatchOkListener = { match, court, totalTimeSeconds ->
                         viewModel.updateMatch(
@@ -137,9 +135,9 @@ enum class NavRoute(val route: String) {
                         )
                     },
                     removeMatchListener = { viewModel.deleteMatch(it) },
-                    defaultTimeSeconds = viewModel.defaultMatchTime,
+                    defaultTimeSeconds = preferencesState.defaultMatchTime,
                     navigateListener = { navController.navigate(it.route) },
-                    missingContentNextStep = MissingContentNextStep.getMissingContent(players, courts, matches),
+                    missingContentNextStep = MissingContentNextStep.getMissingContent(databaseState),
             )
         }
     },
@@ -149,17 +147,16 @@ enum class NavRoute(val route: String) {
         override fun ClavaNavigation(
                 navController: NavHostController,
                 currentTime: () -> Calendar,
-                players: Iterable<Player>,
-                matches: Iterable<Match>,
                 getTimeRemaining: Match.() -> TimeRemaining?,
-                courts: Iterable<Court>,
-                viewModel: MainViewModel
+                viewModel: MainViewModel,
+                databaseState: DatabaseState,
+                preferencesState: DatastoreState,
         ) {
             CurrentMatchesScreen(
-                    courts = courts,
-                    matches = matches,
+                    courts = databaseState.courts,
+                    matches = databaseState.matches,
                     getTimeRemaining = getTimeRemaining,
-                    defaultTimeToAddSeconds = viewModel.defaultTimeToAdd,
+                    defaultTimeToAddSeconds = preferencesState.defaultTimeToAdd,
                     addTimeListener = { match, timeToAdd ->
                         viewModel.updateMatch(
                                 match.addTime(
@@ -183,7 +180,7 @@ enum class NavRoute(val route: String) {
                         )
                     },
                     navigateListener = { navController.navigate(it.route) },
-                    missingContentNextStep = MissingContentNextStep.getMissingContent(players, courts, matches),
+                    missingContentNextStep = MissingContentNextStep.getMissingContent(databaseState),
             )
         }
     },
@@ -193,15 +190,14 @@ enum class NavRoute(val route: String) {
         override fun ClavaNavigation(
                 navController: NavHostController,
                 currentTime: () -> Calendar,
-                players: Iterable<Player>,
-                matches: Iterable<Match>,
                 getTimeRemaining: Match.() -> TimeRemaining?,
-                courts: Iterable<Court>,
-                viewModel: MainViewModel
+                viewModel: MainViewModel,
+                databaseState: DatabaseState,
+                preferencesState: DatastoreState,
         ) {
             PreviousMatchesScreen(
-                    matches = matches,
-                    defaultTimeToAddSeconds = viewModel.defaultTimeToAdd,
+                    matches = databaseState.matches,
+                    defaultTimeToAddSeconds = preferencesState.defaultTimeToAdd,
                     addTimeListener = { match, timeToAdd ->
                         viewModel.updateMatch(
                                 match.addTime(
@@ -213,7 +209,7 @@ enum class NavRoute(val route: String) {
                     deleteMatchListener = { viewModel.deleteMatch(it) },
                     onTabSelectedListener = { navController.navigate(it.destination.route) },
                     navigateListener = { navController.navigate(it.route) },
-                    missingContentNextStep = MissingContentNextStep.getMissingContent(players, courts, matches),
+                    missingContentNextStep = MissingContentNextStep.getMissingContent(databaseState),
             )
         }
     },
@@ -223,17 +219,16 @@ enum class NavRoute(val route: String) {
         override fun ClavaNavigation(
                 navController: NavHostController,
                 currentTime: () -> Calendar,
-                players: Iterable<Player>,
-                matches: Iterable<Match>,
                 getTimeRemaining: Match.() -> TimeRemaining?,
-                courts: Iterable<Court>,
-                viewModel: MainViewModel
+                viewModel: MainViewModel,
+                databaseState: DatabaseState,
+                preferencesState: DatastoreState
         ) {
             DaysReportScreen(
-                    matches = matches,
+                    matches = databaseState.matches,
                     onTabSelectedListener = { navController.navigate(it.destination.route) },
                     navigateListener = { navController.navigate(it.route) },
-                    missingContentNextStep = MissingContentNextStep.getMissingContent(players, courts, matches),
+                    missingContentNextStep = MissingContentNextStep.getMissingContent(databaseState),
             )
         }
     },
@@ -243,11 +238,10 @@ enum class NavRoute(val route: String) {
         override fun ClavaNavigation(
                 navController: NavHostController,
                 currentTime: () -> Calendar,
-                players: Iterable<Player>,
-                matches: Iterable<Match>,
                 getTimeRemaining: Match.() -> TimeRemaining?,
-                courts: Iterable<Court>,
-                viewModel: MainViewModel
+                viewModel: MainViewModel,
+                databaseState: DatabaseState,
+                preferencesState: DatastoreState
         ) {
 //            val filtered = matches.filterKeys { it.isCurrent }.entries
 
@@ -257,8 +251,8 @@ enum class NavRoute(val route: String) {
                     missingContentNextStep = null,
                     headerContent = {
                         AvailableCourtsHeader(
-                                courts = courts,
-                                matches = matches,
+                                courts = databaseState.courts,
+                                matches = databaseState.matches,
                                 getTimeRemaining = getTimeRemaining
                         )
                     },
@@ -285,11 +279,10 @@ enum class NavRoute(val route: String) {
     abstract fun ClavaNavigation(
             navController: NavHostController,
             currentTime: () -> Calendar,
-            players: Iterable<Player>,
-            matches: Iterable<Match>,
             getTimeRemaining: Match.() -> TimeRemaining?,
-            courts: Iterable<Court>,
             viewModel: MainViewModel,
+            databaseState: DatabaseState,
+            preferencesState: DatastoreState,
     )
 
     fun Iterable<Match>.filterToAfterCutoff(cutoff: Calendar) =

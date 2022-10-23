@@ -45,25 +45,23 @@ enum class MissingContentNextStep(
 
     companion object {
         fun getMissingContent(
-                players: Iterable<Player>?,
-                courts: Iterable<Court>?,
-                matches: Iterable<Match>?,
+                databaseState: DatabaseState
         ): Set<MissingContentNextStep> {
             val state = mutableSetOf<MissingContentNextStep>()
 
-            if (players == null || players.none()) state.add(ADD_PLAYERS)
-            else if (players.none { it.enabled }) state.add(ENABLE_PLAYERS)
+            if (databaseState.players.none()) state.add(ADD_PLAYERS)
+            else if (databaseState.players.none { it.enabled }) state.add(ENABLE_PLAYERS)
 
-            if (courts == null || courts.none()) state.add(ADD_COURTS)
-            else if (courts.none { it.enabled }) state.add(ENABLE_COURTS)
+            if (databaseState.courts.none()) state.add(ADD_COURTS)
+            else if (databaseState.courts.none { it.enabled }) state.add(ENABLE_COURTS)
 
-            if (matches == null || matches.none()) {
+            if (databaseState.matches.none()) {
                 state.addAll(values().filter { it.isMatchStep })
                 return state
             }
-            if (matches.none { it.isFinished }) state.add(COMPLETE_A_MATCH)
-            if (matches.none { it.isCurrent }) state.add(START_A_MATCH)
-            if (matches.none { it.isNotStarted }) state.add(SETUP_A_MATCH)
+            if (databaseState.matches.none { it.isFinished }) state.add(COMPLETE_A_MATCH)
+            if (databaseState.matches.none { it.isCurrent }) state.add(START_A_MATCH)
+            if (databaseState.matches.none { it.isNotStarted }) state.add(SETUP_A_MATCH)
             return state
         }
 

@@ -19,6 +19,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.eywa.projectclava.main.mainActivity.ui.ClavaBottomNav
 import com.eywa.projectclava.main.mainActivity.ui.DrawerContent
+import com.eywa.projectclava.main.model.DatabaseState
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.ProjectClavaTheme
 import kotlinx.coroutines.launch
@@ -27,7 +28,6 @@ import java.util.*
 /*
  * Time spent: 38 hrs
  */
-// TODO What happens if a player is deleted - their matches aren't cleared but then the match doesn't have any players
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
 
@@ -51,9 +51,8 @@ class MainActivity : ComponentActivity() {
             ProjectClavaTheme {
                 val currentTime by viewModel.currentTime.collectAsState(initial = Calendar.getInstance())
 
-                val players by viewModel.players.collectAsState(initial = listOf())
-                val matches by viewModel.matches.collectAsState(initial = listOf())
-                val courts by viewModel.courts.collectAsState(initial = listOf())
+                val databaseState by viewModel.databaseState.collectAsState(initial = DatabaseState())
+                val preferences by viewModel.preferences.collectAsState(initial = DatastoreState())
 
                 val navController = rememberNavController()
                 val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -83,10 +82,10 @@ class MainActivity : ComponentActivity() {
                         bottomBar = {
                             if (isBottomNavVisible) {
                                 ClavaBottomNav(
-                                        hasOverrunningMatch = matches.any {
+                                        hasOverrunningMatch = databaseState.matches.any {
                                             if (!it.isOnCourt) return@any false
                                             val remaining = it.state.getTimeLeft(currentTime) ?: return@any false
-                                            remaining.isEndingSoon(viewModel.overrunIndicatorThreshold)
+                                            remaining.isEndingSoon(preferences.overrunIndicatorThreshold)
                                         },
                                         navController = navController,
                                 )
@@ -95,17 +94,12 @@ class MainActivity : ComponentActivity() {
                         drawerContent = {
                             DrawerContent(
                                     currentTime = { currentTime },
-                                    defaultMatchTime = viewModel.defaultMatchTime,
-                                    defaultTimeToAdd = viewModel.defaultTimeToAdd,
-                                    clubNightStartTime = viewModel.clubNightStartTime,
-                                    prependCourt = viewModel.prependCourt,
-                                    overrunIndicatorThreshold = viewModel.overrunIndicatorThreshold,
-                                    players = players,
-                                    matches = matches,
+                                    preferencesState = preferences,
+                                    databaseState = databaseState,
                                     isDrawerOpen = drawerState.isOpen,
                                     closeDrawer = { closeDrawer() },
                                     listener = {
-                                        if (it is MainIntent.DrawerIntent.Navigate) {
+                                        if (it is DrawerIntent.Navigate) {
                                             navController.navigate(it.route.route)
                                             closeDrawer()
                                         }
@@ -126,10 +120,9 @@ class MainActivity : ComponentActivity() {
                                 route.ClavaNavigation(
                                         navController = navController,
                                         currentTime = { currentTime },
-                                        players = players,
-                                        matches = matches,
                                         getTimeRemaining = { state.getTimeLeft(currentTime) },
-                                        courts = courts,
+                                        databaseState = databaseState,
+                                        preferencesState = preferences,
                                         viewModel = viewModel,
                                 )
                             }

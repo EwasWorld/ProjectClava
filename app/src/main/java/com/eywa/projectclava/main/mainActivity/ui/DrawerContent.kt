@@ -14,13 +14,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.eywa.projectclava.main.common.UpdateCalendarInfo
 import com.eywa.projectclava.main.common.asDateString
 import com.eywa.projectclava.main.common.asTimeString
-import com.eywa.projectclava.main.mainActivity.MainIntent.DrawerIntent
+import com.eywa.projectclava.main.mainActivity.DatastoreState
+import com.eywa.projectclava.main.mainActivity.DrawerIntent
 import com.eywa.projectclava.main.mainActivity.NavRoute
-import com.eywa.projectclava.main.model.Match
+import com.eywa.projectclava.main.model.DatabaseState
 import com.eywa.projectclava.main.model.MatchState
-import com.eywa.projectclava.main.model.Player
 import com.eywa.projectclava.main.ui.sharedUi.TimePicker
 import com.eywa.projectclava.main.ui.sharedUi.TimePickerState
 import com.eywa.projectclava.ui.theme.DividerThickness
@@ -33,26 +34,21 @@ private val drawerTextStyle = Typography.h4
 @Composable
 fun DrawerContent(
         currentTime: () -> Calendar,
-        defaultMatchTime: Int,
-        defaultTimeToAdd: Int,
-        overrunIndicatorThreshold: Int,
-        clubNightStartTime: Calendar,
-        prependCourt: Boolean,
-        players: Iterable<Player>,
-        matches: Iterable<Match>,
+        preferencesState: DatastoreState,
+        databaseState: DatabaseState,
         isDrawerOpen: Boolean,
         closeDrawer: () -> Unit,
         listener: (DrawerIntent) -> Unit,
 ) {
     val context = LocalContext.current
     var matchTimePickerState by remember(isDrawerOpen) {
-        mutableStateOf(TimePickerState(defaultMatchTime))
+        mutableStateOf(TimePickerState(preferencesState.defaultMatchTime))
     }
     var timeToAddPickerState by remember(isDrawerOpen) {
-        mutableStateOf(TimePickerState(defaultTimeToAdd))
+        mutableStateOf(TimePickerState(preferencesState.defaultTimeToAdd))
     }
     var overrunThresholdPickerState by remember(isDrawerOpen) {
-        mutableStateOf(TimePickerState(overrunIndicatorThreshold))
+        mutableStateOf(TimePickerState(preferencesState.overrunIndicatorThreshold))
     }
 
     /**
@@ -71,13 +67,15 @@ fun DrawerContent(
                 { _, hours, minutes ->
                     listener(
                             DrawerIntent.UpdateClubNightStartTime(
-                                    hours = hours,
-                                    minutes = minutes,
+                                    UpdateCalendarInfo(
+                                            hours = hours,
+                                            minutes = minutes,
+                                    )
                             )
                     )
                 },
-                clubNightStartTime.get(Calendar.HOUR_OF_DAY),
-                clubNightStartTime.get(Calendar.MINUTE),
+                preferencesState.clubNightStartTime.get(Calendar.HOUR_OF_DAY),
+                preferencesState.clubNightStartTime.get(Calendar.MINUTE),
                 true,
         )
     }
@@ -87,15 +85,17 @@ fun DrawerContent(
                 { _, year, month, day ->
                     listener(
                             DrawerIntent.UpdateClubNightStartTime(
-                                    day = day,
-                                    month = month,
-                                    year = year,
+                                    UpdateCalendarInfo(
+                                            day = day,
+                                            month = month,
+                                            year = year,
+                                    )
                             )
                     )
                 },
-                clubNightStartTime.get(Calendar.YEAR),
-                clubNightStartTime.get(Calendar.MONTH),
-                clubNightStartTime.get(Calendar.DATE),
+                preferencesState.clubNightStartTime.get(Calendar.YEAR),
+                preferencesState.clubNightStartTime.get(Calendar.MONTH),
+                preferencesState.clubNightStartTime.get(Calendar.DATE),
         )
     }
 
@@ -112,12 +112,12 @@ fun DrawerContent(
                     style = drawerTextStyle,
             )
             Text(
-                    text = clubNightStartTime.asTimeString(),
+                    text = preferencesState.clubNightStartTime.asTimeString(),
                     style = drawerTextStyle.asClickableStyle(),
                     modifier = Modifier.clickable { timePicker.show() }
             )
             Text(
-                    text = clubNightStartTime.asDateString(),
+                    text = preferencesState.clubNightStartTime.asDateString(),
                     style = drawerTextStyle.asClickableStyle(),
                     modifier = Modifier.clickable { datePicker.show() }
             )
@@ -131,7 +131,7 @@ fun DrawerContent(
         ) {
             DefaultTimePicker(
                     title = "Default match duration:",
-                    errorSuffix = "Default match time is still " + defaultMatchTime.asTimeString(),
+                    errorSuffix = "Default match time is still " + preferencesState.defaultMatchTime.asTimeString(),
                     state = matchTimePickerState,
                     updateState = {
                         matchTimePickerState = it
@@ -142,7 +142,7 @@ fun DrawerContent(
             )
             DefaultTimePicker(
                     title = "Default additional time:",
-                    errorSuffix = "Default add time is still " + defaultTimeToAdd.asTimeString(),
+                    errorSuffix = "Default add time is still " + preferencesState.defaultTimeToAdd.asTimeString(),
                     state = timeToAddPickerState,
                     updateState = {
                         timeToAddPickerState = it
@@ -153,7 +153,7 @@ fun DrawerContent(
             )
             DefaultTimePicker(
                     title = "Overrun indicator threshold:",
-                    errorSuffix = "Threshold is still " + overrunIndicatorThreshold.asTimeString(),
+                    errorSuffix = "Threshold is still " + preferencesState.overrunIndicatorThreshold.asTimeString(),
                     state = overrunThresholdPickerState,
                     updateState = {
                         overrunThresholdPickerState = it
@@ -175,7 +175,7 @@ fun DrawerContent(
                         modifier = Modifier.weight(1f)
                 )
                 Switch(
-                        checked = prependCourt,
+                        checked = preferencesState.prependCourt,
                         onCheckedChange = { listener(DrawerIntent.TogglePrependCourt) }
                 )
             }
@@ -195,12 +195,12 @@ fun DrawerContent(
                 updateExpandedItemIndex = { expandedItemIndex = it },
         ) {
             DrawerTextButton(text = "Mark all players as not present") {
-                listener(DrawerIntent.UpdatePlayers(players.map { it.copy(isPresent = false) }))
+                listener(DrawerIntent.UpdatePlayers(databaseState.players.map { it.copy(isPresent = false) }))
                 listener(DrawerIntent.Navigate(NavRoute.ADD_PLAYER))
                 closeDrawer()
             }
             DrawerTextButton(text = "Clear matches and set cut off to now") {
-                matches.forEach {
+                databaseState.matches.forEach {
                     when (it.state) {
                         is MatchState.NotStarted -> listener(DrawerIntent.DeleteMatch(it))
                         is MatchState.Completed -> {}
@@ -211,7 +211,7 @@ fun DrawerContent(
                 }
             }
             DrawerTextButton(text = "Mark all ongoing matches as complete") {
-                matches.forEach {
+                databaseState.matches.forEach {
                     if (it.state is MatchState.OnCourt) {
                         listener(DrawerIntent.UpdateMatch(it.completeMatch(currentTime())))
                     }
@@ -309,13 +309,8 @@ fun DrawerContent_Preview() {
     val currentTime = Calendar.getInstance()
     DrawerContent(
             currentTime = { currentTime },
-            defaultMatchTime = 15 * 60,
-            defaultTimeToAdd = 2 * 60,
-            overrunIndicatorThreshold = 10,
-            clubNightStartTime = currentTime,
-            prependCourt = true,
-            players = listOf(),
-            matches = listOf(),
+            preferencesState = DatastoreState(),
+            databaseState = DatabaseState(),
             isDrawerOpen = true,
             closeDrawer = {},
             listener = {},
