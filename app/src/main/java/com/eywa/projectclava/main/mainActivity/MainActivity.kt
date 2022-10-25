@@ -116,7 +116,7 @@ class MainActivity : ComponentActivity() {
                                             closeDrawer()
                                         }
                                         else {
-                                            viewModel.mainHandle(it)
+                                            viewModel.handleIntent(it)
                                         }
                                     }
                             )

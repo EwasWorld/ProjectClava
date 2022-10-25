@@ -23,6 +23,7 @@ sealed class DatabaseIntent : CoreIntent {
     data class UpdateMatch(val value: Match) : DatabaseIntent()
     data class DeleteMatch(val value: Match) : DatabaseIntent()
     object DeleteAllMatches : DatabaseIntent()
+    data class AddMatch(val value: Iterable<Player>) : DatabaseIntent()
 
     /*
      * Players

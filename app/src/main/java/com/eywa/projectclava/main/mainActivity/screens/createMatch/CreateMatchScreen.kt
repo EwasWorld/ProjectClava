@@ -1,4 +1,4 @@
-package com.eywa.projectclava.main.ui.mainScreens
+package com.eywa.projectclava.main.mainActivity.screens.createMatch
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,7 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -18,72 +18,35 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.main.common.GeneratableMatchState
-import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.common.generatePlayers
-import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
 
-@Composable
-fun CreateMatchScreen(
-        players: Iterable<Player>,
-        matches: Iterable<Match> = listOf(),
-        getTimeRemaining: Match.() -> TimeRemaining?,
-        courts: Iterable<Court>? = listOf(),
-        createMatchListener: (Iterable<Player>) -> Unit,
-        missingContentNextStep: Iterable<MissingContentNextStep>?,
-        navigateListener: (NavRoute) -> Unit,
-) {
-    var selectedPlayers: Set<Player> by remember { mutableStateOf(setOf()) }
-
-    CreateMatchScreen(
-            players = players,
-            matches = matches,
-            getTimeRemaining = getTimeRemaining,
-            courts = courts,
-            selectedPlayers = selectedPlayers,
-            createMatchListener = {
-                createMatchListener(selectedPlayers)
-                selectedPlayers = setOf()
-            },
-            removeAllFromMatchListener = { selectedPlayers = setOf() },
-            playerClickedListener = {
-                selectedPlayers = if (selectedPlayers.contains(it)) {
-                    selectedPlayers.minus(it)
-                }
-                else {
-                    selectedPlayers.plus(it)
-                }
-            },
-            missingContentNextStep = missingContentNextStep,
-            navigateListener = navigateListener,
-    )
-}
 
 /**
- * @param selectedPlayers the people selected to form the next match
+ * @param clubNightStartTime When club night began.
+ * Matches that ended before this time will not count towards the 'played before' markers
  */
 @Composable
 fun CreateMatchScreen(
-        players: Iterable<Player>,
-        matches: Iterable<Match> = listOf(),
+        state: CreateMatchState,
+        databaseState: DatabaseState,
+        clubNightStartTime: Calendar,
         getTimeRemaining: Match.() -> TimeRemaining?,
-        courts: Iterable<Court>? = listOf(),
-        selectedPlayers: Iterable<Player>,
-        createMatchListener: () -> Unit,
-        removeAllFromMatchListener: () -> Unit,
-        playerClickedListener: (Player) -> Unit,
-        missingContentNextStep: Iterable<MissingContentNextStep>?,
-        navigateListener: (NavRoute) -> Unit,
+        listener: (CreateMatchIntent) -> Unit,
 ) {
-    val playerMatches = matches.getPlayerMatches()
-    val selectedPlayerNames = selectedPlayers.map { it.name }
+    val playerMatches = databaseState.matches.getPlayerMatches()
+    val selectedPlayerNames = state.selectedPlayers.map { it.name }
     // Everyone the selected players have previously played
     val previouslyPlayed = playerMatches
             .filter { (player, _) -> selectedPlayerNames.contains(player) }
+            // Ignore matches from before club night started
+            .mapValues { entry ->
+                entry.value.filter { !it.isFinished || it.getFinishTime()!!.after(clubNightStartTime) }
+            }
             .values
             .flatten()
             .flatMap { it.players }
@@ -92,25 +55,27 @@ fun CreateMatchScreen(
             .minus(selectedPlayerNames.toSet())
 
     // Players to show
-    val availablePlayers = players.filter { it.isPresent }
+    val availablePlayers = databaseState.players.filter { it.enabled }
 
     ClavaScreen(
             noContentText = "No players to match up",
             missingContentNextStep = setOf(
                     MissingContentNextStep.ADD_PLAYERS, MissingContentNextStep.ENABLE_PLAYERS
-            ).let { allowed -> missingContentNextStep?.filter { allowed.contains(it) } },
-            navigateListener = navigateListener,
+            ).let { allowed -> databaseState.getMissingContent().filter { allowed.contains(it) } },
+            navigateListener = { listener(CreateMatchIntent.Navigate(it)) },
             headerContent = {
-                AvailableCourtsHeader(courts = courts, matches = matches, getTimeRemaining = getTimeRemaining)
+                AvailableCourtsHeader(
+                        courts = databaseState.courts,
+                        matches = databaseState.matches,
+                        getTimeRemaining = getTimeRemaining
+                )
             },
             footerContent = {
                 CreateMatchScreenFooter(
                         getTimeRemaining = getTimeRemaining,
-                        selectedPlayers = selectedPlayers,
+                        selectedPlayers = state.selectedPlayers,
                         playerMatches = playerMatches,
-                        createMatchListener = createMatchListener,
-                        removeAllFromMatchListener = removeAllFromMatchListener,
-                        playerClickedListener = playerClickedListener,
+                        listener = listener,
                 )
             },
     ) {
@@ -163,7 +128,7 @@ fun CreateMatchScreen(
                 Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                                .clickable { playerClickedListener(player) }
+                                .clickable { listener(CreateMatchIntent.PlayerClicked(player)) }
                                 .padding(10.dp)
                 ) {
                     Text(
@@ -194,9 +159,7 @@ private fun CreateMatchScreenFooter(
         getTimeRemaining: Match.() -> TimeRemaining?,
         selectedPlayers: Iterable<Player>,
         playerMatches: Map<String, List<Match>?>,
-        createMatchListener: () -> Unit,
-        removeAllFromMatchListener: () -> Unit,
-        playerClickedListener: (Player) -> Unit,
+        listener: (CreateMatchIntent) -> Unit,
 ) {
     SelectedItemActions(
             buttons = listOf(
@@ -206,7 +169,7 @@ private fun CreateMatchScreenFooter(
                                     contentDescription = "Remove all",
                             ),
                             enabled = selectedPlayers.any(),
-                            onClick = removeAllFromMatchListener,
+                            onClick = { listener(CreateMatchIntent.ClearSelectedPlayers) },
                     ),
                     SelectedItemAction(
                             icon = ClavaIconInfo.VectorIcon(
@@ -214,7 +177,7 @@ private fun CreateMatchScreenFooter(
                                     contentDescription = "Create match",
                             ),
                             enabled = selectedPlayers.any(),
-                            onClick = createMatchListener,
+                            onClick = { listener(CreateMatchIntent.CreateMatch) },
                     ),
             ),
     ) {
@@ -269,7 +232,7 @@ private fun CreateMatchScreenFooter(
                                 style = Typography.h4,
                                 modifier = Modifier
                                         .padding(vertical = 5.dp, horizontal = 10.dp)
-                                        .clickable { playerClickedListener(player) }
+                                        .clickable { listener(CreateMatchIntent.PlayerClicked(player)) }
                         )
                     }
                 }
@@ -283,16 +246,16 @@ private fun CreateMatchScreenFooter(
 fun CreateMatchScreen_Preview() {
     val currentTime = Calendar.getInstance(Locale.getDefault())
     CreateMatchScreen(
-            players = generatePlayers(15),
-            matches = generateMatches(5, Calendar.getInstance(Locale.getDefault())),
+            state = CreateMatchState(
+                    selectedPlayers = generatePlayers(2),
+            ),
+            databaseState = DatabaseState(
+                    players = generatePlayers(15),
+                    matches = generateMatches(5, Calendar.getInstance(Locale.getDefault())),
+            ),
+            clubNightStartTime = currentTime,
             getTimeRemaining = { state.getTimeLeft(currentTime) },
-            courts = generateCourts(5),
-            selectedPlayers = generatePlayers(2),
-            createMatchListener = {},
-            removeAllFromMatchListener = {},
-            playerClickedListener = {},
-            missingContentNextStep = null,
-            navigateListener = {},
+            listener = {},
     )
 }
 
@@ -305,16 +268,15 @@ fun Individual_CreateMatchScreen_Preview(
     val players = generatePlayers(2)
     val match = generateMatches(1, Calendar.getInstance(Locale.getDefault()), params.matchType)
     CreateMatchScreen(
-            players = players,
-            matches = match,
+            state = CreateMatchState(
+            ),
+            databaseState = DatabaseState(
+                    players = players,
+                    matches = match,
+            ),
+            clubNightStartTime = currentTime,
             getTimeRemaining = { state.getTimeLeft(currentTime) },
-            courts = generateCourts(1),
-            selectedPlayers = listOf(),
-            createMatchListener = {},
-            removeAllFromMatchListener = {},
-            playerClickedListener = {},
-            missingContentNextStep = null,
-            navigateListener = {},
+            listener = {},
     )
 }
 

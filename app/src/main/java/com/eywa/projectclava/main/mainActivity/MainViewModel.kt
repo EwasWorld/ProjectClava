@@ -1,6 +1,9 @@
 package com.eywa.projectclava.main.mainActivity
 
 import android.app.Application
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.eywa.projectclava.main.database.ClavaDatabase
@@ -9,14 +12,30 @@ import com.eywa.projectclava.main.database.match.DatabaseMatchPlayer
 import com.eywa.projectclava.main.database.match.MatchRepo
 import com.eywa.projectclava.main.database.player.PlayerRepo
 import com.eywa.projectclava.main.mainActivity.drawer.DrawerIntent
+import com.eywa.projectclava.main.mainActivity.screens.ScreenIntent
+import com.eywa.projectclava.main.mainActivity.screens.ScreenState
+import com.eywa.projectclava.main.mainActivity.screens.createMatch.CreateMatchState
 import com.eywa.projectclava.main.model.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
+import kotlin.reflect.KClass
+import kotlin.reflect.cast
+
+fun <T> SharedFlow<T>.latest() = replayCache.first()
+
+fun <T : ScreenState> createState(clazz: KClass<T>): T {
+    @Suppress("UNCHECKED_CAST")
+    return when (clazz) {
+        CreateMatchState::class -> CreateMatchState()
+        else -> throw NotImplementedError()
+    } as T
+}
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     val currentTime = MutableSharedFlow<Calendar>(1)
+    private var screenState by mutableStateOf(mapOf<KClass<out ScreenState>, ScreenState>())
 
     private val _effects: MutableStateFlow<MainEffect?> = MutableStateFlow(null)
     val effects: Flow<MainEffect?> = _effects
@@ -32,12 +51,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /*
      * Main state
      */
-    private val courts = courtRepo.getAll().map { it.map { dbMatch -> dbMatch.asCourt() } }
-    private val players = playerRepo.getAll().map { it.map { dbMatch -> dbMatch.asPlayer() } }
-    private val matches = matchRepo.getAll().map { it.map { dbMatch -> dbMatch.asMatch() } }
-    val databaseState = courts
-            .combine(players) { a, b -> a to b }
-            .combine(matches) { (courts, players), matches -> DatabaseState(courts, matches, players) }
+    val databaseState = courtRepo.getAll().map { it.map { dbMatch -> dbMatch.asCourt() } }
+            .combine(playerRepo.getAll().map { it.map { dbMatch -> dbMatch.asPlayer() } }) { courts, matches ->
+                courts to matches
+            }
+            .combine(matchRepo.getAll().map { it.map { dbMatch -> dbMatch.asMatch() } }) { (courts, players), matches ->
+                DatabaseState(courts, matches, players)
+            }
             .shareIn(viewModelScope, SharingStarted.Eagerly, 1)
 
     /*
@@ -57,40 +77,67 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun mainHandle(action: MainIntent) {
-        when (action) {
+    /**
+     * Retrieves the current state of type T or creates a new one if it doesn't exist.
+     * Kind of annoying to pass the class around rather than using reified T, but didn't want to expose
+     * [updateScreenState] or [screenState]
+     */
+    fun <T : ScreenState> getScreenState(clazz: KClass<T>) = screenState[clazz]?.let { clazz.cast(it) }
+            ?: createState(clazz).apply { updateScreenState() }
+
+    private fun ScreenState.updateScreenState() {
+        screenState = screenState.plus(this::class to this)
+    }
+
+    fun handleIntent(intent: MainIntent) {
+        when (intent) {
             /*
              * CoreIntents
              */
-            is MainEffect -> viewModelScope.launch { _effects.emit(action) }
-            is DatabaseIntent -> viewModelScope.launch { handleDatabaseAction(action) }
+            is MainEffect -> viewModelScope.launch { _effects.emit(intent) }
+            is DatabaseIntent -> viewModelScope.launch { handleDatabaseIntent(intent) }
             is DataStoreIntent -> viewModelScope.launch {
-                clavaDatastore.handle(action, preferences.replayCache.first())
+                clavaDatastore.handle(intent, preferences.latest())
             }
 
             /*
              * Screens
              */
-            is DrawerIntent -> mainHandle(action.map())
-
+            is DrawerIntent -> handleIntent(intent.map())
+            is ScreenIntent<*> -> {
+                // TODO Things went a bit funny with the types... ngl
+                @Suppress("UNCHECKED_CAST")
+                (intent as ScreenIntent<ScreenState>).handle(
+                        currentState = getScreenState(intent.getStateClass()),
+                        handle = { handleIntent(it) },
+                        newStateListener = { it.updateScreenState() },
+                )
+            }
             else -> throw NotImplementedError()
         }
     }
 
-    private suspend fun handleDatabaseAction(action: DatabaseIntent) {
-        when (action) {
+    private suspend fun handleDatabaseIntent(intent: DatabaseIntent) {
+        when (intent) {
             /*
              * Matches
              */
             DatabaseIntent.DeleteAllMatches -> matchRepo.deleteAll()
-            is DatabaseIntent.DeleteMatch -> matchRepo.delete(action.value.asDatabaseMatch())
-            is DatabaseIntent.UpdateMatch -> matchRepo.update(action.value.asDatabaseMatch())
+            is DatabaseIntent.DeleteMatch -> matchRepo.delete(intent.value.asDatabaseMatch())
+            is DatabaseIntent.UpdateMatch -> matchRepo.update(intent.value.asDatabaseMatch())
+            is DatabaseIntent.AddMatch -> {
+                check(intent.value.any()) { "No players in match" }
+                val databaseMatch =
+                        Match(0, intent.value, MatchState.NotStarted(currentTime.latest())).asDatabaseMatch()
+                val matchId = matchRepo.insert(databaseMatch)
+                matchRepo.insert(*intent.value.map { DatabaseMatchPlayer(matchId.toInt(), it.id) }.toTypedArray())
+            }
 
             /*
              * Players
              */
             is DatabaseIntent.UpdatePlayers -> playerRepo.update(
-                    *action.value.map { it.asDatabasePlayer() }.toTypedArray()
+                    *intent.value.map { it.asDatabasePlayer() }.toTypedArray()
             )
         }
     }
@@ -117,12 +164,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun deleteCourt(court: Court) = viewModelScope.launch {
         courtRepo.delete(court.asDatabaseCourt())
-    }
-
-    fun addMatch(players: Iterable<Player>, createdTime: Calendar) = viewModelScope.launch {
-        val databaseMatch = Match(0, players, MatchState.NotStarted(createdTime)).asDatabaseMatch()
-        val matchId = matchRepo.insert(databaseMatch)
-        matchRepo.insert(*players.map { DatabaseMatchPlayer(matchId.toInt(), it.id) }.toTypedArray())
     }
 
     fun updateMatch(match: Match) = viewModelScope.launch {

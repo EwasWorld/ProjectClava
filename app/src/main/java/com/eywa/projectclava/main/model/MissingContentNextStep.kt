@@ -44,6 +44,10 @@ enum class MissingContentNextStep(
     ;
 
     companion object {
+        @Deprecated(
+                message = "Moved to databaseState",
+                replaceWith = ReplaceWith("databaseState.getMissingContent()")
+        )
         fun getMissingContent(
                 databaseState: DatabaseState
         ): Set<MissingContentNextStep> {
