@@ -17,8 +17,9 @@ import androidx.core.view.WindowInsetsCompat.toWindowInsetsCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.eywa.projectclava.main.mainActivity.drawer.DrawerContent
+import com.eywa.projectclava.main.mainActivity.drawer.DrawerIntent
 import com.eywa.projectclava.main.mainActivity.ui.ClavaBottomNav
-import com.eywa.projectclava.main.mainActivity.ui.DrawerContent
 import com.eywa.projectclava.main.model.DatabaseState
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.ProjectClavaTheme
@@ -69,6 +70,17 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
+                LaunchedEffect(Unit) {
+                    scope.launch {
+                        viewModel.effects.collect { effect ->
+                            when (effect) {
+                                is MainEffect.Navigate -> navController.navigate(effect.value.route)
+                                null -> {}
+                            }
+                        }
+                    }
+                }
+
                 // Hide the soft keyboard on closing the drawer
                 LaunchedEffect(drawerState.isOpen) {
                     if (!drawerState.isOpen) {
@@ -100,7 +112,7 @@ class MainActivity : ComponentActivity() {
                                     closeDrawer = { closeDrawer() },
                                     listener = {
                                         if (it is DrawerIntent.Navigate) {
-                                            navController.navigate(it.route.route)
+                                            navController.navigate(it.value.route)
                                             closeDrawer()
                                         }
                                         else {

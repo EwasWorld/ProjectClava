@@ -8,6 +8,7 @@ import com.eywa.projectclava.main.database.court.CourtRepo
 import com.eywa.projectclava.main.database.match.DatabaseMatchPlayer
 import com.eywa.projectclava.main.database.match.MatchRepo
 import com.eywa.projectclava.main.database.player.PlayerRepo
+import com.eywa.projectclava.main.mainActivity.drawer.DrawerIntent
 import com.eywa.projectclava.main.model.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
@@ -16,6 +17,9 @@ import java.util.*
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     val currentTime = MutableSharedFlow<Calendar>(1)
+
+    private val _effects: MutableStateFlow<MainEffect?> = MutableStateFlow(null)
+    val effects: Flow<MainEffect?> = _effects
 
     /*
      * Repos
@@ -55,47 +59,39 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun mainHandle(action: MainIntent) {
         when (action) {
-            is DrawerIntent -> handle(action)
+            /*
+             * CoreIntents
+             */
+            is MainEffect -> viewModelScope.launch { _effects.emit(action) }
+            is DatabaseIntent -> viewModelScope.launch { handleDatabaseAction(action) }
             is DataStoreIntent -> viewModelScope.launch {
                 clavaDatastore.handle(action, preferences.replayCache.first())
             }
+
+            /*
+             * Screens
+             */
+            is DrawerIntent -> mainHandle(action.map())
+
             else -> throw NotImplementedError()
         }
     }
 
-    private fun handle(action: DrawerIntent) {
+    private suspend fun handleDatabaseAction(action: DatabaseIntent) {
         when (action) {
-            is DrawerIntent.Navigate -> throw NotImplementedError()
-            is DrawerIntent.UpdateClubNightStartTime -> {
-                mainHandle(DataStoreIntent.UpdateClubNightStartTime(action.value))
-            }
-            is DrawerIntent.UpdateClubNightStartTimeCalendar -> {
-                mainHandle(DataStoreIntent.UpdateClubNightStartTimeCalendar(action.value))
-            }
-            is DrawerIntent.UpdateDefaultMatchTime -> {
-                mainHandle(DataStoreIntent.UpdateDefaultMatchTime(action.value))
-            }
-            is DrawerIntent.UpdateDefaultTimeToAdd -> {
-                mainHandle(DataStoreIntent.UpdateDefaultTimeToAdd(action.value))
-            }
-            is DrawerIntent.UpdateOverrunIndicatorThreshold -> {
-                mainHandle(DataStoreIntent.UpdateOverrunIndicatorThreshold(action.value))
-            }
-            is DrawerIntent.TogglePrependCourt -> {
-                mainHandle(DataStoreIntent.TogglePrependCourt)
-            }
-            DrawerIntent.DeleteAllMatches -> viewModelScope.launch {
-                matchRepo.deleteAll()
-            }
-            is DrawerIntent.DeleteMatch -> viewModelScope.launch {
-                matchRepo.delete(action.match.asDatabaseMatch())
-            }
-            is DrawerIntent.UpdatePlayers -> viewModelScope.launch {
-                playerRepo.update(*action.players.map { it.asDatabasePlayer() }.toTypedArray())
-            }
-            is DrawerIntent.UpdateMatch -> viewModelScope.launch {
-                matchRepo.update(action.match.asDatabaseMatch())
-            }
+            /*
+             * Matches
+             */
+            DatabaseIntent.DeleteAllMatches -> matchRepo.deleteAll()
+            is DatabaseIntent.DeleteMatch -> matchRepo.delete(action.value.asDatabaseMatch())
+            is DatabaseIntent.UpdateMatch -> matchRepo.update(action.value.asDatabaseMatch())
+
+            /*
+             * Players
+             */
+            is DatabaseIntent.UpdatePlayers -> playerRepo.update(
+                    *action.value.map { it.asDatabasePlayer() }.toTypedArray()
+            )
         }
     }
 
@@ -137,3 +133,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         matchRepo.delete(match.asDatabaseMatch())
     }
 }
+
+/**
+ * Top level for any intents.
+ * Screen's intents should map instead to a [CoreIntent]
+ */
+interface MainIntent

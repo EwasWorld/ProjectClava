@@ -27,7 +27,7 @@ data class DatastoreState(
         val prependCourt: Boolean = true,
 )
 
-interface DataStoreIntent : MainIntent {
+interface DataStoreIntent : CoreIntent {
     data class UpdateClubNightStartTime(val value: UpdateCalendarInfo) : DataStoreIntent
     data class UpdateClubNightStartTimeCalendar(val value: Calendar) : DataStoreIntent
     data class UpdateOverrunIndicatorThreshold(val value: Int) : DataStoreIntent

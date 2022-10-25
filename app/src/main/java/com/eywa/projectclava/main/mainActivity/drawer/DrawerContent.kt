@@ -1,4 +1,4 @@
-package com.eywa.projectclava.main.mainActivity.ui
+package com.eywa.projectclava.main.mainActivity.drawer
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
@@ -18,7 +18,6 @@ import com.eywa.projectclava.main.common.UpdateCalendarInfo
 import com.eywa.projectclava.main.common.asDateString
 import com.eywa.projectclava.main.common.asTimeString
 import com.eywa.projectclava.main.mainActivity.DatastoreState
-import com.eywa.projectclava.main.mainActivity.DrawerIntent
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.model.DatabaseState
 import com.eywa.projectclava.main.model.MatchState
@@ -207,8 +206,8 @@ fun DrawerContent(
                         is MatchState.OnCourt -> listener(DrawerIntent.UpdateMatch(it.completeMatch(currentTime())))
                         is MatchState.Paused -> listener(DrawerIntent.UpdateMatch(it.completeMatch(currentTime())))
                     }
-                    listener(DrawerIntent.UpdateClubNightStartTimeCalendar(currentTime()))
                 }
+                listener(DrawerIntent.UpdateClubNightStartTimeCalendar(currentTime()))
             }
             DrawerTextButton(text = "Mark all ongoing matches as complete") {
                 databaseState.matches.forEach {
