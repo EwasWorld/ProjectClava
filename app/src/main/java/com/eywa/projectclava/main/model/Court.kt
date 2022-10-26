@@ -1,7 +1,7 @@
 package com.eywa.projectclava.main.model
 
 import com.eywa.projectclava.main.database.court.DatabaseCourt
-import com.eywa.projectclava.main.ui.sharedUi.SetupListItem
+import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListItem
 
 fun DatabaseCourt.asCourt() = Court(id, name, canBeUsed)
 

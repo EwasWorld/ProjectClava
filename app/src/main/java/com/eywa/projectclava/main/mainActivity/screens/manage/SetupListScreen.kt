@@ -1,4 +1,4 @@
-package com.eywa.projectclava.main.ui.sharedUi
+package com.eywa.projectclava.main.mainActivity.screens.manage
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -31,12 +31,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.eywa.projectclava.R
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.common.generatePlayers
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.model.*
-import com.eywa.projectclava.main.ui.mainScreens.SetupCourtsScreen
+import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
@@ -53,68 +54,97 @@ enum class SetupListTabSwitcherItem(
     COURTS("Courts", NavRoute.ADD_COURT),
 }
 
+data class SetupListState<T>(
+        val addItemName: String = "",
+        val addItemIsDirty: Boolean = false,
+        val editDialogOpenFor: T? = null,
+        val useTextPlaceholderAlt: Boolean = false,
+)
+
+/**
+ * Properties that are different between screens but not dynamic like state
+ */
+enum class SetupListSettings(
+        val typeContentDescription: String,
+        private val textPlaceholder: String,
+        private val textPlaceholderAlt: String?,
+        val deleteIconInfo: ClavaIconInfo = ClavaIconInfo.VectorIcon(Icons.Default.Close, "Delete"),
+        val selectedTab: SetupListTabSwitcherItem,
+) {
+    PLAYERS(
+            typeContentDescription = "player",
+            deleteIconInfo = ClavaIconInfo.PainterIcon(R.drawable.baseline_archive_24, "Archive"),
+            selectedTab = SetupListTabSwitcherItem.PLAYERS,
+            textPlaceholder = "John Doe",
+            textPlaceholderAlt = null,
+    ),
+    COURTS(
+            typeContentDescription = "court",
+            selectedTab = SetupListTabSwitcherItem.COURTS,
+            textPlaceholder = "Court 1",
+            textPlaceholderAlt = "1",
+    )
+    ;
+
+    fun getTextPlaceholder(useAlt: Boolean) =
+            if (useAlt && textPlaceholderAlt != null) textPlaceholderAlt else textPlaceholder
+}
+
+sealed class SetupListIntent {
+
+}
+
 @Composable
 fun <T : SetupListItem> SetupListScreen(
-        typeContentDescription: String,
-        textPlaceholder: String,
-        items: Iterable<T>?,
+        setupListSettings: SetupListSettings,
+        setupListState: SetupListState<T>,
+        items: Iterable<T>,
         getMatch: (T) -> Match?,
         getTimeRemaining: Match.() -> TimeRemaining?,
-        addItemName: String,
         nameIsDuplicate: (newName: String, editItemName: String?) -> Boolean,
-        showAddItemBlankError: Boolean,
         addItemNameClearPressedListener: () -> Unit,
         addItemNameChangedListener: (String) -> Unit,
         itemAddedListener: (String) -> Unit,
-        editDialogOpenFor: T?,
         itemNameEditedListener: (T, String) -> Unit,
         itemNameEditCancelledListener: () -> Unit,
         itemNameEditStartedListener: (T) -> Unit,
-        deleteIconInfo: ClavaIconInfo = ClavaIconInfo.VectorIcon(Icons.Default.Close, "Delete"),
         itemDeletedListener: (T) -> Unit,
         itemClickedListener: (T) -> Unit,
         hasExtraContent: (T) -> Boolean = { false },
-        selectedTab: SetupListTabSwitcherItem,
         onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
         extraContent: @Composable RowScope.(T) -> Unit = {},
-        missingContentNextStep: MissingContentNextStep?,
         navigateListener: (NavRoute) -> Unit,
 ) {
     // TODO Add an are you sure to deletion
     val focusManager = LocalFocusManager.current
     var isSearchExpanded by remember { mutableStateOf(false) }
     var searchText: String? by remember { mutableStateOf(null) }
-    val noContentString = if (searchText == null) {
-        "No ${typeContentDescription}s yet,\n\nType a name into the box below\nthen press enter!"
-    }
-    else {
-        "No matches found for '$searchText'"
-    }
 
     val itemsToShow = searchText
             .takeIf { !it.isNullOrBlank() }
-            ?.let { searchTxt -> items?.filter { it.name.contains(searchTxt, ignoreCase = true) } }
-            ?: items
+            ?.let { searchTxt -> items.filter { it.name.contains(searchTxt, ignoreCase = true) } }
+            ?.takeIf { it.isNotEmpty() }
 
     EditNameDialog(
-            typeContentDescription = typeContentDescription,
-            textPlaceholder = textPlaceholder,
+            typeContentDescription = setupListSettings.typeContentDescription,
+            textPlaceholder = setupListSettings.getTextPlaceholder(setupListState.useTextPlaceholderAlt),
             nameIsDuplicate = nameIsDuplicate,
-            editDialogOpenFor = editDialogOpenFor,
+            editDialogOpenFor = setupListState.editDialogOpenFor,
             itemEditedListener = itemNameEditedListener,
             itemEditCancelledListener = itemNameEditCancelledListener,
     )
 
     ClavaScreen(
-            noContentText = noContentString,
-            missingContentNextStep = missingContentNextStep?.let { setOf(it) },
+            noContentText = "No ${setupListSettings.typeContentDescription}s yet," +
+                    "\n\nType a name into the box below\nthen press enter!",
+            missingContentNextStep = if (items.none()) listOf(MissingContentNextStep.ADD_PLAYERS) else null,
             showMissingContentNextStep = false,
             navigateListener = navigateListener,
             fabs = { modifier ->
                 SearchFab(
                         isExpanded = isSearchExpanded,
-                        textPlaceholder = textPlaceholder,
-                        typeContentDescription = typeContentDescription,
+                        textPlaceholder = setupListSettings.getTextPlaceholder(setupListState.useTextPlaceholderAlt),
+                        typeContentDescription = setupListSettings.typeContentDescription,
                         toggleExpanded = {
                             isSearchExpanded = !isSearchExpanded
                             if (!isSearchExpanded) {
@@ -129,14 +159,14 @@ fun <T : SetupListItem> SetupListScreen(
             footerIsVisible = !isSearchExpanded,
             footerContent = {
                 NamedItemTextField<T>(
-                        typeContentDescription = typeContentDescription,
-                        textPlaceholder = textPlaceholder,
+                        typeContentDescription = setupListSettings.typeContentDescription,
+                        textPlaceholder = setupListSettings.getTextPlaceholder(setupListState.useTextPlaceholderAlt),
                         nameIsDuplicate = nameIsDuplicate,
-                        proposedItemName = addItemName,
-                        showBlankError = showAddItemBlankError,
+                        proposedItemName = setupListState.addItemName,
+                        showBlankError = setupListState.addItemIsDirty,
                         onValueChangedListener = addItemNameChangedListener,
                         onClearPressedListener = addItemNameClearPressedListener,
-                        onDoneListener = { itemAddedListener(addItemName.trim()) },
+                        onDoneListener = { itemAddedListener(setupListState.addItemName.trim()) },
                         textFieldModifier = Modifier.fillMaxWidth(),
                         modifier = Modifier
                                 .padding(horizontal = 20.dp, vertical = 10.dp)
@@ -146,12 +176,12 @@ fun <T : SetupListItem> SetupListScreen(
             headerContent = {
                 TabSwitcher(
                         items = SetupListTabSwitcherItem.values().toList(),
-                        selectedItem = selectedTab,
+                        selectedItem = setupListSettings.selectedTab,
                         onItemClicked = onTabSelectedListener,
                 )
             }
     ) {
-        if (itemsToShow?.any() != true) {
+        if (!searchText.isNullOrBlank() && itemsToShow == null) {
             // No search results
             item {
                 Text(
@@ -163,7 +193,7 @@ fun <T : SetupListItem> SetupListScreen(
             }
         }
         else {
-            items(itemsToShow.sortedBy { it.name }) { item ->
+            items((itemsToShow ?: items).sortedBy { it.name }) { item ->
                 val match = getMatch(item)
                 SelectableListItem(
                         enabled = item.enabled,
@@ -204,8 +234,9 @@ fun <T : SetupListItem> SetupListScreen(
                                     }
                             ) {
                                 Icon(
-                                        painter = deleteIconInfo.asPainter(),
-                                        contentDescription = "${deleteIconInfo.contentDescription!!} ${item.name}"
+                                        painter = setupListSettings.deleteIconInfo.asPainter(),
+                                        contentDescription = setupListSettings.deleteIconInfo.contentDescription!! +
+                                                " " + item.name
                                 )
                             }
                         }
@@ -341,26 +372,21 @@ fun SetupListScreen_Preview() {
 
     Box(modifier = Modifier.fillMaxSize()) {
         SetupListScreen(
-                typeContentDescription = "player",
-                textPlaceholder = "John Doe",
-                addItemName = "",
+                setupListSettings = SetupListSettings.PLAYERS,
+                setupListState = SetupListState(),
                 nameIsDuplicate = { name, _ -> players.any { it.name == name } },
                 addItemNameChangedListener = {},
                 addItemNameClearPressedListener = {},
-                showAddItemBlankError = false,
                 items = players.sortedBy { it.name },
                 getMatch = { player: Player -> matches[players.sortedBy { it.name }.indexOf(player) % matches.size] },
                 getTimeRemaining = { state.getTimeLeft(currentTime) },
-                editDialogOpenFor = null,
                 itemNameEditedListener = { _, _ -> },
                 itemNameEditCancelledListener = {},
                 itemClickedListener = {},
                 itemAddedListener = {},
                 itemNameEditStartedListener = {},
                 itemDeletedListener = {},
-                selectedTab = SetupListTabSwitcherItem.PLAYERS,
                 onTabSelectedListener = {},
-                missingContentNextStep = null,
                 navigateListener = {},
         )
     }
@@ -371,22 +397,22 @@ fun SetupListScreen_Preview() {
 fun ExtraInfo_SetupListScreen_Preview() {
     val currentTime = Calendar.getInstance(Locale.getDefault())
     SetupCourtsScreen(
-            courts = generateCourts(10),
-            matches = generateMatches(5, currentTime),
+            databaseState = DatabaseState(
+                    courts = generateCourts(10),
+                    matches = generateMatches(5, currentTime),
+            ),
+            state = SetupListState(),
+            prependCourt = false,
             getTimeRemaining = { state.getTimeLeft(currentTime) },
-            addItemName = "",
             addItemNameClearPressedListener = {},
-            showAddItemBlankError = false,
             addItemNameChangedListener = {},
             itemAddedListener = {},
-            editDialogOpenFor = null,
             itemNameEditedListener = { _, _ -> },
             itemNameEditCancelledListener = {},
             itemNameEditStartedListener = {},
             itemDeletedListener = {},
             toggleIsPresentListener = {},
             onTabSelectedListener = {},
-            missingContentNextStep = null,
             navigateListener = {},
     )
 }
@@ -397,26 +423,23 @@ fun Dialog_SetupListScreen_Preview() {
     val players = generatePlayers(20)
     Box(modifier = Modifier.fillMaxSize()) {
         SetupListScreen(
-                typeContentDescription = "player",
-                textPlaceholder = "John Doe",
-                addItemName = "",
+                setupListSettings = SetupListSettings.PLAYERS,
+                setupListState = SetupListState(
+                        editDialogOpenFor = players[2],
+                ),
                 addItemNameChangedListener = {},
                 nameIsDuplicate = { name, _ -> players.any { it.name == name } },
                 addItemNameClearPressedListener = {},
-                showAddItemBlankError = false,
                 items = players,
                 getMatch = { null },
                 getTimeRemaining = { null },
-                editDialogOpenFor = players[2],
                 itemNameEditedListener = { _, _ -> },
                 itemNameEditCancelledListener = {},
                 itemClickedListener = {},
                 itemAddedListener = {},
                 itemNameEditStartedListener = {},
                 itemDeletedListener = {},
-                selectedTab = SetupListTabSwitcherItem.PLAYERS,
                 onTabSelectedListener = {},
-                missingContentNextStep = null,
                 navigateListener = {},
         )
     }
@@ -428,26 +451,23 @@ fun Error_SetupListScreen_Preview() {
     val players = generatePlayers(5)
     Box(modifier = Modifier.fillMaxSize()) {
         SetupListScreen(
-                typeContentDescription = "player",
-                textPlaceholder = "John Doe",
-                addItemName = players.first().name,
+                setupListSettings = SetupListSettings.PLAYERS,
+                setupListState = SetupListState(
+                        addItemName = players.first().name,
+                ),
                 addItemNameChangedListener = {},
                 nameIsDuplicate = { name, _ -> players.any { it.name == name } },
                 addItemNameClearPressedListener = {},
-                showAddItemBlankError = false,
                 items = players,
                 getMatch = { null },
                 getTimeRemaining = { null },
-                editDialogOpenFor = null,
                 itemNameEditedListener = { _, _ -> },
                 itemNameEditCancelledListener = {},
                 itemClickedListener = {},
                 itemAddedListener = {},
                 itemNameEditStartedListener = {},
                 itemDeletedListener = {},
-                selectedTab = SetupListTabSwitcherItem.PLAYERS,
                 onTabSelectedListener = {},
-                missingContentNextStep = null,
                 navigateListener = {},
         )
     }

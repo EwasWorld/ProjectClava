@@ -81,11 +81,9 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                // Hide the soft keyboard on closing the drawer
+                // Hide the soft keyboard on opening/closing the drawer
                 LaunchedEffect(drawerState.isOpen) {
-                    if (!drawerState.isOpen) {
-                        focusManager.clearFocus()
-                    }
+                    focusManager.clearFocus()
                 }
 
                 Scaffold(

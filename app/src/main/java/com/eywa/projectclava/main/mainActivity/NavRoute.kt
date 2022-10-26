@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import com.eywa.projectclava.main.mainActivity.screens.createMatch.CreateMatchScreen
 import com.eywa.projectclava.main.mainActivity.screens.createMatch.CreateMatchState
+import com.eywa.projectclava.main.mainActivity.screens.manage.SetupCourtsScreen
+import com.eywa.projectclava.main.mainActivity.screens.manage.SetupPlayersScreen
 import com.eywa.projectclava.main.model.DatabaseState
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.MissingContentNextStep
@@ -25,8 +27,7 @@ enum class NavRoute(val route: String) {
                 preferencesState: DatastoreState,
         ) {
             SetupPlayersScreen(
-                    items = databaseState.players,
-                    matches = databaseState.matches,
+                    databaseState = databaseState,
                     getTimeRemaining = getTimeRemaining,
                     itemAddedListener = { viewModel.addPlayer(it) },
                     itemNameEditedListener = { player, newName ->
@@ -36,7 +37,6 @@ enum class NavRoute(val route: String) {
                     toggleIsPresentListener = { viewModel.updatePlayers(it.copy(isPresent = !it.isPresent)) },
                     onTabSelectedListener = { navController.navigate(it.destination.route) },
                     navigateListener = { navController.navigate(it.route) },
-                    missingContentNextStep = MissingContentNextStep.getMissingContent(databaseState),
             )
         }
     },
@@ -74,8 +74,7 @@ enum class NavRoute(val route: String) {
                 preferencesState: DatastoreState,
         ) {
             SetupCourtsScreen(
-                    courts = databaseState.courts,
-                    matches = databaseState.matches,
+                    databaseState = databaseState,
                     getTimeRemaining = getTimeRemaining,
                     itemAddedListener = { viewModel.addCourt(it) },
                     itemNameEditedListener = { court, newName ->
@@ -86,7 +85,6 @@ enum class NavRoute(val route: String) {
                     toggleIsPresentListener = { viewModel.updateCourt(it.copy(canBeUsed = !it.canBeUsed)) },
                     onTabSelectedListener = { navController.navigate(it.destination.route) },
                     navigateListener = { navController.navigate(it.route) },
-                    missingContentNextStep = MissingContentNextStep.getMissingContent(databaseState),
             )
         }
     },

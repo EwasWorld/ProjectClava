@@ -1,10 +1,11 @@
-package com.eywa.projectclava.main.ui.mainScreens
+package com.eywa.projectclava.main.mainActivity.screens.manage
 
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -14,16 +15,13 @@ import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.model.*
-import com.eywa.projectclava.main.ui.sharedUi.SetupListScreen
-import com.eywa.projectclava.main.ui.sharedUi.SetupListTabSwitcherItem
 import java.util.*
 
 // TODO Sort by number (plus on court-picking dialogs)
 // TODO Court picking dialogs: no courts available
 @Composable
 fun SetupCourtsScreen(
-        courts: Iterable<Court>?,
-        matches: Iterable<Match>?,
+        databaseState: DatabaseState,
         getTimeRemaining: Match.() -> TimeRemaining?,
         prependCourt: Boolean = true,
         itemAddedListener: (String) -> Unit,
@@ -31,100 +29,96 @@ fun SetupCourtsScreen(
         itemDeletedListener: (Court) -> Unit,
         toggleIsPresentListener: (Court) -> Unit,
         onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
-        missingContentNextStep: Iterable<MissingContentNextStep>?,
         navigateListener: (NavRoute) -> Unit,
 ) {
-    val newItemName = rememberSaveable { mutableStateOf("") }
-    var editDialogOpenFor: Court? by remember { mutableStateOf(null) }
-    val addFieldTouched = rememberSaveable { mutableStateOf(false) }
+    val state = remember(prependCourt) { mutableStateOf(SetupListState<Court>(useTextPlaceholderAlt = prependCourt)) }
 
     SetupCourtsScreen(
-            matches = matches,
+            state = state.value,
+            databaseState = databaseState,
             getTimeRemaining = getTimeRemaining,
-            courts = courts,
-            addItemName = newItemName.value,
             prependCourt = prependCourt,
-            showAddItemBlankError = addFieldTouched.value,
             addItemNameClearPressedListener = {
-                newItemName.value = ""
-                addFieldTouched.value = false
+                state.value = state.value.copy(
+                        addItemName = "",
+                        addItemIsDirty = false,
+                )
             },
             addItemNameChangedListener = {
-                newItemName.value = it
-                addFieldTouched.value = true
+                state.value = state.value.copy(
+                        addItemName = it,
+                        addItemIsDirty = true,
+                )
             },
             itemAddedListener = {
-                itemAddedListener(if (prependCourt) "Court $it" else it)
-                newItemName.value = ""
-                addFieldTouched.value = false
+                itemAddedListener(it)
+                state.value = state.value.copy(
+                        addItemName = "",
+                        addItemIsDirty = false,
+                )
             },
-            editDialogOpenFor = editDialogOpenFor,
             itemNameEditedListener = { item, newName ->
-                editDialogOpenFor = null
+                state.value = state.value.copy(editDialogOpenFor = null)
                 itemNameEditedListener(item, newName)
             },
-            itemNameEditCancelledListener = { editDialogOpenFor = null },
-            itemNameEditStartedListener = { editDialogOpenFor = it },
+            itemNameEditCancelledListener = {
+                state.value = state.value.copy(editDialogOpenFor = null)
+            },
+            itemNameEditStartedListener = {
+                state.value = state.value.copy(editDialogOpenFor = it)
+            },
             itemDeletedListener = { itemDeletedListener(it) },
             toggleIsPresentListener = toggleIsPresentListener,
             onTabSelectedListener = onTabSelectedListener,
-            missingContentNextStep = missingContentNextStep,
             navigateListener = navigateListener,
     )
 }
 
 @Composable
 fun SetupCourtsScreen(
-        matches: Iterable<Match>?,
-        getTimeRemaining: Match.() -> TimeRemaining?,
-        courts: Iterable<Court>?,
-        addItemName: String,
+        state: SetupListState<Court>,
+        databaseState: DatabaseState,
         prependCourt: Boolean = true,
-        showAddItemBlankError: Boolean,
+        getTimeRemaining: Match.() -> TimeRemaining?,
         addItemNameClearPressedListener: () -> Unit,
         addItemNameChangedListener: (String) -> Unit,
         itemAddedListener: (String) -> Unit,
-        editDialogOpenFor: Court?,
         itemNameEditedListener: (Court, String) -> Unit,
         itemNameEditCancelledListener: () -> Unit,
         itemNameEditStartedListener: (Court) -> Unit,
         itemDeletedListener: (Court) -> Unit,
         toggleIsPresentListener: (Court) -> Unit,
         onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
-        missingContentNextStep: Iterable<MissingContentNextStep>?,
         navigateListener: (NavRoute) -> Unit,
 ) {
     SetupListScreen(
-            typeContentDescription = "court",
-            textPlaceholder = if (prependCourt) "1" else "Court 1",
-            items = courts,
+            setupListSettings = SetupListSettings.COURTS,
+            setupListState = state,
+            items = databaseState.courts,
             nameIsDuplicate = { newName, editItemName ->
                 if (newName == editItemName) return@SetupListScreen true
-                if (courts == null) return@SetupListScreen false
 
                 val checkName = if (prependCourt) "Court $newName" else newName
-                courts.any { it.name == checkName }
+                databaseState.courts.any { it.name == checkName }
             },
-            getMatch = { matches?.getLatestMatchForCourt(it) },
+            getMatch = { databaseState.matches.getLatestMatchForCourt(it) },
             getTimeRemaining = getTimeRemaining,
-            addItemName = addItemName,
-            showAddItemBlankError = showAddItemBlankError,
             addItemNameClearPressedListener = addItemNameClearPressedListener,
             addItemNameChangedListener = addItemNameChangedListener,
             itemAddedListener = itemAddedListener,
-            editDialogOpenFor = editDialogOpenFor,
             itemNameEditedListener = itemNameEditedListener,
             itemNameEditCancelledListener = itemNameEditCancelledListener,
             itemNameEditStartedListener = itemNameEditStartedListener,
             itemDeletedListener = { itemDeletedListener(it) },
             itemClickedListener = toggleIsPresentListener,
-            hasExtraContent = { matches?.getLatestMatchForCourt(it) != null },
+            hasExtraContent = { databaseState.matches.getLatestMatchForCourt(it) != null },
             extraContent = {
-                ExtraContent(match = matches?.getLatestMatchForCourt(it)!!, getTimeRemaining = getTimeRemaining)
+                ExtraContent(
+                        match = databaseState.matches.getLatestMatchForCourt(it)!!,
+                        getTimeRemaining = getTimeRemaining
+                )
             },
-            selectedTab = SetupListTabSwitcherItem.COURTS,
             onTabSelectedListener = onTabSelectedListener,
-            missingContentNextStep = missingContentNextStep?.find { it == MissingContentNextStep.ADD_COURTS },
             navigateListener = navigateListener,
     )
 }
@@ -153,22 +147,21 @@ fun RowScope.ExtraContent(match: Match, getTimeRemaining: Match.() -> TimeRemain
 fun SetupCourtsScreen_Preview() {
     val currentTime = Calendar.getInstance(Locale.getDefault())
     SetupCourtsScreen(
-            courts = generateCourts(10),
-            matches = generateMatches(5, currentTime),
+            state = SetupListState(),
+            databaseState = DatabaseState(
+                    courts = generateCourts(10),
+                    matches = generateMatches(5, currentTime),
+            ),
             getTimeRemaining = { state.getTimeLeft(currentTime) },
-            addItemName = "",
             addItemNameClearPressedListener = {},
-            showAddItemBlankError = false,
             addItemNameChangedListener = {},
             itemAddedListener = {},
-            editDialogOpenFor = null,
             itemNameEditedListener = { _, _ -> },
             itemNameEditCancelledListener = {},
             itemNameEditStartedListener = {},
             itemDeletedListener = {},
             toggleIsPresentListener = {},
             onTabSelectedListener = {},
-            missingContentNextStep = null,
             navigateListener = {},
     )
 }
