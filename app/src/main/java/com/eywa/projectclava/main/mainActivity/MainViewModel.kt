@@ -119,7 +119,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
              */
             DatabaseIntent.DeleteAllMatches -> matchRepo.deleteAll()
             is DatabaseIntent.DeleteMatch -> matchRepo.delete(intent.match.asDatabaseMatch())
-            is DatabaseIntent.UpdateMatch -> matchRepo.update(intent.match.asDatabaseMatch())
             is DatabaseIntent.AddMatch -> {
                 check(intent.players.any()) { "No players in match" }
                 val databaseMatch =
@@ -127,9 +126,45 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val matchId = matchRepo.insert(databaseMatch)
                 matchRepo.insert(*intent.players.map { DatabaseMatchPlayer(matchId.toInt(), it.id) }.toTypedArray())
             }
-            is DatabaseIntent.AddTimeToMatch -> matchRepo.update(
-                    intent.match.addTime(currentTime.latest(), intent.secondsToAdd).asDatabaseMatch()
-            )
+
+            /*
+             * Update match
+             */
+            is DatabaseIntent.UpdateMatch -> matchRepo.update(intent.match.asDatabaseMatch())
+            is DatabaseIntent.AddTimeToMatch ->
+                databaseState.latest().matches.find { it.id == intent.matchId }!!.let { match ->
+                    matchRepo.update(
+                            match.addTime(currentTime.latest(), intent.secondsToAdd).asDatabaseMatch()
+                    )
+                }
+            is DatabaseIntent.CompleteMatch ->
+                databaseState.latest().matches.find { it.id == intent.matchId }!!.let { match ->
+                    matchRepo.update(
+                            match.completeMatch(currentTime.latest()).asDatabaseMatch()
+                    )
+                }
+            is DatabaseIntent.PauseMatch ->
+                databaseState.latest().matches.find { it.id == intent.matchId }!!.let { match ->
+                    matchRepo.update(
+                            match.pauseMatch(currentTime.latest()).asDatabaseMatch()
+                    )
+                }
+            is DatabaseIntent.ResumeMatch ->
+                databaseState.latest().matches.find { it.id == intent.matchId }!!.let { match ->
+                    matchRepo.update(
+                            match.resumeMatch(
+                                    currentTime.latest(),
+                                    intent.court,
+                                    intent.resumeTimeSeconds
+                            ).asDatabaseMatch()
+                    )
+                }
+            is DatabaseIntent.ChangeMatchCourt ->
+                databaseState.latest().matches.find { it.id == intent.matchId }!!.let { match ->
+                    matchRepo.update(
+                            match.changeCourt(intent.court).asDatabaseMatch()
+                    )
+                }
 
             /*
              * Players

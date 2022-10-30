@@ -6,15 +6,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.eywa.projectclava.main.mainActivity.CoreIntent
 import com.eywa.projectclava.main.mainActivity.DatabaseIntent
-import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.ui.sharedUi.AddTimeDialogIntent.*
 
-interface AddTimeDialogState {
-    val addTimeDialogOpenFor: Match?
+interface SelectableMatch {
+    val selectedMatchId: Int?
+}
+
+interface AddTimeDialogState : SelectableMatch {
+    val addTimeDialogIsOpen: Boolean
     val timeToAdd: TimePickerState?
 
     fun addTimeCopy(
-            addTimeDialogOpenFor: Match? = this.addTimeDialogOpenFor,
+            addTimeDialogIsOpen: Boolean = this.addTimeDialogIsOpen,
             timeToAdd: TimePickerState? = this.timeToAdd,
     ): AddTimeDialogState
 }
@@ -23,7 +26,7 @@ sealed class AddTimeDialogIntent {
     object Submitted : AddTimeDialogIntent()
     object CloseDialog : AddTimeDialogIntent()
     data class TimeToAddChanged(val newTimePickerState: TimePickerState) : AddTimeDialogIntent()
-    data class AddTimeOpened(val match: Match) : AddTimeDialogIntent()
+    object AddTimeOpened : AddTimeDialogIntent()
 
     @Suppress("UNCHECKED_CAST")
     fun <S : AddTimeDialogState> handle(
@@ -33,15 +36,18 @@ sealed class AddTimeDialogIntent {
             handle: (CoreIntent) -> Unit,
     ) {
         when (this) {
-            CloseDialog -> newStateListener(currentState.addTimeCopy(null, null) as S)
+            CloseDialog -> newStateListener(currentState.addTimeCopy(false, null) as S)
             is TimeToAddChanged -> newStateListener(currentState.addTimeCopy(timeToAdd = newTimePickerState) as S)
             is AddTimeOpened -> newStateListener(
-                    currentState.addTimeCopy(match, TimePickerState(defaultTimeToAddSeconds)) as S
+                    currentState.addTimeCopy(
+                            addTimeDialogIsOpen = true,
+                            timeToAdd = TimePickerState(defaultTimeToAddSeconds),
+                    ) as S
             )
             Submitted -> {
                 handle(
                         DatabaseIntent.AddTimeToMatch(
-                                match = currentState.addTimeDialogOpenFor!!,
+                                matchId = currentState.selectedMatchId!!,
                                 secondsToAdd = currentState.timeToAdd!!.totalSeconds,
                         )
                 )
@@ -57,12 +63,12 @@ fun AddTimeDialog(
         listener: (AddTimeDialogIntent) -> Unit,
 ) {
     check(
-            (state.addTimeDialogOpenFor == null && state.timeToAdd == null)
-                    || (state.addTimeDialogOpenFor != null && state.timeToAdd != null)
+            (!state.addTimeDialogIsOpen && state.timeToAdd == null)
+                    || (state.addTimeDialogIsOpen && state.timeToAdd != null)
     ) { "Invalid AddTimeDialogState" }
 
     ClavaDialog(
-            isShown = state.addTimeDialogOpenFor != null,
+            isShown = state.addTimeDialogIsOpen,
             title = "Add time",
             okButtonText = "Add",
             onCancelListener = { listener(CloseDialog) },

@@ -71,7 +71,7 @@ fun ClavaBottomNav(
                 label = "Ongoing",
                 contentDescription = "Ongoing matches",
                 badgeContent = if (hasOverrunningMatch) "" else null,
-                destination = NavRoute.CURRENT_MATCHES.route,
+                destination = NavRoute.ONGOING_MATCHES.route,
                 currentRoute = currentRoute,
                 onClick = onClick,
         )

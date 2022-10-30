@@ -12,24 +12,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import com.eywa.projectclava.main.model.Court
-import com.eywa.projectclava.main.model.Match
-import com.eywa.projectclava.main.model.getCourtsInUse
-import java.util.*
-
-@Composable
-fun SelectCourtRadioButtons(
-        courts: Iterable<Court>?,
-        matches: Iterable<Match>?,
-        currentTime: Calendar,
-        selectedCourt: Court?,
-        onCourtSelected: (Court) -> Unit,
-) {
-    SelectCourtRadioButtons(
-            availableCourts = courts?.minus((matches?.getCourtsInUse() ?: listOf()).toSet()),
-            selectedCourt = selectedCourt,
-            onCourtSelected = onCourtSelected
-    )
-}
 
 @Composable
 fun SelectCourtRadioButtons(

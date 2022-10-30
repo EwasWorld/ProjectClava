@@ -30,15 +30,15 @@ import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
 
 data class MatchHistoryState(
-        val selectedMatch: Match? = null,
-        override val addTimeDialogOpenFor: Match? = null,
+        override val selectedMatchId: Int? = null,
+        override val addTimeDialogIsOpen: Boolean = false,
         override val timeToAdd: TimePickerState? = null,
 ) : ScreenState, AddTimeDialogState {
     override fun addTimeCopy(
-            addTimeDialogOpenFor: Match?,
+            addTimeDialogIsOpen: Boolean,
             timeToAdd: TimePickerState?,
     ) = copy(
-            addTimeDialogOpenFor = addTimeDialogOpenFor,
+            addTimeDialogIsOpen = addTimeDialogIsOpen,
             timeToAdd = timeToAdd,
     )
 }
@@ -64,7 +64,7 @@ sealed class MatchHistoryIntent : ScreenIntent<MatchHistoryState> {
         when (this) {
             is AddTimeIntent -> value.handle(defaultTimeToAdd, currentState, newStateListener, handle)
             is MatchClicked -> newStateListener(
-                    currentState.copy(selectedMatch = match.takeIf { currentState.selectedMatch != match })
+                    currentState.copy(selectedMatchId = match.id.takeIf { currentState.selectedMatchId != match.id })
             )
             is MatchDeleted -> handle(DatabaseIntent.DeleteMatch(match))
             is Navigate -> handle(MainEffect.Navigate(destination))
@@ -96,9 +96,11 @@ fun MatchHistoryScreen(
             navigateListener = { listener(Navigate(it)) },
             footerContent = {
                 PreviousMatchesScreenFooter(
-                        selectedMatch = state.selectedMatch,
+                        selectedMatch = state.selectedMatchId?.let { selected ->
+                            databaseState.matches.find { it.id == selected }
+                        },
                         openAddTimeDialogListener = {
-                            listener(AddTimeDialogIntent.AddTimeOpened(it).toMatchHistoryIntent(defaultTimeToAdd))
+                            listener(AddTimeDialogIntent.AddTimeOpened.toMatchHistoryIntent(defaultTimeToAdd))
                         },
                         deleteMatchListener = { listener(MatchDeleted(it)) }
                 )
@@ -112,7 +114,7 @@ fun MatchHistoryScreen(
             }
     ) {
         items(finishedMatches.withIndex().toList()) { (index, match) ->
-            val isSelected = state.selectedMatch?.id == match.id
+            val isSelected = state.selectedMatchId == match.id
 
             val date = match.getFinishTime()!!.asDateString()
             val matchesPreviousDate = index

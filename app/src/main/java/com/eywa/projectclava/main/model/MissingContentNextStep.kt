@@ -38,7 +38,7 @@ enum class MissingContentNextStep(
     ),
     COMPLETE_A_MATCH(
             nextStepsText = "We need to mark a match as completed",
-            buttonRoute = NavRoute.CURRENT_MATCHES,
+            buttonRoute = NavRoute.ONGOING_MATCHES,
             isMatchStep = true,
     )
     ;

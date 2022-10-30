@@ -13,8 +13,9 @@ import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListState
 import com.eywa.projectclava.main.mainActivity.screens.manage.SetupPlayersScreen
 import com.eywa.projectclava.main.mainActivity.screens.matchUp.CreateMatchScreen
 import com.eywa.projectclava.main.mainActivity.screens.matchUp.CreateMatchState
+import com.eywa.projectclava.main.mainActivity.screens.ongoing.OngoingMatchesScreen
+import com.eywa.projectclava.main.mainActivity.screens.ongoing.OngoingMatchesState
 import com.eywa.projectclava.main.model.*
-import com.eywa.projectclava.main.ui.mainScreens.CurrentMatchesScreen
 import com.eywa.projectclava.main.ui.mainScreens.UpcomingMatchesScreen
 import com.eywa.projectclava.main.ui.sharedUi.AvailableCourtsHeader
 import com.eywa.projectclava.main.ui.sharedUi.ClavaScreen
@@ -146,7 +147,9 @@ enum class NavRoute(val route: String) {
         }
     },
 
-    CURRENT_MATCHES("current_matches") {
+    ONGOING_MATCHES("ongoing_matches") {
+        override fun createInitialState() = OngoingMatchesState()
+
         @Composable
         override fun ClavaNavigation(
                 navController: NavHostController,
@@ -157,35 +160,12 @@ enum class NavRoute(val route: String) {
                 preferencesState: DatastoreState,
                 isSoftKeyboardOpen: Boolean,
         ) {
-            CurrentMatchesScreen(
-                    courts = databaseState.courts,
-                    matches = databaseState.matches,
+            OngoingMatchesScreen(
+                    databaseState = databaseState,
+                    state = viewModel.getScreenState(this) as OngoingMatchesState,
                     getTimeRemaining = getTimeRemaining,
                     defaultTimeToAddSeconds = preferencesState.defaultTimeToAdd,
-                    addTimeListener = { match, timeToAdd ->
-                        viewModel.updateMatch(
-                                match.addTime(
-                                        currentTime(),
-                                        timeToAdd
-                                )
-                        )
-                    },
-                    setCompletedListener = { viewModel.updateMatch(it.completeMatch(currentTime())) },
-                    changeCourtListener = { match, court ->
-                        viewModel.updateMatch(match.changeCourt(court))
-                    },
-                    pauseListener = { viewModel.updateMatch(it.pauseMatch(currentTime())) },
-                    resumeListener = { match, court, resumeTime ->
-                        viewModel.updateMatch(
-                                match.resumeMatch(
-                                        currentTime(),
-                                        court,
-                                        resumeTime
-                                )
-                        )
-                    },
-                    navigateListener = { navController.navigate(it.route) },
-                    missingContentNextStep = MissingContentNextStep.getMissingContent(databaseState),
+                    listener = { viewModel.handleIntent(it) },
             )
         }
     },
