@@ -1,4 +1,4 @@
-package com.eywa.projectclava.main.ui.mainScreens
+package com.eywa.projectclava.main.mainActivity.screens.history.summary
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
@@ -15,8 +15,10 @@ import com.eywa.projectclava.main.common.asDateString
 import com.eywa.projectclava.main.common.asTimeString
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.mainActivity.NavRoute
+import com.eywa.projectclava.main.model.DatabaseState
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.MissingContentNextStep
+import com.eywa.projectclava.main.ui.mainScreens.HistoryTabSwitcherItem
 import com.eywa.projectclava.main.ui.sharedUi.ClavaScreen
 import com.eywa.projectclava.main.ui.sharedUi.TabSwitcher
 import com.eywa.projectclava.main.ui.sharedUi.WrappingRow
@@ -24,23 +26,21 @@ import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
 
 @Composable
-fun DaysReportScreen(
-        matches: Iterable<Match>?,
-        onTabSelectedListener: (HistoryTabSwitcherItem) -> Unit,
-        missingContentNextStep: Iterable<MissingContentNextStep>?,
+fun HistorySummaryScreen(
+        databaseState: DatabaseState,
         navigateListener: (NavRoute) -> Unit,
 ) {
     // Most recent first
-    val matchesGroupedByDate = matches
-            ?.filter { it.isFinished }
-            ?.groupBy { it.getFinishTime()?.asDateString()!! }
-            ?.entries
-            ?.sortedByDescending { it.value.first().getFinishTime() }
+    val matchesGroupedByDate = databaseState.matches
+            .filter { it.isFinished }
+            .groupBy { it.getFinishTime()?.asDateString()!! }
+            .entries
+            .sortedByDescending { it.value.first().getFinishTime() }
 
     ClavaScreen(
             noContentText = "No matches have been completed",
-            missingContentNextStep = missingContentNextStep
-                    ?.takeIf { states -> states.any { it == MissingContentNextStep.COMPLETE_A_MATCH } },
+            missingContentNextStep = databaseState.getMissingContent()
+                    .takeIf { states -> states.any { it == MissingContentNextStep.COMPLETE_A_MATCH } },
             navigateListener = navigateListener,
             headerContent = {
                 TabSwitcher(
@@ -52,7 +52,8 @@ fun DaysReportScreen(
             listArrangement = Arrangement.spacedBy(25.dp),
             listModifier = Modifier.padding(horizontal = 5.dp)
     ) {
-        items(matchesGroupedByDate ?: listOf()) { (dateString, matches) ->
+        items(matchesGroupedByDate) { (dateString, matches) ->
+            val isSingleMatch = matches.count() == 1
             val firstMatch = matches.minByOrNull { it.getFinishTime()!! }!!.getFinishTime()!!.asTimeString()
             val lastMatch = matches.maxByOrNull { it.getFinishTime()!! }!!.getFinishTime()!!.asTimeString()
             val players = matches
@@ -61,7 +62,8 @@ fun DaysReportScreen(
                     .mapValues { (_, value) -> value.size }
                     .entries
                     .sortedBy { (name, _) -> name }
-            val plural = "es".takeIf { matches.count() > 1 } ?: ""
+            val plural = "es".takeIf { !isSingleMatch } ?: ""
+            val matchTimes = if (isSingleMatch) "at $firstMatch" else "from $firstMatch to $lastMatch"
 
             Column(
                     modifier = Modifier.fillMaxWidth()
@@ -71,8 +73,7 @@ fun DaysReportScreen(
                         style = Typography.h3,
                 )
                 Text(
-                        text = "${matches.size} match$plural" +
-                                " from $firstMatch to $lastMatch",
+                        text = "${matches.size} match$plural $matchTimes",
                         style = Typography.h4,
                 )
                 Spacer(modifier = Modifier.height(10.dp))
@@ -114,7 +115,7 @@ fun DaysReportScreen(
 
 @Preview(showBackground = true)
 @Composable
-fun DaysReportScreen_Preview() {
+fun HistorySummaryScreen_Preview() {
     val currentTime = Calendar.getInstance()
     val matches = (0..4).fold(listOf<Match>()) { acc, i ->
         acc + generateMatches(
@@ -123,10 +124,10 @@ fun DaysReportScreen_Preview() {
                 forceState = GeneratableMatchState.COMPLETE,
         )
     }
-    DaysReportScreen(
-            matches = matches,
-            onTabSelectedListener = {},
-            missingContentNextStep = null,
+    HistorySummaryScreen(
+            databaseState = DatabaseState(
+                    matches = matches,
+            ),
             navigateListener = {},
     )
 }

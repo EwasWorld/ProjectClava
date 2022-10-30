@@ -1,4 +1,4 @@
-package com.eywa.projectclava.main.mainActivity.screens.createMatch
+package com.eywa.projectclava.main.mainActivity.screens.matchUp
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*

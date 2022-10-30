@@ -2,17 +2,17 @@ package com.eywa.projectclava.main.mainActivity
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
-import com.eywa.projectclava.main.mainActivity.archivedPlayers.ArchivedPlayersScreen
-import com.eywa.projectclava.main.mainActivity.archivedPlayers.ArchivedPlayersState
 import com.eywa.projectclava.main.mainActivity.screens.ScreenState
-import com.eywa.projectclava.main.mainActivity.screens.createMatch.CreateMatchScreen
-import com.eywa.projectclava.main.mainActivity.screens.createMatch.CreateMatchState
+import com.eywa.projectclava.main.mainActivity.screens.archivedPlayers.ArchivedPlayersScreen
+import com.eywa.projectclava.main.mainActivity.screens.archivedPlayers.ArchivedPlayersState
+import com.eywa.projectclava.main.mainActivity.screens.history.summary.HistorySummaryScreen
 import com.eywa.projectclava.main.mainActivity.screens.manage.SetupCourtsScreen
 import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListState
 import com.eywa.projectclava.main.mainActivity.screens.manage.SetupPlayersScreen
+import com.eywa.projectclava.main.mainActivity.screens.matchUp.CreateMatchScreen
+import com.eywa.projectclava.main.mainActivity.screens.matchUp.CreateMatchState
 import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.mainScreens.CurrentMatchesScreen
-import com.eywa.projectclava.main.ui.mainScreens.DaysReportScreen
 import com.eywa.projectclava.main.ui.mainScreens.PreviousMatchesScreen
 import com.eywa.projectclava.main.ui.mainScreens.UpcomingMatchesScreen
 import com.eywa.projectclava.main.ui.sharedUi.AvailableCourtsHeader
@@ -219,7 +219,9 @@ enum class NavRoute(val route: String) {
         }
     },
 
-    DAYS_REPORT("days_report") {
+    HISTORY_SUMMARY("history_summary") {
+        override fun createInitialState() = throw NotImplementedError("No initial state")
+
         @Composable
         override fun ClavaNavigation(
                 navController: NavHostController,
@@ -230,11 +232,9 @@ enum class NavRoute(val route: String) {
                 preferencesState: DatastoreState,
                 isSoftKeyboardOpen: Boolean
         ) {
-            DaysReportScreen(
-                    matches = databaseState.matches,
-                    onTabSelectedListener = { navController.navigate(it.destination.route) },
+            HistorySummaryScreen(
+                    databaseState = databaseState,
                     navigateListener = { navController.navigate(it.route) },
-                    missingContentNextStep = MissingContentNextStep.getMissingContent(databaseState),
             )
         }
     },

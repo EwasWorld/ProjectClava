@@ -26,7 +26,7 @@ enum class HistoryTabSwitcherItem(
         override val destination: NavRoute
 ) : TabSwitcherItem {
     MATCHES("Matches", NavRoute.PREVIOUS_MATCHES),
-    SUMMARY("Summary", NavRoute.DAYS_REPORT),
+    SUMMARY("Summary", NavRoute.HISTORY_SUMMARY),
 }
 
 @Composable

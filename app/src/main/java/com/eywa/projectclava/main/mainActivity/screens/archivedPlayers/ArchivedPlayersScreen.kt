@@ -1,4 +1,4 @@
-package com.eywa.projectclava.main.mainActivity.archivedPlayers
+package com.eywa.projectclava.main.mainActivity.screens.archivedPlayers
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth

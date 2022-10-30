@@ -1,4 +1,4 @@
-package com.eywa.projectclava.main.mainActivity.screens.createMatch
+package com.eywa.projectclava.main.mainActivity.screens.matchUp
 
 import com.eywa.projectclava.main.mainActivity.CoreIntent
 import com.eywa.projectclava.main.mainActivity.DatabaseIntent
