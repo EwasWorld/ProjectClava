@@ -38,6 +38,44 @@ fun ClavaScreen(
         listModifier: Modifier = Modifier,
         listContent: LazyListScope.() -> Unit,
 ) {
+    // Always show at the same height, regardless of the header/footer size
+    val firstMissingContent = missingContentNextStep.getFirstStep()
+    if (firstMissingContent != null) {
+        Box(
+                contentAlignment = Alignment.TopCenter,
+                modifier = Modifier
+                        .fillMaxSize()
+        ) {
+            Column(
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 20.dp)
+            ) {
+                Text(
+                        text = noContentText,
+                        style = Typography.h4,
+                        textAlign = TextAlign.Center,
+                )
+                if (showMissingContentNextStep) {
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Text(
+                            text = firstMissingContent.nextStepsText,
+                            style = Typography.h4,
+                            textAlign = TextAlign.Center,
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Button(onClick = { navigateListener(firstMissingContent.buttonRoute) }) {
+                        Text(
+                                text = "Let's do it!",
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = modifier.fillMaxSize()
@@ -58,38 +96,7 @@ fun ClavaScreen(
                         .fillMaxWidth()
                         .weight(1f)
         ) {
-            val firstMissingContent = missingContentNextStep.getFirstStep()
-            if (firstMissingContent != null) {
-                // TODO Force this to always be at the same height
-                Column(
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 20.dp)
-                ) {
-                    Text(
-                            text = noContentText,
-                            style = Typography.h4,
-                            textAlign = TextAlign.Center,
-                    )
-                    if (showMissingContentNextStep) {
-                        Spacer(modifier = Modifier.height(20.dp))
-                        Text(
-                                text = firstMissingContent.nextStepsText,
-                                style = Typography.h4,
-                                textAlign = TextAlign.Center,
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Button(onClick = { navigateListener(firstMissingContent.buttonRoute) }) {
-                            Text(
-                                    text = "Let's do it!",
-                            )
-                        }
-                    }
-                }
-            }
-            else {
+            if (firstMissingContent == null) {
                 LazyColumn(
                         verticalArrangement = listArrangement,
                         contentPadding = PaddingValues(vertical = 20.dp),
