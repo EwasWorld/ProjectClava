@@ -5,7 +5,7 @@ import com.eywa.projectclava.main.mainActivity.MainEffect
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListIntent.SetupListItemIntent
 import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListIntent.SetupListStateIntent
-import com.eywa.projectclava.main.ui.sharedUi.EditDialogListener
+import com.eywa.projectclava.main.ui.sharedUi.EditDialogIntent
 
 
 sealed class SetupListIntent {
@@ -29,10 +29,7 @@ sealed class SetupListIntent {
         object AddNameCleared : SetupListStateIntent()
         data class AddNameChanged(val value: String) : SetupListStateIntent()
 
-        data class EditItemStarted(val value: SetupListItem) : SetupListStateIntent()
-        data class EditItemNameChanged(val value: String) : SetupListStateIntent()
-        object EditItemCancelled : SetupListStateIntent()
-        object EditNameCleared : SetupListStateIntent()
+        data class EditItemStateIntent(val value: EditDialogIntent.EditItemStateIntent) : SetupListStateIntent()
 
         object ToggleSearch : SetupListStateIntent()
         data class SearchTextChanged(val value: String) : SetupListStateIntent()
@@ -46,23 +43,9 @@ sealed class SetupListIntent {
         ) {
             @Suppress("UNCHECKED_CAST")
             when (this) {
+                is EditItemStateIntent -> value.handle(currentState, newStateListener)
                 AddNameCleared -> newStateListener(currentState.copy(addItemName = "", addItemIsDirty = false))
                 is AddNameChanged -> newStateListener(currentState.copy(addItemName = value, addItemIsDirty = true))
-                EditItemCancelled -> newStateListener(currentState.copy(editDialogOpenFor = null))
-                EditNameCleared -> newStateListener(currentState.copy(editItemName = "", editNameIsDirty = false))
-                is EditItemNameChanged -> newStateListener(
-                        currentState.copy(
-                                editItemName = value,
-                                editNameIsDirty = true,
-                        )
-                )
-                is EditItemStarted -> newStateListener(
-                        currentState.copy(
-                                editItemName = value.name,
-                                editNameIsDirty = false,
-                                editDialogOpenFor = value as T,
-                        )
-                )
                 is Navigate -> handle(MainEffect.Navigate(value))
                 is SearchTextChanged -> newStateListener(currentState.copy(searchText = value))
                 ToggleSearch -> {
@@ -77,10 +60,7 @@ sealed class SetupListIntent {
     }
 }
 
-fun EditDialogListener.toSetupListIntent() = when (this) {
-    EditDialogListener.EditItemCancelled -> SetupListStateIntent.EditItemCancelled
-    EditDialogListener.EditNameCleared -> SetupListStateIntent.EditNameCleared
-    is EditDialogListener.EditItemNameChanged -> SetupListStateIntent.EditItemNameChanged(value)
-    is EditDialogListener.EditItemStarted<*> -> SetupListStateIntent.EditItemStarted(value as SetupListItem)
-    EditDialogListener.EditItemSubmitted -> SetupListItemIntent.EditItemSubmitted
+fun EditDialogIntent.toSetupListIntent() = when (this) {
+    is EditDialogIntent.EditItemStateIntent -> SetupListStateIntent.EditItemStateIntent(this)
+    EditDialogIntent.EditItemSubmitted -> SetupListItemIntent.EditItemSubmitted
 }

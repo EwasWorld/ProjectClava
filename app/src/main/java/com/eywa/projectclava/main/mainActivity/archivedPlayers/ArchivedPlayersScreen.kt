@@ -1,4 +1,4 @@
-package com.eywa.projectclava.main.ui.mainScreens
+package com.eywa.projectclava.main.mainActivity.archivedPlayers
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,7 +10,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -18,67 +18,37 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.R
-import com.eywa.projectclava.main.model.Match
+import com.eywa.projectclava.main.model.DatabaseState
 import com.eywa.projectclava.main.model.MissingContentNextStep
-import com.eywa.projectclava.main.model.Player
 import com.eywa.projectclava.main.ui.sharedUi.ClavaScreen
+import com.eywa.projectclava.main.ui.sharedUi.EditDialogIntent
 import com.eywa.projectclava.main.ui.sharedUi.EditNameDialog
 import com.eywa.projectclava.main.ui.sharedUi.SelectableListItem
 import com.eywa.projectclava.ui.theme.Typography
 
-@Composable
-fun ArchivedPlayersScreen(
-        players: Iterable<Player>?,
-        matches: Iterable<Match>?,
-        itemNameEditedListener: (Player, String) -> Unit,
-        itemDeletedListener: (Player) -> Unit,
-        itemUnarchivedListener: (Player) -> Unit,
-) {
-    var editDialogOpenFor: Player? by remember { mutableStateOf(null) }
-
-    ArchivedPlayersScreen(
-            players = players,
-            matches = matches,
-            editDialogOpenFor = editDialogOpenFor,
-            itemNameEditedListener = { item, newName ->
-                editDialogOpenFor = null
-                itemNameEditedListener(item, newName)
-            },
-            itemNameEditCancelledListener = { editDialogOpenFor = null },
-            itemNameEditStartedListener = { editDialogOpenFor = it },
-            itemDeletedListener = { itemDeletedListener(it) },
-            itemUnarchivedListener = { itemUnarchivedListener(it) },
-    )
-}
 
 @Composable
 fun ArchivedPlayersScreen(
-        players: Iterable<Player>?,
-        matches: Iterable<Match>?,
-        editDialogOpenFor: Player?,
-        itemNameEditedListener: (Player, String) -> Unit,
-        itemNameEditCancelledListener: () -> Unit,
-        itemNameEditStartedListener: (Player) -> Unit,
-        itemDeletedListener: (Player) -> Unit,
-        itemUnarchivedListener: (Player) -> Unit,
+        databaseState: DatabaseState,
+        state: ArchivedPlayersState,
+        listener: (ArchivedPlayersIntent) -> Unit,
 ) {
-    val archivedPlayers = players?.filter { it.isArchived }
+    val archivedPlayers = databaseState.players.filter { it.isArchived }
 
     EditNameDialog(
             typeContentDescription = "player",
             textPlaceholder = "John Doe",
             nameIsDuplicate = { newName, nameOfItemBeingEdited ->
-                newName != nameOfItemBeingEdited && players?.any { it.name == newName } == true
+                newName != nameOfItemBeingEdited && databaseState.players.any { it.name == newName }
             },
-            editDialogOpenFor = editDialogOpenFor,
-            itemEditedListener = itemNameEditedListener,
-            itemEditCancelledListener = itemNameEditCancelledListener,
+            editItemState = state,
+            listener = { listener(it.toArchivedPlayersIntent()) },
     )
 
     // TODO Add a search?
     ClavaScreen(
             noContentText = "No archived players",
-            missingContentNextStep = if (archivedPlayers.isNullOrEmpty()) listOf(MissingContentNextStep.ADD_PLAYERS) else null,
+            missingContentNextStep = if (archivedPlayers.isEmpty()) listOf(MissingContentNextStep.ADD_PLAYERS) else null,
             showMissingContentNextStep = false,
             navigateListener = {},
             headerContent = {
@@ -94,39 +64,44 @@ fun ArchivedPlayersScreen(
                 )
             }
     ) {
-        items(archivedPlayers?.sortedBy { it.name } ?: listOf()) { item ->
+        items(archivedPlayers.sortedBy { it.name }) { player ->
             SelectableListItem {
                 Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(start = 15.dp)
                 ) {
                     Text(
-                            text = item.name,
+                            text = player.name,
                             style = Typography.h4,
                             modifier = Modifier.weight(1f)
                     )
                     IconButton(
-                            onClick = { itemNameEditStartedListener(item) }
+                            onClick = {
+                                listener(
+                                        EditDialogIntent.EditItemStateIntent.EditItemStarted(player)
+                                                .toArchivedPlayersIntent()
+                                )
+                            }
                     ) {
                         Icon(
                                 imageVector = Icons.Default.Edit,
-                                contentDescription = "Edit ${item.name}"
+                                contentDescription = "Edit ${player.name}"
                         )
                     }
                     IconButton(
-                            onClick = { itemUnarchivedListener(item) }
+                            onClick = { listener(ArchivedPlayersIntent.PlayerUnarchived(player)) }
                     ) {
                         Icon(
                                 painter = painterResource(R.drawable.baseline_unarchive_24),
-                                contentDescription = "Unarchive ${item.name}"
+                                contentDescription = "Unarchive ${player.name}"
                         )
                     }
                     IconButton(
-                            onClick = { itemDeletedListener(item) }
+                            onClick = { listener(ArchivedPlayersIntent.ItemDeleted(player)) }
                     ) {
                         Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = "Delete ${item.name}"
+                                contentDescription = "Delete ${player.name}"
                         )
                     }
                 }

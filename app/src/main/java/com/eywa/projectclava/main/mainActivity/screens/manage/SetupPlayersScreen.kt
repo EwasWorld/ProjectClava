@@ -6,6 +6,7 @@ import com.eywa.projectclava.main.mainActivity.DatabaseIntent
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.mainActivity.screens.ScreenIntent
 import com.eywa.projectclava.main.model.*
+import com.eywa.projectclava.main.ui.sharedUi.EditDialogIntent
 
 sealed class AddPlayerIntent : ScreenIntent<SetupListState<Player>> {
     override val screen: NavRoute = NavRoute.ADD_PLAYER
@@ -27,10 +28,13 @@ sealed class AddPlayerIntent : ScreenIntent<SetupListState<Player>> {
                 handle(DatabaseIntent.AddPlayer(currentState.addItemName.trim()))
                 SetupListIntent.SetupListStateIntent.AddNameCleared.handle(currentState, handle, newStateListener)
             }
-            EditPlayerSubmitted -> {
-                val playerToEdit = currentState.editDialogOpenFor!!
-                handle(DatabaseIntent.UpdatePlayer(playerToEdit.copy(name = currentState.editItemName.trim())))
-                SetupListIntent.SetupListStateIntent.EditNameCleared.handle(currentState, handle, newStateListener)
+            is EditPlayerSubmitted -> {
+                EditDialogIntent.EditItemSubmitted.handle(
+                        currentState,
+                        newStateListener
+                ) { editItem, newName ->
+                    handle(DatabaseIntent.UpdatePlayer(editItem.copy(name = newName.trim())))
+                }
             }
             is PlayerClicked -> {
                 handle(DatabaseIntent.UpdatePlayer(player.copy(isPresent = !player.isPresent)))

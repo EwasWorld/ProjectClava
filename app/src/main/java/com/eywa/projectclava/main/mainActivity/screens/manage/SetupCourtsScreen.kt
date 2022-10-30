@@ -16,6 +16,7 @@ import com.eywa.projectclava.main.mainActivity.DatabaseIntent
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.mainActivity.screens.ScreenIntent
 import com.eywa.projectclava.main.model.*
+import com.eywa.projectclava.main.ui.sharedUi.EditDialogIntent
 import java.util.*
 
 sealed class AddCourtIntent : ScreenIntent<SetupListState<Court>> {
@@ -40,10 +41,13 @@ sealed class AddCourtIntent : ScreenIntent<SetupListState<Court>> {
                 handle(DatabaseIntent.AddCourt(prefix + currentState.addItemName.trim()))
                 SetupListIntent.SetupListStateIntent.AddNameCleared.handle(currentState, handle, newStateListener)
             }
-            EditCourtSubmitted -> {
-                val courtToEdit = currentState.editDialogOpenFor!!
-                handle(DatabaseIntent.UpdateCourt(courtToEdit.copy(name = currentState.editItemName.trim())))
-                SetupListIntent.SetupListStateIntent.EditNameCleared.handle(currentState, handle, newStateListener)
+            is EditCourtSubmitted -> {
+                EditDialogIntent.EditItemSubmitted.handle(
+                        currentState,
+                        newStateListener
+                ) { editItem, newName ->
+                    handle(DatabaseIntent.UpdateCourt(editItem.copy(name = newName.trim())))
+                }
             }
             is CourtClicked -> handle(DatabaseIntent.UpdateCourt(court.copy(canBeUsed = !court.canBeUsed)))
             is CourtDeleted -> handle(DatabaseIntent.DeleteCourt(court))
@@ -52,9 +56,9 @@ sealed class AddCourtIntent : ScreenIntent<SetupListState<Court>> {
     }
 }
 
-private fun SetupListIntent.toAddCourtIntent(prependCourt: Boolean) = when (this) {
+private fun SetupListIntent.toAddCourtIntent(prependCourt: Boolean? = null) = when (this) {
     is SetupListIntent.SetupListStateIntent -> AddCourtIntent.ScreenIntent(this)
-    SetupListIntent.SetupListItemIntent.AddItemSubmitted -> AddCourtIntent.AddCourtSubmitted(prependCourt)
+    SetupListIntent.SetupListItemIntent.AddItemSubmitted -> AddCourtIntent.AddCourtSubmitted(prependCourt!!)
     SetupListIntent.SetupListItemIntent.EditItemSubmitted -> AddCourtIntent.EditCourtSubmitted
     is SetupListIntent.SetupListItemIntent.ItemClicked<*> -> AddCourtIntent.CourtClicked(value as Court)
     is SetupListIntent.SetupListItemIntent.ItemDeleted<*> -> AddCourtIntent.CourtDeleted(value as Court)

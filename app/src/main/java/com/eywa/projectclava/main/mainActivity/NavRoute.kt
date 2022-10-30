@@ -2,6 +2,8 @@ package com.eywa.projectclava.main.mainActivity
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import com.eywa.projectclava.main.mainActivity.archivedPlayers.ArchivedPlayersScreen
+import com.eywa.projectclava.main.mainActivity.archivedPlayers.ArchivedPlayersState
 import com.eywa.projectclava.main.mainActivity.screens.ScreenState
 import com.eywa.projectclava.main.mainActivity.screens.createMatch.CreateMatchScreen
 import com.eywa.projectclava.main.mainActivity.screens.createMatch.CreateMatchState
@@ -9,7 +11,10 @@ import com.eywa.projectclava.main.mainActivity.screens.manage.SetupCourtsScreen
 import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListState
 import com.eywa.projectclava.main.mainActivity.screens.manage.SetupPlayersScreen
 import com.eywa.projectclava.main.model.*
-import com.eywa.projectclava.main.ui.mainScreens.*
+import com.eywa.projectclava.main.ui.mainScreens.CurrentMatchesScreen
+import com.eywa.projectclava.main.ui.mainScreens.DaysReportScreen
+import com.eywa.projectclava.main.ui.mainScreens.PreviousMatchesScreen
+import com.eywa.projectclava.main.ui.mainScreens.UpcomingMatchesScreen
 import com.eywa.projectclava.main.ui.sharedUi.AvailableCourtsHeader
 import com.eywa.projectclava.main.ui.sharedUi.ClavaScreen
 import java.util.*
@@ -38,6 +43,8 @@ enum class NavRoute(val route: String) {
     },
 
     ARCHIVED_PLAYERS("archived_players") {
+        override fun createInitialState() = ArchivedPlayersState()
+
         @Composable
         override fun ClavaNavigation(
                 navController: NavHostController,
@@ -48,13 +55,9 @@ enum class NavRoute(val route: String) {
                 preferencesState: DatastoreState,
         ) {
             ArchivedPlayersScreen(
-                    players = databaseState.players,
-                    matches = databaseState.matches,
-                    itemNameEditedListener = { player, newName ->
-                        viewModel.updatePlayers(player.copy(name = newName))
-                    },
-                    itemDeletedListener = { viewModel.deletePlayer(it) },
-                    itemUnarchivedListener = { viewModel.updatePlayers(it.copy(isArchived = false)) },
+                    databaseState = databaseState,
+                    state = viewModel.getScreenState(this) as ArchivedPlayersState,
+                    listener = { viewModel.handleIntent(it) },
             )
         }
     },

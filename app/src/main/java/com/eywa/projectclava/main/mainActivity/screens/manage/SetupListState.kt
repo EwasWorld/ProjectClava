@@ -33,6 +33,16 @@ data class SetupListState<T : SetupListItem>(
         val searchText: String? = null,
 ) : ScreenState, EditItemState<T> {
     val isSearchExpanded = searchText != null
+
+    override fun editItemCopy(
+            editItemName: String,
+            editNameIsDirty: Boolean,
+            editDialogOpenFor: T?
+    ) = copy(
+            editItemName = editItemName,
+            editNameIsDirty = editNameIsDirty,
+            editDialogOpenFor = editDialogOpenFor
+    )
 }
 
 /**
