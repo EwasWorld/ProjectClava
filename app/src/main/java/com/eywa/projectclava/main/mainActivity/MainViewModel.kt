@@ -17,6 +17,8 @@ import com.eywa.projectclava.main.mainActivity.drawer.DrawerIntent
 import com.eywa.projectclava.main.mainActivity.screens.ScreenIntent
 import com.eywa.projectclava.main.mainActivity.screens.ScreenState
 import com.eywa.projectclava.main.model.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -28,7 +30,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val currentTime = MutableSharedFlow<Calendar>(1)
     private var screenState by mutableStateOf(mapOf<NavRoute, ScreenState>())
 
-    private val _effects: MutableStateFlow<MainEffect?> = MutableStateFlow(null)
+    private val _effects: MutableSharedFlow<MainEffect?> =
+            MutableSharedFlow(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     val effects: Flow<MainEffect?> = _effects
 
     /*
@@ -60,7 +63,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             .shareIn(viewModelScope, SharingStarted.Eagerly, 1)
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(context = Dispatchers.Default) {
             while (true) {
                 currentTime.emit(Calendar.getInstance(Locale.getDefault()))
                 delay(1000)
@@ -84,7 +87,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             /*
              * CoreIntents
              */
-            is MainEffect -> viewModelScope.launch { _effects.emit(intent) }
+            is MainEffect -> viewModelScope.launch(context = Dispatchers.Default) { _effects.emit(intent) }
             is DatabaseIntent -> viewModelScope.launch { handleDatabaseIntent(intent) }
             is DataStoreIntent -> viewModelScope.launch {
                 clavaDatastore.handle(intent, preferences.latest())
