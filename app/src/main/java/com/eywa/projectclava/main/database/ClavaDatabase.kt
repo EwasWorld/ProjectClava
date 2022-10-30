@@ -89,7 +89,7 @@ abstract class ClavaDatabase : RoomDatabase() {
         private var dbLock = Object()
         private var INSTANCE: ClavaDatabase? = null
 
-        // TODO Dependency injection
+        // TODO_HACKY Use dependency injection xD
         fun getInstance(applicationContext: Context): ClavaDatabase {
             synchronized(dbLock) {
                 if (INSTANCE == null) {

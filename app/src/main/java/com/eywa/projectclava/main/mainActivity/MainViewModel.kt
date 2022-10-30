@@ -8,34 +8,25 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.eywa.projectclava.main.database.ClavaDatabase
 import com.eywa.projectclava.main.database.court.CourtRepo
+import com.eywa.projectclava.main.database.court.DatabaseCourt
 import com.eywa.projectclava.main.database.match.DatabaseMatchPlayer
 import com.eywa.projectclava.main.database.match.MatchRepo
+import com.eywa.projectclava.main.database.player.DatabasePlayer
 import com.eywa.projectclava.main.database.player.PlayerRepo
 import com.eywa.projectclava.main.mainActivity.drawer.DrawerIntent
 import com.eywa.projectclava.main.mainActivity.screens.ScreenIntent
 import com.eywa.projectclava.main.mainActivity.screens.ScreenState
-import com.eywa.projectclava.main.mainActivity.screens.createMatch.CreateMatchState
 import com.eywa.projectclava.main.model.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
-import kotlin.reflect.KClass
-import kotlin.reflect.cast
 
 fun <T> SharedFlow<T>.latest() = replayCache.first()
 
-fun <T : ScreenState> createState(clazz: KClass<T>): T {
-    @Suppress("UNCHECKED_CAST")
-    return when (clazz) {
-        CreateMatchState::class -> CreateMatchState()
-        else -> throw NotImplementedError()
-    } as T
-}
-
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     val currentTime = MutableSharedFlow<Calendar>(1)
-    private var screenState by mutableStateOf(mapOf<KClass<out ScreenState>, ScreenState>())
+    private var screenState by mutableStateOf(mapOf<NavRoute, ScreenState>())
 
     private val _effects: MutableStateFlow<MainEffect?> = MutableStateFlow(null)
     val effects: Flow<MainEffect?> = _effects
@@ -78,15 +69,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
-     * Retrieves the current state of type T or creates a new one if it doesn't exist.
-     * Kind of annoying to pass the class around rather than using reified T, but didn't want to expose
-     * [updateScreenState] or [screenState]
+     * Retrieves the current state of the screen.
+     * If it doesn't exist, creates a new one and saves it
      */
-    fun <T : ScreenState> getScreenState(clazz: KClass<T>) = screenState[clazz]?.let { clazz.cast(it) }
-            ?: createState(clazz).apply { updateScreenState() }
+    fun getScreenState(screen: NavRoute) = screenState[screen]
+            ?: screen.createInitialState().also { screen.updateScreenState(it) }
 
-    private fun ScreenState.updateScreenState() {
-        screenState = screenState.plus(this::class to this)
+    private fun NavRoute.updateScreenState(newState: ScreenState) {
+        screenState = screenState.plus(this to newState)
     }
 
     fun handleIntent(intent: MainIntent) {
@@ -105,12 +95,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
              */
             is DrawerIntent -> handleIntent(intent.map())
             is ScreenIntent<*> -> {
-                // TODO Things went a bit funny with the types... ngl
                 @Suppress("UNCHECKED_CAST")
                 (intent as ScreenIntent<ScreenState>).handle(
-                        currentState = getScreenState(intent.getStateClass()),
+                        currentState = getScreenState(intent.screen),
                         handle = { handleIntent(it) },
-                        newStateListener = { it.updateScreenState() },
+                        newStateListener = { intent.screen.updateScreenState(it) },
                 )
             }
             else -> throw NotImplementedError()
@@ -118,32 +107,43 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private suspend fun handleDatabaseIntent(intent: DatabaseIntent) {
+        // Keep else so that when new DatabaseIntents are added, they cannot be ignored
+        // Fool me once, shame on you >.>
+        @Suppress("REDUNDANT_ELSE_IN_WHEN")
         when (intent) {
             /*
              * Matches
              */
             DatabaseIntent.DeleteAllMatches -> matchRepo.deleteAll()
-            is DatabaseIntent.DeleteMatch -> matchRepo.delete(intent.value.asDatabaseMatch())
-            is DatabaseIntent.UpdateMatch -> matchRepo.update(intent.value.asDatabaseMatch())
+            is DatabaseIntent.DeleteMatch -> matchRepo.delete(intent.match.asDatabaseMatch())
+            is DatabaseIntent.UpdateMatch -> matchRepo.update(intent.match.asDatabaseMatch())
             is DatabaseIntent.AddMatch -> {
-                check(intent.value.any()) { "No players in match" }
+                check(intent.players.any()) { "No players in match" }
                 val databaseMatch =
-                        Match(0, intent.value, MatchState.NotStarted(currentTime.latest())).asDatabaseMatch()
+                        Match(0, intent.players, MatchState.NotStarted(currentTime.latest())).asDatabaseMatch()
                 val matchId = matchRepo.insert(databaseMatch)
-                matchRepo.insert(*intent.value.map { DatabaseMatchPlayer(matchId.toInt(), it.id) }.toTypedArray())
+                matchRepo.insert(*intent.players.map { DatabaseMatchPlayer(matchId.toInt(), it.id) }.toTypedArray())
             }
 
             /*
              * Players
              */
+            is DatabaseIntent.AddPlayer -> playerRepo.insertAll(DatabasePlayer(0, intent.name))
+            is DatabaseIntent.DeletePlayer -> playerRepo.delete(intent.player.asDatabasePlayer())
+            is DatabaseIntent.UpdatePlayer -> playerRepo.update(intent.player.asDatabasePlayer())
             is DatabaseIntent.UpdatePlayers -> playerRepo.update(
-                    *intent.value.map { it.asDatabasePlayer() }.toTypedArray()
+                    *intent.players.map { it.asDatabasePlayer() }.toTypedArray()
             )
-        }
-    }
 
-    fun addPlayer(playerName: String) = viewModelScope.launch {
-        playerRepo.insertAll(Player(0, playerName).asDatabasePlayer())
+            /*
+             * Courts
+             */
+            is DatabaseIntent.AddCourt -> courtRepo.insertAll(DatabaseCourt(0, intent.name))
+            is DatabaseIntent.DeleteCourt -> courtRepo.delete(intent.court.asDatabaseCourt())
+            is DatabaseIntent.UpdateCourt -> courtRepo.update(intent.court.asDatabaseCourt())
+
+            else -> throw NotImplementedError()
+        }
     }
 
     fun updatePlayers(vararg player: Player) = viewModelScope.launch {
@@ -152,18 +152,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun deletePlayer(player: Player) = viewModelScope.launch {
         playerRepo.delete(player.asDatabasePlayer())
-    }
-
-    fun addCourt(courtName: String) = viewModelScope.launch {
-        courtRepo.insertAll(Court(0, courtName).asDatabaseCourt())
-    }
-
-    fun updateCourt(court: Court) = viewModelScope.launch {
-        courtRepo.update(court.asDatabaseCourt())
-    }
-
-    fun deleteCourt(court: Court) = viewModelScope.launch {
-        courtRepo.delete(court.asDatabaseCourt())
     }
 
     fun updateMatch(match: Match) = viewModelScope.launch {

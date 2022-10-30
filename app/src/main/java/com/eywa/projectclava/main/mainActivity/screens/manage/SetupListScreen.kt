@@ -17,7 +17,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -35,7 +37,12 @@ import com.eywa.projectclava.R
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.common.generatePlayers
+import com.eywa.projectclava.main.mainActivity.CoreIntent
+import com.eywa.projectclava.main.mainActivity.MainEffect
 import com.eywa.projectclava.main.mainActivity.NavRoute
+import com.eywa.projectclava.main.mainActivity.screens.ScreenState
+import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListIntent.SetupListItemIntent
+import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListIntent.SetupListStateIntent
 import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.ClavaColor
@@ -54,12 +61,17 @@ enum class SetupListTabSwitcherItem(
     COURTS("Courts", NavRoute.ADD_COURT),
 }
 
-data class SetupListState<T>(
+data class SetupListState<T : SetupListItem>(
         val addItemName: String = "",
         val addItemIsDirty: Boolean = false,
-        val editDialogOpenFor: T? = null,
+        override val editItemName: String = "",
+        override val editNameIsDirty: Boolean = false,
+        override val editDialogOpenFor: T? = null,
         val useTextPlaceholderAlt: Boolean = false,
-)
+        val searchText: String? = null,
+) : ScreenState, EditItemState<T> {
+    val isSearchExpanded = searchText != null
+}
 
 /**
  * Properties that are different between screens but not dynamic like state
@@ -91,47 +103,105 @@ enum class SetupListSettings(
 }
 
 sealed class SetupListIntent {
+    sealed class SetupListItemIntent<T : SetupListItem> : SetupListIntent() {
+        object AddItemSubmit : SetupListItemIntent<SetupListItem>()
+        object EditItemSubmit : SetupListItemIntent<SetupListItem>()
+        data class ItemDeleted<T : SetupListItem>(val value: T) : SetupListItemIntent<T>()
+        data class ItemClicked<T : SetupListItem>(val value: T) : SetupListItemIntent<T>()
+    }
 
+    /**
+     * Actions that will behave the same no matter the type of T
+     * (usually due to affecting only the [SetupListState] or things like navigation)
+     */
+    sealed class SetupListStateIntent : SetupListIntent() {
+        object ToggleUseAltPlaceholderText : SetupListStateIntent()
+
+        object AddItemClear : SetupListStateIntent()
+        data class AddItemNameChanged(val value: String) : SetupListStateIntent()
+
+        data class EditItemStarted(val value: SetupListItem) : SetupListStateIntent()
+        data class EditItemNameChanged(val value: String) : SetupListStateIntent()
+        object EditItemCancelled : SetupListStateIntent()
+        object EditNameCleared : SetupListStateIntent()
+
+        object ToggleSearch : SetupListStateIntent()
+        data class SearchTextChanged(val value: String) : SetupListStateIntent()
+
+        data class Navigate(val value: NavRoute) : SetupListStateIntent()
+
+        fun <T : SetupListItem> handle(
+                currentState: SetupListState<T>,
+                handle: (CoreIntent) -> Unit,
+                newStateListener: (SetupListState<T>) -> Unit
+        ) {
+            @Suppress("UNCHECKED_CAST")
+            when (this) {
+                AddItemClear -> newStateListener(currentState.copy(addItemName = "", addItemIsDirty = false))
+                is AddItemNameChanged -> newStateListener(currentState.copy(addItemName = value, addItemIsDirty = true))
+                EditItemCancelled -> newStateListener(currentState.copy(editDialogOpenFor = null))
+                EditNameCleared -> newStateListener(currentState.copy(editItemName = "", editNameIsDirty = false))
+                is EditItemNameChanged -> newStateListener(
+                        currentState.copy(
+                                editItemName = value,
+                                editNameIsDirty = true
+                        )
+                )
+                is EditItemStarted -> newStateListener(
+                        currentState.copy(
+                                editItemName = value.name,
+                                editNameIsDirty = false,
+                                editDialogOpenFor = value as T
+                        )
+                )
+                is Navigate -> handle(MainEffect.Navigate(value))
+                is SearchTextChanged -> newStateListener(currentState.copy(searchText = value))
+                ToggleSearch -> {
+                    val newSearchText = if (currentState.searchText == null) "" else null
+                    newStateListener(currentState.copy(searchText = newSearchText))
+                }
+                ToggleUseAltPlaceholderText -> newStateListener(
+                        currentState.copy(useTextPlaceholderAlt = !currentState.useTextPlaceholderAlt)
+                )
+            }
+        }
+    }
+}
+
+fun EditDialogListener.toSetupListIntent() = when (this) {
+    EditDialogListener.EditItemCancelled -> SetupListStateIntent.EditItemCancelled
+    EditDialogListener.EditNameCleared -> SetupListStateIntent.EditNameCleared
+    is EditDialogListener.EditItemNameChanged -> SetupListStateIntent.EditItemNameChanged(value)
+    is EditDialogListener.EditItemStarted<*> -> SetupListStateIntent.EditItemStarted(value as SetupListItem)
+    EditDialogListener.EditItemSubmit -> SetupListItemIntent.EditItemSubmit
 }
 
 @Composable
 fun <T : SetupListItem> SetupListScreen(
         setupListSettings: SetupListSettings,
-        setupListState: SetupListState<T>,
+        state: SetupListState<T>,
         items: Iterable<T>,
         getMatch: (T) -> Match?,
         getTimeRemaining: Match.() -> TimeRemaining?,
         nameIsDuplicate: (newName: String, editItemName: String?) -> Boolean,
-        addItemNameClearPressedListener: () -> Unit,
-        addItemNameChangedListener: (String) -> Unit,
-        itemAddedListener: (String) -> Unit,
-        itemNameEditedListener: (T, String) -> Unit,
-        itemNameEditCancelledListener: () -> Unit,
-        itemNameEditStartedListener: (T) -> Unit,
-        itemDeletedListener: (T) -> Unit,
-        itemClickedListener: (T) -> Unit,
         hasExtraContent: (T) -> Boolean = { false },
-        onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
         extraContent: @Composable RowScope.(T) -> Unit = {},
-        navigateListener: (NavRoute) -> Unit,
+        listener: (SetupListIntent) -> Unit,
 ) {
     // TODO Add an are you sure to deletion
     val focusManager = LocalFocusManager.current
-    var isSearchExpanded by remember { mutableStateOf(false) }
-    var searchText: String? by remember { mutableStateOf(null) }
 
-    val itemsToShow = searchText
+    val itemsToShow = state.searchText
             .takeIf { !it.isNullOrBlank() }
             ?.let { searchTxt -> items.filter { it.name.contains(searchTxt, ignoreCase = true) } }
             ?.takeIf { it.isNotEmpty() }
 
     EditNameDialog(
             typeContentDescription = setupListSettings.typeContentDescription,
-            textPlaceholder = setupListSettings.getTextPlaceholder(setupListState.useTextPlaceholderAlt),
+            textPlaceholder = setupListSettings.getTextPlaceholder(state.useTextPlaceholderAlt),
             nameIsDuplicate = nameIsDuplicate,
-            editDialogOpenFor = setupListState.editDialogOpenFor,
-            itemEditedListener = itemNameEditedListener,
-            itemEditCancelledListener = itemNameEditCancelledListener,
+            editItemState = state,
+            listener = { listener(it.toSetupListIntent()) },
     )
 
     ClavaScreen(
@@ -139,34 +209,29 @@ fun <T : SetupListItem> SetupListScreen(
                     "\n\nType a name into the box below\nthen press enter!",
             missingContentNextStep = if (items.none()) listOf(MissingContentNextStep.ADD_PLAYERS) else null,
             showMissingContentNextStep = false,
-            navigateListener = navigateListener,
+            navigateListener = { listener(SetupListStateIntent.Navigate(it)) },
             fabs = { modifier ->
                 SearchFab(
-                        isExpanded = isSearchExpanded,
-                        textPlaceholder = setupListSettings.getTextPlaceholder(setupListState.useTextPlaceholderAlt),
+                        isExpanded = state.isSearchExpanded,
+                        textPlaceholder = setupListSettings.getTextPlaceholder(state.useTextPlaceholderAlt),
                         typeContentDescription = setupListSettings.typeContentDescription,
-                        toggleExpanded = {
-                            isSearchExpanded = !isSearchExpanded
-                            if (!isSearchExpanded) {
-                                searchText = null
-                            }
-                        },
-                        searchText = searchText ?: "",
-                        onValueChangedListener = { searchText = it },
+                        toggleExpanded = { listener(SetupListStateIntent.ToggleSearch) },
+                        searchText = state.searchText ?: "",
+                        onValueChangedListener = { listener(SetupListStateIntent.SearchTextChanged(it)) },
                         modifier = modifier
                 )
             },
-            footerIsVisible = !isSearchExpanded,
+            footerIsVisible = !state.isSearchExpanded,
             footerContent = {
                 NamedItemTextField<T>(
                         typeContentDescription = setupListSettings.typeContentDescription,
-                        textPlaceholder = setupListSettings.getTextPlaceholder(setupListState.useTextPlaceholderAlt),
+                        textPlaceholder = setupListSettings.getTextPlaceholder(state.useTextPlaceholderAlt),
                         nameIsDuplicate = nameIsDuplicate,
-                        proposedItemName = setupListState.addItemName,
-                        showBlankError = setupListState.addItemIsDirty,
-                        onValueChangedListener = addItemNameChangedListener,
-                        onClearPressedListener = addItemNameClearPressedListener,
-                        onDoneListener = { itemAddedListener(setupListState.addItemName.trim()) },
+                        proposedItemName = state.addItemName,
+                        fieldIsDirty = state.addItemIsDirty,
+                        onValueChangedListener = { listener(SetupListStateIntent.AddItemNameChanged(it)) },
+                        onClearPressedListener = { listener(SetupListStateIntent.AddItemClear) },
+                        onDoneListener = { listener(SetupListItemIntent.AddItemSubmit) },
                         textFieldModifier = Modifier.fillMaxWidth(),
                         modifier = Modifier
                                 .padding(horizontal = 20.dp, vertical = 10.dp)
@@ -177,15 +242,15 @@ fun <T : SetupListItem> SetupListScreen(
                 TabSwitcher(
                         items = SetupListTabSwitcherItem.values().toList(),
                         selectedItem = setupListSettings.selectedTab,
-                        onItemClicked = onTabSelectedListener,
+                        navigateListener = { listener(SetupListStateIntent.Navigate(it)) },
                 )
             }
     ) {
-        if (!searchText.isNullOrBlank() && itemsToShow == null) {
+        if (state.searchText?.isBlank() == false && itemsToShow == null) {
             // No search results
             item {
                 Text(
-                        text = "No matches found for '$searchText'",
+                        text = "No matches found for '${state.searchText}'",
                         style = Typography.h4,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
@@ -202,7 +267,7 @@ fun <T : SetupListItem> SetupListScreen(
                 ) {
                     Column(
                             modifier = Modifier.clickable {
-                                itemClickedListener(item)
+                                listener(SetupListItemIntent.ItemClicked(item))
                                 focusManager.clearFocus()
                             }
                     ) {
@@ -218,7 +283,7 @@ fun <T : SetupListItem> SetupListScreen(
                             )
                             IconButton(
                                     onClick = {
-                                        itemNameEditStartedListener(item)
+                                        listener(SetupListStateIntent.EditItemStarted(item))
                                         focusManager.clearFocus()
                                     }
                             ) {
@@ -229,7 +294,7 @@ fun <T : SetupListItem> SetupListScreen(
                             }
                             IconButton(
                                     onClick = {
-                                        itemDeletedListener(item)
+                                        listener(SetupListItemIntent.ItemDeleted(item))
                                         focusManager.clearFocus()
                                     }
                             ) {
@@ -373,21 +438,12 @@ fun SetupListScreen_Preview() {
     Box(modifier = Modifier.fillMaxSize()) {
         SetupListScreen(
                 setupListSettings = SetupListSettings.PLAYERS,
-                setupListState = SetupListState(),
+                state = SetupListState(),
                 nameIsDuplicate = { name, _ -> players.any { it.name == name } },
-                addItemNameChangedListener = {},
-                addItemNameClearPressedListener = {},
                 items = players.sortedBy { it.name },
                 getMatch = { player: Player -> matches[players.sortedBy { it.name }.indexOf(player) % matches.size] },
                 getTimeRemaining = { state.getTimeLeft(currentTime) },
-                itemNameEditedListener = { _, _ -> },
-                itemNameEditCancelledListener = {},
-                itemClickedListener = {},
-                itemAddedListener = {},
-                itemNameEditStartedListener = {},
-                itemDeletedListener = {},
-                onTabSelectedListener = {},
-                navigateListener = {},
+                listener = {},
         )
     }
 }
@@ -404,16 +460,7 @@ fun ExtraInfo_SetupListScreen_Preview() {
             state = SetupListState(),
             prependCourt = false,
             getTimeRemaining = { state.getTimeLeft(currentTime) },
-            addItemNameClearPressedListener = {},
-            addItemNameChangedListener = {},
-            itemAddedListener = {},
-            itemNameEditedListener = { _, _ -> },
-            itemNameEditCancelledListener = {},
-            itemNameEditStartedListener = {},
-            itemDeletedListener = {},
-            toggleIsPresentListener = {},
-            onTabSelectedListener = {},
-            navigateListener = {},
+            listener = {},
     )
 }
 
@@ -424,23 +471,14 @@ fun Dialog_SetupListScreen_Preview() {
     Box(modifier = Modifier.fillMaxSize()) {
         SetupListScreen(
                 setupListSettings = SetupListSettings.PLAYERS,
-                setupListState = SetupListState(
+                state = SetupListState(
                         editDialogOpenFor = players[2],
                 ),
-                addItemNameChangedListener = {},
                 nameIsDuplicate = { name, _ -> players.any { it.name == name } },
-                addItemNameClearPressedListener = {},
                 items = players,
                 getMatch = { null },
                 getTimeRemaining = { null },
-                itemNameEditedListener = { _, _ -> },
-                itemNameEditCancelledListener = {},
-                itemClickedListener = {},
-                itemAddedListener = {},
-                itemNameEditStartedListener = {},
-                itemDeletedListener = {},
-                onTabSelectedListener = {},
-                navigateListener = {},
+                listener = {},
         )
     }
 }
@@ -452,23 +490,14 @@ fun Error_SetupListScreen_Preview() {
     Box(modifier = Modifier.fillMaxSize()) {
         SetupListScreen(
                 setupListSettings = SetupListSettings.PLAYERS,
-                setupListState = SetupListState(
+                state = SetupListState(
                         addItemName = players.first().name,
                 ),
-                addItemNameChangedListener = {},
                 nameIsDuplicate = { name, _ -> players.any { it.name == name } },
-                addItemNameClearPressedListener = {},
                 items = players,
                 getMatch = { null },
                 getTimeRemaining = { null },
-                itemNameEditedListener = { _, _ -> },
-                itemNameEditCancelledListener = {},
-                itemClickedListener = {},
-                itemAddedListener = {},
-                itemNameEditStartedListener = {},
-                itemDeletedListener = {},
-                onTabSelectedListener = {},
-                navigateListener = {},
+                listener = {},
         )
     }
 }

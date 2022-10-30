@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -13,104 +11,79 @@ import com.eywa.projectclava.R
 import com.eywa.projectclava.main.common.asTimeString
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
+import com.eywa.projectclava.main.mainActivity.CoreIntent
+import com.eywa.projectclava.main.mainActivity.DatabaseIntent
 import com.eywa.projectclava.main.mainActivity.NavRoute
+import com.eywa.projectclava.main.mainActivity.screens.ScreenIntent
 import com.eywa.projectclava.main.model.*
 import java.util.*
 
-// TODO Sort by number (plus on court-picking dialogs)
-// TODO Court picking dialogs: no courts available
-@Composable
-fun SetupCourtsScreen(
-        databaseState: DatabaseState,
-        getTimeRemaining: Match.() -> TimeRemaining?,
-        prependCourt: Boolean = true,
-        itemAddedListener: (String) -> Unit,
-        itemNameEditedListener: (Court, String) -> Unit,
-        itemDeletedListener: (Court) -> Unit,
-        toggleIsPresentListener: (Court) -> Unit,
-        onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
-        navigateListener: (NavRoute) -> Unit,
-) {
-    val state = remember(prependCourt) { mutableStateOf(SetupListState<Court>(useTextPlaceholderAlt = prependCourt)) }
+sealed class AddCourtIntent : ScreenIntent<SetupListState<Court>> {
+    override val screen: NavRoute = NavRoute.ADD_COURT
 
-    SetupCourtsScreen(
-            state = state.value,
-            databaseState = databaseState,
-            getTimeRemaining = getTimeRemaining,
-            prependCourt = prependCourt,
-            addItemNameClearPressedListener = {
-                state.value = state.value.copy(
-                        addItemName = "",
-                        addItemIsDirty = false,
-                )
-            },
-            addItemNameChangedListener = {
-                state.value = state.value.copy(
-                        addItemName = it,
-                        addItemIsDirty = true,
-                )
-            },
-            itemAddedListener = {
-                itemAddedListener(it)
-                state.value = state.value.copy(
-                        addItemName = "",
-                        addItemIsDirty = false,
-                )
-            },
-            itemNameEditedListener = { item, newName ->
-                state.value = state.value.copy(editDialogOpenFor = null)
-                itemNameEditedListener(item, newName)
-            },
-            itemNameEditCancelledListener = {
-                state.value = state.value.copy(editDialogOpenFor = null)
-            },
-            itemNameEditStartedListener = {
-                state.value = state.value.copy(editDialogOpenFor = it)
-            },
-            itemDeletedListener = { itemDeletedListener(it) },
-            toggleIsPresentListener = toggleIsPresentListener,
-            onTabSelectedListener = onTabSelectedListener,
-            navigateListener = navigateListener,
-    )
+    // TODO_HACKY Get the prependedness from the state
+    data class AddCourtSubmit(val prependCourt: Boolean) : AddCourtIntent()
+    object EditCourtSubmit : AddCourtIntent()
+    data class CourtDeleted(val court: Court) : AddCourtIntent()
+    data class CourtClicked(val court: Court) : AddCourtIntent()
+
+    data class ScreenIntent(val value: SetupListIntent.SetupListStateIntent) : AddCourtIntent()
+
+    override fun handle(
+            currentState: SetupListState<Court>,
+            handle: (CoreIntent) -> Unit,
+            newStateListener: (SetupListState<Court>) -> Unit
+    ) {
+        when (this) {
+            is AddCourtSubmit -> {
+                val prefix = if (prependCourt) "Court " else ""
+                handle(DatabaseIntent.AddCourt(prefix + currentState.addItemName.trim()))
+                SetupListIntent.SetupListStateIntent.AddItemClear.handle(currentState, handle, newStateListener)
+            }
+            EditCourtSubmit -> {
+                val courtToEdit = currentState.editDialogOpenFor!!
+                handle(DatabaseIntent.UpdateCourt(courtToEdit.copy(name = currentState.editItemName.trim())))
+                SetupListIntent.SetupListStateIntent.EditNameCleared.handle(currentState, handle, newStateListener)
+            }
+            is CourtClicked -> handle(DatabaseIntent.UpdateCourt(court.copy(canBeUsed = !court.canBeUsed)))
+            is CourtDeleted -> handle(DatabaseIntent.DeleteCourt(court))
+            is ScreenIntent -> value.handle(currentState, handle, newStateListener)
+        }
+    }
 }
 
+private fun SetupListIntent.toAddCourtIntent(prependCourt: Boolean) = when (this) {
+    is SetupListIntent.SetupListStateIntent -> AddCourtIntent.ScreenIntent(this)
+    SetupListIntent.SetupListItemIntent.AddItemSubmit -> AddCourtIntent.AddCourtSubmit(prependCourt)
+    SetupListIntent.SetupListItemIntent.EditItemSubmit -> AddCourtIntent.EditCourtSubmit
+    is SetupListIntent.SetupListItemIntent.ItemClicked<*> -> AddCourtIntent.CourtClicked(value as Court)
+    is SetupListIntent.SetupListItemIntent.ItemDeleted<*> -> AddCourtIntent.CourtDeleted(value as Court)
+}
+
+
+// TODO Sort by number (plus on court-picking dialogs)
+// TODO Court picking dialogs: no courts available
 @Composable
 fun SetupCourtsScreen(
         state: SetupListState<Court>,
         databaseState: DatabaseState,
         prependCourt: Boolean = true,
         getTimeRemaining: Match.() -> TimeRemaining?,
-        addItemNameClearPressedListener: () -> Unit,
-        addItemNameChangedListener: (String) -> Unit,
-        itemAddedListener: (String) -> Unit,
-        itemNameEditedListener: (Court, String) -> Unit,
-        itemNameEditCancelledListener: () -> Unit,
-        itemNameEditStartedListener: (Court) -> Unit,
-        itemDeletedListener: (Court) -> Unit,
-        toggleIsPresentListener: (Court) -> Unit,
-        onTabSelectedListener: (SetupListTabSwitcherItem) -> Unit,
-        navigateListener: (NavRoute) -> Unit,
+        listener: (AddCourtIntent) -> Unit,
 ) {
     SetupListScreen(
             setupListSettings = SetupListSettings.COURTS,
-            setupListState = state,
+            // TODO_HACKY Not sure if I like this useTextPlaceholderAlt switcharoo...
+            state = state.copy(useTextPlaceholderAlt = prependCourt),
             items = databaseState.courts,
             nameIsDuplicate = { newName, editItemName ->
                 if (newName == editItemName) return@SetupListScreen true
 
                 val checkName = if (prependCourt) "Court $newName" else newName
-                databaseState.courts.any { it.name == checkName }
+                databaseState.courts.any { it.name == checkName.trim() }
             },
             getMatch = { databaseState.matches.getLatestMatchForCourt(it) },
             getTimeRemaining = getTimeRemaining,
-            addItemNameClearPressedListener = addItemNameClearPressedListener,
-            addItemNameChangedListener = addItemNameChangedListener,
-            itemAddedListener = itemAddedListener,
-            itemNameEditedListener = itemNameEditedListener,
-            itemNameEditCancelledListener = itemNameEditCancelledListener,
-            itemNameEditStartedListener = itemNameEditStartedListener,
-            itemDeletedListener = { itemDeletedListener(it) },
-            itemClickedListener = toggleIsPresentListener,
             hasExtraContent = { databaseState.matches.getLatestMatchForCourt(it) != null },
             extraContent = {
                 ExtraContent(
@@ -118,8 +91,7 @@ fun SetupCourtsScreen(
                         getTimeRemaining = getTimeRemaining
                 )
             },
-            onTabSelectedListener = onTabSelectedListener,
-            navigateListener = navigateListener,
+            listener = { listener(it.toAddCourtIntent(prependCourt)) },
     )
 }
 
@@ -153,15 +125,6 @@ fun SetupCourtsScreen_Preview() {
                     matches = generateMatches(5, currentTime),
             ),
             getTimeRemaining = { state.getTimeLeft(currentTime) },
-            addItemNameClearPressedListener = {},
-            addItemNameChangedListener = {},
-            itemAddedListener = {},
-            itemNameEditedListener = { _, _ -> },
-            itemNameEditCancelledListener = {},
-            itemNameEditStartedListener = {},
-            itemDeletedListener = {},
-            toggleIsPresentListener = {},
-            onTabSelectedListener = {},
-            navigateListener = {},
+            listener = {},
     )
 }

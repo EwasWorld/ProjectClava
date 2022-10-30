@@ -2,7 +2,7 @@ package com.eywa.projectclava.main.mainActivity.screens
 
 import com.eywa.projectclava.main.mainActivity.CoreIntent
 import com.eywa.projectclava.main.mainActivity.MainIntent
-import kotlin.reflect.KClass
+import com.eywa.projectclava.main.mainActivity.NavRoute
 
 /**
  * Top level for any state belonging to a single screen. Usually accompanied by a [ScreenIntent]
@@ -10,7 +10,8 @@ import kotlin.reflect.KClass
 interface ScreenState
 
 interface ScreenIntent<T : ScreenState> : MainIntent {
-    fun getStateClass(): KClass<T>
+    // TODO_HACKY This is kind of breaking abstraction and it's not my favourite...
+    val screen: NavRoute
 
     fun handle(
             currentState: T,

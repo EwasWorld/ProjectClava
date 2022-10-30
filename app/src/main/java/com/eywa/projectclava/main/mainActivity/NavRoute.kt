@@ -2,14 +2,13 @@ package com.eywa.projectclava.main.mainActivity
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import com.eywa.projectclava.main.mainActivity.screens.ScreenState
 import com.eywa.projectclava.main.mainActivity.screens.createMatch.CreateMatchScreen
 import com.eywa.projectclava.main.mainActivity.screens.createMatch.CreateMatchState
 import com.eywa.projectclava.main.mainActivity.screens.manage.SetupCourtsScreen
+import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListState
 import com.eywa.projectclava.main.mainActivity.screens.manage.SetupPlayersScreen
-import com.eywa.projectclava.main.model.DatabaseState
-import com.eywa.projectclava.main.model.Match
-import com.eywa.projectclava.main.model.MissingContentNextStep
-import com.eywa.projectclava.main.model.TimeRemaining
+import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.mainScreens.*
 import com.eywa.projectclava.main.ui.sharedUi.AvailableCourtsHeader
 import com.eywa.projectclava.main.ui.sharedUi.ClavaScreen
@@ -17,6 +16,8 @@ import java.util.*
 
 enum class NavRoute(val route: String) {
     ADD_PLAYER("add_player") {
+        override fun createInitialState() = SetupListState<Player>()
+
         @Composable
         override fun ClavaNavigation(
                 navController: NavHostController,
@@ -26,17 +27,12 @@ enum class NavRoute(val route: String) {
                 databaseState: DatabaseState,
                 preferencesState: DatastoreState,
         ) {
+            @Suppress("UNCHECKED_CAST")
             SetupPlayersScreen(
+                    state = viewModel.getScreenState(this) as SetupListState<Player>,
                     databaseState = databaseState,
                     getTimeRemaining = getTimeRemaining,
-                    itemAddedListener = { viewModel.addPlayer(it) },
-                    itemNameEditedListener = { player, newName ->
-                        viewModel.updatePlayers(player.copy(name = newName))
-                    },
-                    itemArchivedListener = { viewModel.updatePlayers(it.copy(isArchived = true)) },
-                    toggleIsPresentListener = { viewModel.updatePlayers(it.copy(isPresent = !it.isPresent)) },
-                    onTabSelectedListener = { navController.navigate(it.destination.route) },
-                    navigateListener = { navController.navigate(it.route) },
+                    listener = { viewModel.handleIntent(it) },
             )
         }
     },
@@ -64,6 +60,8 @@ enum class NavRoute(val route: String) {
     },
 
     ADD_COURT("add_court") {
+        override fun createInitialState() = SetupListState<Court>()
+
         @Composable
         override fun ClavaNavigation(
                 navController: NavHostController,
@@ -73,23 +71,20 @@ enum class NavRoute(val route: String) {
                 databaseState: DatabaseState,
                 preferencesState: DatastoreState,
         ) {
+            @Suppress("UNCHECKED_CAST")
             SetupCourtsScreen(
+                    state = viewModel.getScreenState(this) as SetupListState<Court>,
                     databaseState = databaseState,
                     getTimeRemaining = getTimeRemaining,
-                    itemAddedListener = { viewModel.addCourt(it) },
-                    itemNameEditedListener = { court, newName ->
-                        viewModel.updateCourt(court.copy(name = newName))
-                    },
                     prependCourt = preferencesState.prependCourt,
-                    itemDeletedListener = { viewModel.deleteCourt(it) },
-                    toggleIsPresentListener = { viewModel.updateCourt(it.copy(canBeUsed = !it.canBeUsed)) },
-                    onTabSelectedListener = { navController.navigate(it.destination.route) },
-                    navigateListener = { navController.navigate(it.route) },
+                    listener = { viewModel.handleIntent(it) },
             )
         }
     },
 
     CREATE_MATCH("create_match") {
+        override fun createInitialState() = CreateMatchState()
+
         @Composable
         override fun ClavaNavigation(
                 navController: NavHostController,
@@ -100,7 +95,7 @@ enum class NavRoute(val route: String) {
                 preferencesState: DatastoreState,
         ) {
             CreateMatchScreen(
-                    state = viewModel.getScreenState(CreateMatchState::class),
+                    state = viewModel.getScreenState(this) as CreateMatchState,
                     clubNightStartTime = preferencesState.clubNightStartTime,
                     databaseState = databaseState,
                     getTimeRemaining = getTimeRemaining,
@@ -231,6 +226,7 @@ enum class NavRoute(val route: String) {
         }
     },
 
+    // TODO_HACKY Create a build variant for this
     TEST_PAGE("test") {
         @Composable
         override fun ClavaNavigation(
@@ -272,6 +268,11 @@ enum class NavRoute(val route: String) {
         }
     },
     ;
+
+    open fun createInitialState(): ScreenState {
+        // TODO Make this abstract
+        throw NotImplementedError("No initial state")
+    }
 
     @Composable
     abstract fun ClavaNavigation(

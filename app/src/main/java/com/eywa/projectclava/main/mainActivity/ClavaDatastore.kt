@@ -11,7 +11,7 @@ import java.util.*
 
 private const val USER_PREFERENCES_NAME = "clava_user_preferences"
 
-// TODO Dependency injection?
+// TODO_HACKY Use dependency injection?
 val Context.dataStore by preferencesDataStore(name = USER_PREFERENCES_NAME)
 
 data class DatastoreState(

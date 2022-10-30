@@ -181,7 +181,7 @@ fun DrawerContent(
         }
 
 //        DrawerDivider()
-//        // TODO Create a build variant for this
+//        // TODO_HACKY Create a build variant for this
 //        DrawerTextButton(text = "Go to test page") {
 //            navController.navigate(NavRoute.TEST_PAGE.route)
 //        }

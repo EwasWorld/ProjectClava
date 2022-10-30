@@ -74,7 +74,7 @@ class MainActivity : ComponentActivity() {
                     scope.launch {
                         viewModel.effects.collect { effect ->
                             when (effect) {
-                                is MainEffect.Navigate -> navController.navigate(effect.value.route)
+                                is MainEffect.Navigate -> navController.navigate(effect.destination.route)
                                 null -> {}
                             }
                         }

@@ -30,7 +30,7 @@ interface TabSwitcherItem {
 fun <T : TabSwitcherItem> TabSwitcher(
         items: Iterable<T>,
         selectedItem: T,
-        onItemClicked: (T) -> Unit,
+        navigateListener: (NavRoute) -> Unit,
         modifier: Modifier = Modifier,
 ) {
     require(items.count() >= 2) { "Must have at least two items" }
@@ -73,7 +73,7 @@ fun <T : TabSwitcherItem> TabSwitcher(
                             ),
                             textAlign = TextAlign.Center,
                             modifier = Modifier
-                                    .clickable { onItemClicked(item) }
+                                    .clickable { navigateListener(item.destination) }
                                     .weight(1f)
                                     .background(backgroundColour)
                                     .fillMaxHeight()
@@ -128,6 +128,6 @@ fun TabSwitcher_Preview() {
     TabSwitcher(
             items = SetupListTabSwitcherItem.values().toList(),
             selectedItem = SetupListTabSwitcherItem.PLAYERS,
-            onItemClicked = {},
+            navigateListener = {},
     )
 }

@@ -46,7 +46,7 @@ fun DaysReportScreen(
                 TabSwitcher(
                         items = HistoryTabSwitcherItem.values().toList(),
                         selectedItem = HistoryTabSwitcherItem.SUMMARY,
-                        onItemClicked = onTabSelectedListener,
+                        navigateListener = { navigateListener(it) },
                 )
             },
             listArrangement = Arrangement.spacedBy(25.dp),

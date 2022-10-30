@@ -99,7 +99,7 @@ fun PreviousMatchesScreen(
                 TabSwitcher(
                         items = HistoryTabSwitcherItem.values().toList(),
                         selectedItem = HistoryTabSwitcherItem.MATCHES,
-                        onItemClicked = onTabSelectedListener,
+                        navigateListener = { navigateListener(it) },
                 )
             }
     ) {
