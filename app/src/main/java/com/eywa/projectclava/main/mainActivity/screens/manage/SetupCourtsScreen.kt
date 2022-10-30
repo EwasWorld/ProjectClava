@@ -22,8 +22,8 @@ sealed class AddCourtIntent : ScreenIntent<SetupListState<Court>> {
     override val screen: NavRoute = NavRoute.ADD_COURT
 
     // TODO_HACKY Get the prependedness from the state
-    data class AddCourtSubmit(val prependCourt: Boolean) : AddCourtIntent()
-    object EditCourtSubmit : AddCourtIntent()
+    data class AddCourtSubmitted(val prependCourt: Boolean) : AddCourtIntent()
+    object EditCourtSubmitted : AddCourtIntent()
     data class CourtDeleted(val court: Court) : AddCourtIntent()
     data class CourtClicked(val court: Court) : AddCourtIntent()
 
@@ -35,12 +35,12 @@ sealed class AddCourtIntent : ScreenIntent<SetupListState<Court>> {
             newStateListener: (SetupListState<Court>) -> Unit
     ) {
         when (this) {
-            is AddCourtSubmit -> {
+            is AddCourtSubmitted -> {
                 val prefix = if (prependCourt) "Court " else ""
                 handle(DatabaseIntent.AddCourt(prefix + currentState.addItemName.trim()))
-                SetupListIntent.SetupListStateIntent.AddItemClear.handle(currentState, handle, newStateListener)
+                SetupListIntent.SetupListStateIntent.AddNameCleared.handle(currentState, handle, newStateListener)
             }
-            EditCourtSubmit -> {
+            EditCourtSubmitted -> {
                 val courtToEdit = currentState.editDialogOpenFor!!
                 handle(DatabaseIntent.UpdateCourt(courtToEdit.copy(name = currentState.editItemName.trim())))
                 SetupListIntent.SetupListStateIntent.EditNameCleared.handle(currentState, handle, newStateListener)
@@ -54,8 +54,8 @@ sealed class AddCourtIntent : ScreenIntent<SetupListState<Court>> {
 
 private fun SetupListIntent.toAddCourtIntent(prependCourt: Boolean) = when (this) {
     is SetupListIntent.SetupListStateIntent -> AddCourtIntent.ScreenIntent(this)
-    SetupListIntent.SetupListItemIntent.AddItemSubmit -> AddCourtIntent.AddCourtSubmit(prependCourt)
-    SetupListIntent.SetupListItemIntent.EditItemSubmit -> AddCourtIntent.EditCourtSubmit
+    SetupListIntent.SetupListItemIntent.AddItemSubmitted -> AddCourtIntent.AddCourtSubmitted(prependCourt)
+    SetupListIntent.SetupListItemIntent.EditItemSubmitted -> AddCourtIntent.EditCourtSubmitted
     is SetupListIntent.SetupListItemIntent.ItemClicked<*> -> AddCourtIntent.CourtClicked(value as Court)
     is SetupListIntent.SetupListItemIntent.ItemDeleted<*> -> AddCourtIntent.CourtDeleted(value as Court)
 }
@@ -76,8 +76,8 @@ fun SetupCourtsScreen(
             // TODO_HACKY Not sure if I like this useTextPlaceholderAlt switcharoo...
             state = state.copy(useTextPlaceholderAlt = prependCourt),
             items = databaseState.courts,
-            nameIsDuplicate = { newName, editItemName ->
-                if (newName == editItemName) return@SetupListScreen true
+            nameIsDuplicate = { newName, nameOfItemBeingEdited ->
+                if (newName == nameOfItemBeingEdited) return@SetupListScreen true
 
                 val checkName = if (prependCourt) "Court $newName" else newName
                 databaseState.courts.any { it.name == checkName.trim() }

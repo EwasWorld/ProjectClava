@@ -26,7 +26,7 @@ sealed class EditDialogListener {
     data class EditItemNameChanged(val value: String) : EditDialogListener()
     object EditNameCleared : EditDialogListener()
     object EditItemCancelled : EditDialogListener()
-    object EditItemSubmit : EditDialogListener()
+    object EditItemSubmitted : EditDialogListener()
 }
 
 @Deprecated("Use state instead")
@@ -61,7 +61,7 @@ fun <T : NamedItem> EditNameDialog(
                         fieldTouched.value = false
                         editName.value = ""
                     }
-                    EditDialogListener.EditItemSubmit -> {
+                    EditDialogListener.EditItemSubmitted -> {
                         okListener()
                     }
                     EditDialogListener.EditNameCleared -> {
@@ -77,11 +77,11 @@ fun <T : NamedItem> EditNameDialog(
 fun <T : NamedItem> EditNameDialog(
         typeContentDescription: String,
         textPlaceholder: String,
-        nameIsDuplicate: (newName: String, editItemName: String?) -> Boolean,
+        nameIsDuplicate: (newName: String, nameOfItemBeingEdited: String?) -> Boolean,
         editItemState: EditItemState<T>,
         listener: (EditDialogListener) -> Unit,
 ) {
-    val okListener = { listener(EditDialogListener.EditItemSubmit) }
+    val okListener = { listener(EditDialogListener.EditItemSubmitted) }
 
     ClavaDialog(
             isShown = editItemState.editDialogOpenFor != null,

@@ -67,8 +67,8 @@ fun ArchivedPlayersScreen(
     EditNameDialog(
             typeContentDescription = "player",
             textPlaceholder = "John Doe",
-            nameIsDuplicate = { newName, editItemName ->
-                newName != editItemName && players?.any { it.name == newName } == true
+            nameIsDuplicate = { newName, nameOfItemBeingEdited ->
+                newName != nameOfItemBeingEdited && players?.any { it.name == newName } == true
             },
             editDialogOpenFor = editDialogOpenFor,
             itemEditedListener = itemNameEditedListener,

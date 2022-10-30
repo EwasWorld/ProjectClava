@@ -33,14 +33,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.eywa.projectclava.R
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.common.generatePlayers
-import com.eywa.projectclava.main.mainActivity.CoreIntent
-import com.eywa.projectclava.main.mainActivity.MainEffect
-import com.eywa.projectclava.main.mainActivity.NavRoute
-import com.eywa.projectclava.main.mainActivity.screens.ScreenState
 import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListIntent.SetupListItemIntent
 import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListIntent.SetupListStateIntent
 import com.eywa.projectclava.main.model.*
@@ -49,132 +44,6 @@ import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
 
-interface SetupListItem : NamedItem {
-    val enabled: Boolean
-}
-
-enum class SetupListTabSwitcherItem(
-        override val label: String,
-        override val destination: NavRoute,
-) : TabSwitcherItem {
-    PLAYERS("Players", NavRoute.ADD_PLAYER),
-    COURTS("Courts", NavRoute.ADD_COURT),
-}
-
-data class SetupListState<T : SetupListItem>(
-        val addItemName: String = "",
-        val addItemIsDirty: Boolean = false,
-        override val editItemName: String = "",
-        override val editNameIsDirty: Boolean = false,
-        override val editDialogOpenFor: T? = null,
-        val useTextPlaceholderAlt: Boolean = false,
-        val searchText: String? = null,
-) : ScreenState, EditItemState<T> {
-    val isSearchExpanded = searchText != null
-}
-
-/**
- * Properties that are different between screens but not dynamic like state
- */
-enum class SetupListSettings(
-        val typeContentDescription: String,
-        private val textPlaceholder: String,
-        private val textPlaceholderAlt: String?,
-        val deleteIconInfo: ClavaIconInfo = ClavaIconInfo.VectorIcon(Icons.Default.Close, "Delete"),
-        val selectedTab: SetupListTabSwitcherItem,
-) {
-    PLAYERS(
-            typeContentDescription = "player",
-            deleteIconInfo = ClavaIconInfo.PainterIcon(R.drawable.baseline_archive_24, "Archive"),
-            selectedTab = SetupListTabSwitcherItem.PLAYERS,
-            textPlaceholder = "John Doe",
-            textPlaceholderAlt = null,
-    ),
-    COURTS(
-            typeContentDescription = "court",
-            selectedTab = SetupListTabSwitcherItem.COURTS,
-            textPlaceholder = "Court 1",
-            textPlaceholderAlt = "1",
-    )
-    ;
-
-    fun getTextPlaceholder(useAlt: Boolean) =
-            if (useAlt && textPlaceholderAlt != null) textPlaceholderAlt else textPlaceholder
-}
-
-sealed class SetupListIntent {
-    sealed class SetupListItemIntent<T : SetupListItem> : SetupListIntent() {
-        object AddItemSubmit : SetupListItemIntent<SetupListItem>()
-        object EditItemSubmit : SetupListItemIntent<SetupListItem>()
-        data class ItemDeleted<T : SetupListItem>(val value: T) : SetupListItemIntent<T>()
-        data class ItemClicked<T : SetupListItem>(val value: T) : SetupListItemIntent<T>()
-    }
-
-    /**
-     * Actions that will behave the same no matter the type of T
-     * (usually due to affecting only the [SetupListState] or things like navigation)
-     */
-    sealed class SetupListStateIntent : SetupListIntent() {
-        object ToggleUseAltPlaceholderText : SetupListStateIntent()
-
-        object AddItemClear : SetupListStateIntent()
-        data class AddItemNameChanged(val value: String) : SetupListStateIntent()
-
-        data class EditItemStarted(val value: SetupListItem) : SetupListStateIntent()
-        data class EditItemNameChanged(val value: String) : SetupListStateIntent()
-        object EditItemCancelled : SetupListStateIntent()
-        object EditNameCleared : SetupListStateIntent()
-
-        object ToggleSearch : SetupListStateIntent()
-        data class SearchTextChanged(val value: String) : SetupListStateIntent()
-
-        data class Navigate(val value: NavRoute) : SetupListStateIntent()
-
-        fun <T : SetupListItem> handle(
-                currentState: SetupListState<T>,
-                handle: (CoreIntent) -> Unit,
-                newStateListener: (SetupListState<T>) -> Unit
-        ) {
-            @Suppress("UNCHECKED_CAST")
-            when (this) {
-                AddItemClear -> newStateListener(currentState.copy(addItemName = "", addItemIsDirty = false))
-                is AddItemNameChanged -> newStateListener(currentState.copy(addItemName = value, addItemIsDirty = true))
-                EditItemCancelled -> newStateListener(currentState.copy(editDialogOpenFor = null))
-                EditNameCleared -> newStateListener(currentState.copy(editItemName = "", editNameIsDirty = false))
-                is EditItemNameChanged -> newStateListener(
-                        currentState.copy(
-                                editItemName = value,
-                                editNameIsDirty = true
-                        )
-                )
-                is EditItemStarted -> newStateListener(
-                        currentState.copy(
-                                editItemName = value.name,
-                                editNameIsDirty = false,
-                                editDialogOpenFor = value as T
-                        )
-                )
-                is Navigate -> handle(MainEffect.Navigate(value))
-                is SearchTextChanged -> newStateListener(currentState.copy(searchText = value))
-                ToggleSearch -> {
-                    val newSearchText = if (currentState.searchText == null) "" else null
-                    newStateListener(currentState.copy(searchText = newSearchText))
-                }
-                ToggleUseAltPlaceholderText -> newStateListener(
-                        currentState.copy(useTextPlaceholderAlt = !currentState.useTextPlaceholderAlt)
-                )
-            }
-        }
-    }
-}
-
-fun EditDialogListener.toSetupListIntent() = when (this) {
-    EditDialogListener.EditItemCancelled -> SetupListStateIntent.EditItemCancelled
-    EditDialogListener.EditNameCleared -> SetupListStateIntent.EditNameCleared
-    is EditDialogListener.EditItemNameChanged -> SetupListStateIntent.EditItemNameChanged(value)
-    is EditDialogListener.EditItemStarted<*> -> SetupListStateIntent.EditItemStarted(value as SetupListItem)
-    EditDialogListener.EditItemSubmit -> SetupListItemIntent.EditItemSubmit
-}
 
 @Composable
 fun <T : SetupListItem> SetupListScreen(
@@ -183,7 +52,7 @@ fun <T : SetupListItem> SetupListScreen(
         items: Iterable<T>,
         getMatch: (T) -> Match?,
         getTimeRemaining: Match.() -> TimeRemaining?,
-        nameIsDuplicate: (newName: String, editItemName: String?) -> Boolean,
+        nameIsDuplicate: (newName: String, nameOfItemBeingEdited: String?) -> Boolean,
         hasExtraContent: (T) -> Boolean = { false },
         extraContent: @Composable RowScope.(T) -> Unit = {},
         listener: (SetupListIntent) -> Unit,
@@ -229,9 +98,9 @@ fun <T : SetupListItem> SetupListScreen(
                         nameIsDuplicate = nameIsDuplicate,
                         proposedItemName = state.addItemName,
                         fieldIsDirty = state.addItemIsDirty,
-                        onValueChangedListener = { listener(SetupListStateIntent.AddItemNameChanged(it)) },
-                        onClearPressedListener = { listener(SetupListStateIntent.AddItemClear) },
-                        onDoneListener = { listener(SetupListItemIntent.AddItemSubmit) },
+                        onValueChangedListener = { listener(SetupListStateIntent.AddNameChanged(it)) },
+                        onClearPressedListener = { listener(SetupListStateIntent.AddNameCleared) },
+                        onDoneListener = { listener(SetupListItemIntent.AddItemSubmitted) },
                         textFieldModifier = Modifier.fillMaxWidth(),
                         modifier = Modifier
                                 .padding(horizontal = 20.dp, vertical = 10.dp)

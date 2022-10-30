@@ -10,8 +10,8 @@ import com.eywa.projectclava.main.model.*
 sealed class AddPlayerIntent : ScreenIntent<SetupListState<Player>> {
     override val screen: NavRoute = NavRoute.ADD_PLAYER
 
-    object AddPlayerSubmit : AddPlayerIntent()
-    object EditPlayerSubmit : AddPlayerIntent()
+    object AddPlayerSubmitted : AddPlayerIntent()
+    object EditPlayerSubmitted : AddPlayerIntent()
     data class PlayerArchived(val player: Player) : AddPlayerIntent()
     data class PlayerClicked(val player: Player) : AddPlayerIntent()
 
@@ -23,11 +23,11 @@ sealed class AddPlayerIntent : ScreenIntent<SetupListState<Player>> {
             newStateListener: (SetupListState<Player>) -> Unit
     ) {
         when (this) {
-            AddPlayerSubmit -> {
+            AddPlayerSubmitted -> {
                 handle(DatabaseIntent.AddPlayer(currentState.addItemName.trim()))
-                SetupListIntent.SetupListStateIntent.AddItemClear.handle(currentState, handle, newStateListener)
+                SetupListIntent.SetupListStateIntent.AddNameCleared.handle(currentState, handle, newStateListener)
             }
-            EditPlayerSubmit -> {
+            EditPlayerSubmitted -> {
                 val playerToEdit = currentState.editDialogOpenFor!!
                 handle(DatabaseIntent.UpdatePlayer(playerToEdit.copy(name = currentState.editItemName.trim())))
                 SetupListIntent.SetupListStateIntent.EditNameCleared.handle(currentState, handle, newStateListener)
@@ -43,8 +43,8 @@ sealed class AddPlayerIntent : ScreenIntent<SetupListState<Player>> {
 
 private fun SetupListIntent.toAddPlayerIntent() = when (this) {
     is SetupListIntent.SetupListStateIntent -> AddPlayerIntent.ScreenIntent(this)
-    SetupListIntent.SetupListItemIntent.AddItemSubmit -> AddPlayerIntent.AddPlayerSubmit
-    SetupListIntent.SetupListItemIntent.EditItemSubmit -> AddPlayerIntent.EditPlayerSubmit
+    SetupListIntent.SetupListItemIntent.AddItemSubmitted -> AddPlayerIntent.AddPlayerSubmitted
+    SetupListIntent.SetupListItemIntent.EditItemSubmitted -> AddPlayerIntent.EditPlayerSubmitted
     is SetupListIntent.SetupListItemIntent.ItemClicked<*> -> AddPlayerIntent.PlayerClicked(value as Player)
     is SetupListIntent.SetupListItemIntent.ItemDeleted<*> -> AddPlayerIntent.PlayerArchived(value as Player)
 }
@@ -65,8 +65,8 @@ fun SetupPlayersScreen(
                         .filter { match -> match.players.any { player.name == it.name } }
                         .getPlayerColouringMatch()
             },
-            nameIsDuplicate = { newName, editItemName ->
-                newName != editItemName && databaseState.players.any { it.name == newName.trim() }
+            nameIsDuplicate = { newName, nameOfItemBeingEdited ->
+                newName != nameOfItemBeingEdited && databaseState.players.any { it.name == newName.trim() }
             },
             getTimeRemaining = getTimeRemaining,
             listener = { listener(it.toAddPlayerIntent()) },
