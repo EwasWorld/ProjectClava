@@ -6,13 +6,11 @@ import com.eywa.projectclava.main.mainActivity.DatabaseIntent
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.mainActivity.screens.ScreenIntent
 import com.eywa.projectclava.main.model.*
-import com.eywa.projectclava.main.ui.sharedUi.EditDialogIntent
 
 sealed class AddPlayerIntent : ScreenIntent<SetupListState<Player>> {
     override val screen: NavRoute = NavRoute.ADD_PLAYER
 
     object AddPlayerSubmitted : AddPlayerIntent()
-    object EditPlayerSubmitted : AddPlayerIntent()
     data class PlayerArchived(val player: Player) : AddPlayerIntent()
     data class PlayerClicked(val player: Player) : AddPlayerIntent()
 
@@ -28,19 +26,13 @@ sealed class AddPlayerIntent : ScreenIntent<SetupListState<Player>> {
                 handle(DatabaseIntent.AddPlayer(currentState.addItemName.trim()))
                 SetupListIntent.SetupListStateIntent.AddNameCleared.handle(currentState, handle, newStateListener)
             }
-            is EditPlayerSubmitted -> {
-                EditDialogIntent.EditItemSubmitted.handle(
-                        currentState,
-                        newStateListener
-                ) { editItem, newName ->
-                    handle(DatabaseIntent.UpdatePlayer(editItem.copy(name = newName.trim())))
-                }
-            }
             is PlayerClicked -> {
                 handle(DatabaseIntent.UpdatePlayer(player.copy(isPresent = !player.isPresent)))
             }
             is PlayerArchived -> handle(DatabaseIntent.UpdatePlayer(player.copy(isArchived = true)))
-            is ScreenIntent -> value.handle(currentState, handle, newStateListener)
+            is ScreenIntent -> value.handle(currentState, handle, newStateListener) { editPlayer, newName ->
+                handle(DatabaseIntent.UpdatePlayer(editPlayer.copy(name = newName.trim())))
+            }
         }
     }
 }
@@ -48,7 +40,6 @@ sealed class AddPlayerIntent : ScreenIntent<SetupListState<Player>> {
 private fun SetupListIntent.toAddPlayerIntent() = when (this) {
     is SetupListIntent.SetupListStateIntent -> AddPlayerIntent.ScreenIntent(this)
     SetupListIntent.SetupListItemIntent.AddItemSubmitted -> AddPlayerIntent.AddPlayerSubmitted
-    SetupListIntent.SetupListItemIntent.EditItemSubmitted -> AddPlayerIntent.EditPlayerSubmitted
     is SetupListIntent.SetupListItemIntent.ItemClicked<*> -> AddPlayerIntent.PlayerClicked(value as Player)
     is SetupListIntent.SetupListItemIntent.ItemDeleted<*> -> AddPlayerIntent.PlayerArchived(value as Player)
 }

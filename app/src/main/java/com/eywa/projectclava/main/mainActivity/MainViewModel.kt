@@ -144,7 +144,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             /*
              * Courts
              */
-            is DatabaseIntent.AddCourt -> courtRepo.insertAll(DatabaseCourt(0, intent.name))
+            is DatabaseIntent.AddCourt -> {
+                val prefix = if (preferences.latest().prependCourt) "Court " else ""
+                courtRepo.insertAll(DatabaseCourt(0, prefix + intent.name))
+            }
             is DatabaseIntent.DeleteCourt -> courtRepo.delete(intent.court.asDatabaseCourt())
             is DatabaseIntent.UpdateCourt -> courtRepo.update(intent.court.asDatabaseCourt())
 

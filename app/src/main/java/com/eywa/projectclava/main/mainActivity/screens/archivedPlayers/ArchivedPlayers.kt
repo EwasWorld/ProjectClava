@@ -13,8 +13,7 @@ import com.eywa.projectclava.main.ui.sharedUi.EditDialogState
 sealed class ArchivedPlayersIntent : ScreenIntent<ArchivedPlayersState> {
     override val screen: NavRoute = NavRoute.ARCHIVED_PLAYERS
 
-    data class EditItemStateIntent(val value: EditDialogIntent.EditItemStateIntent) : ArchivedPlayersIntent()
-    object EditItemSubmitted : ArchivedPlayersIntent()
+    data class EditItemStateIntent(val value: EditDialogIntent) : ArchivedPlayersIntent()
 
     data class ItemDeleted(val value: Player) : ArchivedPlayersIntent()
     data class PlayerUnarchived(val value: Player) : ArchivedPlayersIntent()
@@ -25,14 +24,8 @@ sealed class ArchivedPlayersIntent : ScreenIntent<ArchivedPlayersState> {
             newStateListener: (ArchivedPlayersState) -> Unit
     ) {
         when (this) {
-            is EditItemStateIntent -> value.handle(currentState, newStateListener)
-            EditItemSubmitted -> {
-                EditDialogIntent.EditItemSubmitted.handle(
-                        currentState,
-                        newStateListener
-                ) { editItem, newName ->
-                    handle(DatabaseIntent.UpdatePlayer(editItem.copy(name = newName.trim())))
-                }
+            is EditItemStateIntent -> value.handle(currentState, newStateListener) { editItem, newName ->
+                handle(DatabaseIntent.UpdatePlayer(editItem.copy(name = newName.trim())))
             }
             is ItemDeleted -> handle(DatabaseIntent.DeletePlayer(value))
             is PlayerUnarchived -> handle(DatabaseIntent.UpdatePlayer(value.copy(isArchived = false)))
@@ -40,10 +33,8 @@ sealed class ArchivedPlayersIntent : ScreenIntent<ArchivedPlayersState> {
     }
 }
 
-fun EditDialogIntent.toArchivedPlayersIntent() = when (this) {
-    is EditDialogIntent.EditItemStateIntent -> ArchivedPlayersIntent.EditItemStateIntent(this)
-    EditDialogIntent.EditItemSubmitted -> ArchivedPlayersIntent.EditItemSubmitted
-}
+fun EditDialogIntent.toArchivedPlayersIntent() =
+        ArchivedPlayersIntent.EditItemStateIntent(this)
 
 data class ArchivedPlayersState(
         override val editItemName: String = "",

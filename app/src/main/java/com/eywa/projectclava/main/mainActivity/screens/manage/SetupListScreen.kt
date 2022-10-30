@@ -153,10 +153,7 @@ fun <T : SetupListItem> SetupListScreen(
                             )
                             IconButton(
                                     onClick = {
-                                        listener(
-                                                EditDialogIntent.EditItemStateIntent.EditItemStarted(item)
-                                                        .toSetupListIntent()
-                                        )
+                                        listener(EditDialogIntent.EditItemStarted(item).toSetupListIntent())
                                         focusManager.clearFocus()
                                     }
                             ) {

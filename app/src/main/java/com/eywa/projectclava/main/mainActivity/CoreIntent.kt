@@ -38,6 +38,9 @@ sealed class DatabaseIntent : CoreIntent {
     /*
      * Courts
      */
+    /**
+     * Intent will prepend "Court " if the corresponding preference is set
+     */
     data class AddCourt(val name: String) : DatabaseIntent()
     data class UpdateCourt(val court: Court) : DatabaseIntent()
     data class DeleteCourt(val court: Court) : DatabaseIntent()

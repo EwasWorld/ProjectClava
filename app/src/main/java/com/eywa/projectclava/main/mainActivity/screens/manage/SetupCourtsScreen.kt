@@ -16,15 +16,12 @@ import com.eywa.projectclava.main.mainActivity.DatabaseIntent
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.mainActivity.screens.ScreenIntent
 import com.eywa.projectclava.main.model.*
-import com.eywa.projectclava.main.ui.sharedUi.EditDialogIntent
 import java.util.*
 
 sealed class AddCourtIntent : ScreenIntent<SetupListState<Court>> {
     override val screen: NavRoute = NavRoute.ADD_COURT
 
-    // TODO_HACKY Get the prependedness from the state
-    data class AddCourtSubmitted(val prependCourt: Boolean) : AddCourtIntent()
-    object EditCourtSubmitted : AddCourtIntent()
+    object AddCourtSubmitted : AddCourtIntent()
     data class CourtDeleted(val court: Court) : AddCourtIntent()
     data class CourtClicked(val court: Court) : AddCourtIntent()
 
@@ -37,29 +34,21 @@ sealed class AddCourtIntent : ScreenIntent<SetupListState<Court>> {
     ) {
         when (this) {
             is AddCourtSubmitted -> {
-                val prefix = if (prependCourt) "Court " else ""
-                handle(DatabaseIntent.AddCourt(prefix + currentState.addItemName.trim()))
+                handle(DatabaseIntent.AddCourt(currentState.addItemName.trim()))
                 SetupListIntent.SetupListStateIntent.AddNameCleared.handle(currentState, handle, newStateListener)
-            }
-            is EditCourtSubmitted -> {
-                EditDialogIntent.EditItemSubmitted.handle(
-                        currentState,
-                        newStateListener
-                ) { editItem, newName ->
-                    handle(DatabaseIntent.UpdateCourt(editItem.copy(name = newName.trim())))
-                }
             }
             is CourtClicked -> handle(DatabaseIntent.UpdateCourt(court.copy(canBeUsed = !court.canBeUsed)))
             is CourtDeleted -> handle(DatabaseIntent.DeleteCourt(court))
-            is ScreenIntent -> value.handle(currentState, handle, newStateListener)
+            is ScreenIntent -> value.handle(currentState, handle, newStateListener) { editCourt, newName ->
+                handle(DatabaseIntent.UpdateCourt(editCourt.copy(name = newName.trim())))
+            }
         }
     }
 }
 
-private fun SetupListIntent.toAddCourtIntent(prependCourt: Boolean? = null) = when (this) {
+private fun SetupListIntent.toAddCourtIntent() = when (this) {
     is SetupListIntent.SetupListStateIntent -> AddCourtIntent.ScreenIntent(this)
-    SetupListIntent.SetupListItemIntent.AddItemSubmitted -> AddCourtIntent.AddCourtSubmitted(prependCourt!!)
-    SetupListIntent.SetupListItemIntent.EditItemSubmitted -> AddCourtIntent.EditCourtSubmitted
+    SetupListIntent.SetupListItemIntent.AddItemSubmitted -> AddCourtIntent.AddCourtSubmitted
     is SetupListIntent.SetupListItemIntent.ItemClicked<*> -> AddCourtIntent.CourtClicked(value as Court)
     is SetupListIntent.SetupListItemIntent.ItemDeleted<*> -> AddCourtIntent.CourtDeleted(value as Court)
 }
@@ -97,7 +86,7 @@ fun SetupCourtsScreen(
                         getTimeRemaining = getTimeRemaining
                 )
             },
-            listener = { listener(it.toAddCourtIntent(prependCourt)) },
+            listener = { listener(it.toAddCourtIntent()) },
     )
 }
 

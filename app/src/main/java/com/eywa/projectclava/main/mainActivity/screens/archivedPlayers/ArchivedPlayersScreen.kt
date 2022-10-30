@@ -76,12 +76,7 @@ fun ArchivedPlayersScreen(
                             modifier = Modifier.weight(1f)
                     )
                     IconButton(
-                            onClick = {
-                                listener(
-                                        EditDialogIntent.EditItemStateIntent.EditItemStarted(player)
-                                                .toArchivedPlayersIntent()
-                                )
-                            }
+                            onClick = { listener(EditDialogIntent.EditItemStarted(player).toArchivedPlayersIntent()) }
                     ) {
                         Icon(
                                 imageVector = Icons.Default.Edit,

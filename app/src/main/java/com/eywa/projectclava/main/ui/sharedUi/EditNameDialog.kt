@@ -1,7 +1,7 @@
 package com.eywa.projectclava.main.ui.sharedUi
 
 import androidx.compose.runtime.Composable
-import com.eywa.projectclava.main.ui.sharedUi.EditDialogIntent.EditItemStateIntent
+import com.eywa.projectclava.main.ui.sharedUi.EditDialogIntent.*
 
 interface NamedItem {
     val name: String
@@ -20,45 +20,38 @@ interface EditDialogState<T : NamedItem> {
 }
 
 sealed class EditDialogIntent {
-    object EditItemSubmitted : EditDialogIntent() {
-        fun <T : NamedItem, E : EditDialogState<T>> handle(
-                currentState: E,
-                newStateListener: (E) -> Unit,
-                updateName: (editItem: T, newName: String) -> Unit,
-        ) {
-            updateName(currentState.editDialogOpenFor!!, currentState.editItemName)
-            EditItemStateIntent.EditItemCancelled.handle(currentState, newStateListener)
-        }
-    }
+    object EditItemSubmitted : EditDialogIntent()
+    data class EditItemStarted<T : NamedItem>(val value: T) : EditDialogIntent()
+    data class EditItemNameChanged(val value: String) : EditDialogIntent()
+    object EditNameCleared : EditDialogIntent()
+    object EditItemCancelled : EditDialogIntent()
 
-    sealed class EditItemStateIntent : EditDialogIntent() {
-        data class EditItemStarted<T : NamedItem>(val value: T) : EditItemStateIntent()
-        data class EditItemNameChanged(val value: String) : EditItemStateIntent()
-        object EditNameCleared : EditItemStateIntent()
-        object EditItemCancelled : EditItemStateIntent()
-
-        @Suppress("UNCHECKED_CAST")
-        fun <T : NamedItem, E : EditDialogState<T>> handle(
-                currentState: E,
-                newStateListener: (E) -> Unit,
-        ) {
-            when (this) {
-                EditItemCancelled -> newStateListener(
-                        currentState.editItemCopy(editDialogOpenFor = null) as E
-                )
-                is EditItemNameChanged -> newStateListener(
-                        currentState.editItemCopy(editItemName = value, editNameIsDirty = true) as E
-                )
-                is EditItemStarted<*> -> newStateListener(
-                        currentState.editItemCopy(
-                                editItemName = value.name,
-                                editNameIsDirty = false,
-                                editDialogOpenFor = value as T,
-                        ) as E
-                )
-                EditNameCleared -> newStateListener(
-                        currentState.editItemCopy(editItemName = "", editNameIsDirty = false) as E
-                )
+    @Suppress("UNCHECKED_CAST")
+    fun <T : NamedItem, E : EditDialogState<T>> handle(
+            currentState: E,
+            newStateListener: (E) -> Unit,
+            updateName: (editItem: T, newName: String) -> Unit,
+    ) {
+        when (this) {
+            EditItemCancelled -> newStateListener(
+                    currentState.editItemCopy(editDialogOpenFor = null) as E
+            )
+            is EditItemNameChanged -> newStateListener(
+                    currentState.editItemCopy(editItemName = value, editNameIsDirty = true) as E
+            )
+            is EditItemStarted<*> -> newStateListener(
+                    currentState.editItemCopy(
+                            editItemName = value.name,
+                            editNameIsDirty = false,
+                            editDialogOpenFor = value as T,
+                    ) as E
+            )
+            EditNameCleared -> newStateListener(
+                    currentState.editItemCopy(editItemName = "", editNameIsDirty = false) as E
+            )
+            EditItemSubmitted -> {
+                updateName(currentState.editDialogOpenFor!!, currentState.editItemName)
+                EditItemCancelled.handle(currentState, newStateListener, updateName)
             }
         }
     }
@@ -72,7 +65,7 @@ fun <T : NamedItem> EditNameDialog(
         state: EditDialogState<T>,
         listener: (EditDialogIntent) -> Unit,
 ) {
-    val okListener = { listener(EditDialogIntent.EditItemSubmitted) }
+    val okListener = { listener(EditItemSubmitted) }
 
     ClavaDialog(
             isShown = state.editDialogOpenFor != null,
@@ -80,7 +73,7 @@ fun <T : NamedItem> EditNameDialog(
             okButtonText = "Edit",
             okButtonEnabled = state.editItemName.isNotBlank() &&
                     !nameIsDuplicate(state.editItemName, state.editDialogOpenFor?.name),
-            onCancelListener = { listener(EditItemStateIntent.EditItemCancelled) },
+            onCancelListener = { listener(EditItemCancelled) },
             onOkListener = okListener
     ) {
         NamedItemTextField(
@@ -88,8 +81,8 @@ fun <T : NamedItem> EditNameDialog(
                 textPlaceholder = textPlaceholder,
                 nameIsDuplicate = nameIsDuplicate,
                 proposedItemName = state.editItemName,
-                onValueChangedListener = { listener(EditItemStateIntent.EditItemNameChanged(it)) },
-                onClearPressedListener = { listener(EditItemStateIntent.EditNameCleared) },
+                onValueChangedListener = { listener(EditItemNameChanged(it)) },
+                onClearPressedListener = { listener(EditNameCleared) },
                 fieldIsDirty = state.editNameIsDirty,
                 onDoneListener = okListener,
                 itemBeingEdited = state.editDialogOpenFor,

@@ -3,7 +3,6 @@ package com.eywa.projectclava.main.mainActivity.screens.manage
 import com.eywa.projectclava.main.mainActivity.CoreIntent
 import com.eywa.projectclava.main.mainActivity.MainEffect
 import com.eywa.projectclava.main.mainActivity.NavRoute
-import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListIntent.SetupListItemIntent
 import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListIntent.SetupListStateIntent
 import com.eywa.projectclava.main.ui.sharedUi.EditDialogIntent
 
@@ -14,7 +13,6 @@ sealed class SetupListIntent {
      */
     sealed class SetupListItemIntent<T : SetupListItem> : SetupListIntent() {
         object AddItemSubmitted : SetupListItemIntent<SetupListItem>()
-        object EditItemSubmitted : SetupListItemIntent<SetupListItem>()
         data class ItemDeleted<T : SetupListItem>(val value: T) : SetupListItemIntent<T>()
         data class ItemClicked<T : SetupListItem>(val value: T) : SetupListItemIntent<T>()
     }
@@ -29,7 +27,7 @@ sealed class SetupListIntent {
         object AddNameCleared : SetupListStateIntent()
         data class AddNameChanged(val value: String) : SetupListStateIntent()
 
-        data class EditItemStateIntent(val value: EditDialogIntent.EditItemStateIntent) : SetupListStateIntent()
+        data class EditItemStateIntent(val value: EditDialogIntent) : SetupListStateIntent()
 
         object ToggleSearch : SetupListStateIntent()
         data class SearchTextChanged(val value: String) : SetupListStateIntent()
@@ -39,11 +37,11 @@ sealed class SetupListIntent {
         fun <T : SetupListItem> handle(
                 currentState: SetupListState<T>,
                 handle: (CoreIntent) -> Unit,
-                newStateListener: (SetupListState<T>) -> Unit
+                newStateListener: (SetupListState<T>) -> Unit,
+                updateName: ((editItem: T, newName: String) -> Unit)? = null,
         ) {
-            @Suppress("UNCHECKED_CAST")
             when (this) {
-                is EditItemStateIntent -> value.handle(currentState, newStateListener)
+                is EditItemStateIntent -> value.handle(currentState, newStateListener, updateName!!)
                 AddNameCleared -> newStateListener(currentState.copy(addItemName = "", addItemIsDirty = false))
                 is AddNameChanged -> newStateListener(currentState.copy(addItemName = value, addItemIsDirty = true))
                 is Navigate -> handle(MainEffect.Navigate(value))
@@ -60,7 +58,5 @@ sealed class SetupListIntent {
     }
 }
 
-fun EditDialogIntent.toSetupListIntent() = when (this) {
-    is EditDialogIntent.EditItemStateIntent -> SetupListStateIntent.EditItemStateIntent(this)
-    EditDialogIntent.EditItemSubmitted -> SetupListItemIntent.EditItemSubmitted
-}
+fun EditDialogIntent.toSetupListIntent() =
+        SetupListStateIntent.EditItemStateIntent(this)
