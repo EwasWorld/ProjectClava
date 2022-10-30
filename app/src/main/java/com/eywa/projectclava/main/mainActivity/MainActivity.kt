@@ -40,11 +40,11 @@ class MainActivity : ComponentActivity() {
             "Duplicate NavRoute found"
         }
 
-        var isBottomNavVisible by mutableStateOf(true)
+        var isSoftKeyboardOpen by mutableStateOf(false)
 
         // Hide the nav bar when the keyboard is showing
         setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
-            isBottomNavVisible = !insets.isVisible(WindowInsetsCompat.Type.ime())
+            isSoftKeyboardOpen = insets.isVisible(WindowInsetsCompat.Type.ime())
             toWindowInsetsCompat(view.onApplyWindowInsets(insets.toWindowInsets()!!))
         }
 
@@ -90,7 +90,7 @@ class MainActivity : ComponentActivity() {
                         backgroundColor = ClavaColor.Background,
                         scaffoldState = rememberScaffoldState(drawerState = drawerState),
                         bottomBar = {
-                            if (isBottomNavVisible) {
+                            if (!isSoftKeyboardOpen) {
                                 ClavaBottomNav(
                                         hasOverrunningMatch = databaseState.matches.any {
                                             if (!it.isOnCourt) return@any false
@@ -131,9 +131,10 @@ class MainActivity : ComponentActivity() {
                                         navController = navController,
                                         currentTime = { currentTime },
                                         getTimeRemaining = { state.getTimeLeft(currentTime) },
+                                        viewModel = viewModel,
                                         databaseState = databaseState,
                                         preferencesState = preferences,
-                                        viewModel = viewModel,
+                                        isSoftKeyboardOpen = isSoftKeyboardOpen,
                                 )
                             }
                         }

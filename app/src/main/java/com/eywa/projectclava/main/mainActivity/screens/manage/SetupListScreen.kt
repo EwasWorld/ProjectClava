@@ -49,6 +49,7 @@ import java.util.*
 fun <T : SetupListItem> SetupListScreen(
         setupListSettings: SetupListSettings,
         state: SetupListState<T>,
+        isSoftKeyboardOpen: Boolean,
         items: Iterable<T>,
         getMatch: (T) -> Match?,
         getTimeRemaining: Match.() -> TimeRemaining?,
@@ -90,7 +91,7 @@ fun <T : SetupListItem> SetupListScreen(
                         modifier = modifier
                 )
             },
-            footerIsVisible = !state.isSearchExpanded,
+            footerIsVisible = !state.isSearchExpanded || !isSoftKeyboardOpen,
             footerContent = {
                 NamedItemTextField<T>(
                         typeContentDescription = setupListSettings.typeContentDescription,
@@ -316,6 +317,7 @@ fun SetupListScreen_Preview() {
                 getMatch = { player: Player -> matches[players.sortedBy { it.name }.indexOf(player) % matches.size] },
                 getTimeRemaining = { state.getTimeLeft(currentTime) },
                 listener = {},
+                isSoftKeyboardOpen = false,
         )
     }
 }
@@ -333,6 +335,7 @@ fun ExtraInfo_SetupListScreen_Preview() {
             prependCourt = false,
             getTimeRemaining = { state.getTimeLeft(currentTime) },
             listener = {},
+            isSoftKeyboardOpen = false,
     )
 }
 
@@ -351,6 +354,7 @@ fun Dialog_SetupListScreen_Preview() {
                 getMatch = { null },
                 getTimeRemaining = { null },
                 listener = {},
+                isSoftKeyboardOpen = false,
         )
     }
 }
@@ -370,6 +374,7 @@ fun Error_SetupListScreen_Preview() {
                 getMatch = { null },
                 getTimeRemaining = { null },
                 listener = {},
+                isSoftKeyboardOpen = false,
         )
     }
 }

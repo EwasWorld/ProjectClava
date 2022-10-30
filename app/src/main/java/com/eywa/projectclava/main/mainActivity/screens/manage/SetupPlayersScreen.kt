@@ -57,12 +57,14 @@ private fun SetupListIntent.toAddPlayerIntent() = when (this) {
 fun SetupPlayersScreen(
         state: SetupListState<Player>,
         databaseState: DatabaseState,
+        isSoftKeyboardOpen: Boolean,
         getTimeRemaining: Match.() -> TimeRemaining?,
         listener: (AddPlayerIntent) -> Unit,
 ) {
     SetupListScreen(
             setupListSettings = SetupListSettings.PLAYERS,
             state = state,
+            isSoftKeyboardOpen = isSoftKeyboardOpen,
             items = databaseState.players.filter { !it.isArchived },
             getMatch = { player ->
                 databaseState.matches

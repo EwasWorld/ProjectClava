@@ -71,6 +71,7 @@ private fun SetupListIntent.toAddCourtIntent(prependCourt: Boolean? = null) = wh
 fun SetupCourtsScreen(
         state: SetupListState<Court>,
         databaseState: DatabaseState,
+        isSoftKeyboardOpen: Boolean,
         prependCourt: Boolean = true,
         getTimeRemaining: Match.() -> TimeRemaining?,
         listener: (AddCourtIntent) -> Unit,
@@ -80,6 +81,7 @@ fun SetupCourtsScreen(
             // TODO_HACKY Not sure if I like this useTextPlaceholderAlt switcharoo...
             state = state.copy(useTextPlaceholderAlt = prependCourt),
             items = databaseState.courts,
+            isSoftKeyboardOpen = isSoftKeyboardOpen,
             nameIsDuplicate = { newName, nameOfItemBeingEdited ->
                 if (newName == nameOfItemBeingEdited) return@SetupListScreen true
 
@@ -130,5 +132,6 @@ fun SetupCourtsScreen_Preview() {
             ),
             getTimeRemaining = { state.getTimeLeft(currentTime) },
             listener = {},
+            isSoftKeyboardOpen = false,
     )
 }

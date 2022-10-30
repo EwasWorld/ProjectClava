@@ -31,11 +31,13 @@ enum class NavRoute(val route: String) {
                 viewModel: MainViewModel,
                 databaseState: DatabaseState,
                 preferencesState: DatastoreState,
+                isSoftKeyboardOpen: Boolean,
         ) {
             @Suppress("UNCHECKED_CAST")
             SetupPlayersScreen(
                     state = viewModel.getScreenState(this) as SetupListState<Player>,
                     databaseState = databaseState,
+                    isSoftKeyboardOpen = isSoftKeyboardOpen,
                     getTimeRemaining = getTimeRemaining,
                     listener = { viewModel.handleIntent(it) },
             )
@@ -53,6 +55,7 @@ enum class NavRoute(val route: String) {
                 viewModel: MainViewModel,
                 databaseState: DatabaseState,
                 preferencesState: DatastoreState,
+                isSoftKeyboardOpen: Boolean,
         ) {
             ArchivedPlayersScreen(
                     databaseState = databaseState,
@@ -73,11 +76,13 @@ enum class NavRoute(val route: String) {
                 viewModel: MainViewModel,
                 databaseState: DatabaseState,
                 preferencesState: DatastoreState,
+                isSoftKeyboardOpen: Boolean,
         ) {
             @Suppress("UNCHECKED_CAST")
             SetupCourtsScreen(
                     state = viewModel.getScreenState(this) as SetupListState<Court>,
                     databaseState = databaseState,
+                    isSoftKeyboardOpen = isSoftKeyboardOpen,
                     getTimeRemaining = getTimeRemaining,
                     prependCourt = preferencesState.prependCourt,
                     listener = { viewModel.handleIntent(it) },
@@ -96,6 +101,7 @@ enum class NavRoute(val route: String) {
                 viewModel: MainViewModel,
                 databaseState: DatabaseState,
                 preferencesState: DatastoreState,
+                isSoftKeyboardOpen: Boolean,
         ) {
             CreateMatchScreen(
                     state = viewModel.getScreenState(this) as CreateMatchState,
@@ -116,6 +122,7 @@ enum class NavRoute(val route: String) {
                 viewModel: MainViewModel,
                 databaseState: DatabaseState,
                 preferencesState: DatastoreState,
+                isSoftKeyboardOpen: Boolean,
         ) {
             UpcomingMatchesScreen(
                     courts = databaseState.courts,
@@ -147,6 +154,7 @@ enum class NavRoute(val route: String) {
                 viewModel: MainViewModel,
                 databaseState: DatabaseState,
                 preferencesState: DatastoreState,
+                isSoftKeyboardOpen: Boolean,
         ) {
             CurrentMatchesScreen(
                     courts = databaseState.courts,
@@ -190,6 +198,7 @@ enum class NavRoute(val route: String) {
                 viewModel: MainViewModel,
                 databaseState: DatabaseState,
                 preferencesState: DatastoreState,
+                isSoftKeyboardOpen: Boolean,
         ) {
             PreviousMatchesScreen(
                     matches = databaseState.matches,
@@ -218,7 +227,8 @@ enum class NavRoute(val route: String) {
                 getTimeRemaining: Match.() -> TimeRemaining?,
                 viewModel: MainViewModel,
                 databaseState: DatabaseState,
-                preferencesState: DatastoreState
+                preferencesState: DatastoreState,
+                isSoftKeyboardOpen: Boolean
         ) {
             DaysReportScreen(
                     matches = databaseState.matches,
@@ -238,7 +248,8 @@ enum class NavRoute(val route: String) {
                 getTimeRemaining: Match.() -> TimeRemaining?,
                 viewModel: MainViewModel,
                 databaseState: DatabaseState,
-                preferencesState: DatastoreState
+                preferencesState: DatastoreState,
+                isSoftKeyboardOpen: Boolean
         ) {
 //            val filtered = matches.filterKeys { it.isCurrent }.entries
 
@@ -285,5 +296,6 @@ enum class NavRoute(val route: String) {
             viewModel: MainViewModel,
             databaseState: DatabaseState,
             preferencesState: DatastoreState,
+            isSoftKeyboardOpen: Boolean,
     )
 }
