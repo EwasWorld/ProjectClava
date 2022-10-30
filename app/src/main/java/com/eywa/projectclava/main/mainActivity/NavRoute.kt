@@ -5,6 +5,8 @@ import androidx.navigation.NavHostController
 import com.eywa.projectclava.main.mainActivity.screens.ScreenState
 import com.eywa.projectclava.main.mainActivity.screens.archivedPlayers.ArchivedPlayersScreen
 import com.eywa.projectclava.main.mainActivity.screens.archivedPlayers.ArchivedPlayersState
+import com.eywa.projectclava.main.mainActivity.screens.history.matches.MatchHistoryScreen
+import com.eywa.projectclava.main.mainActivity.screens.history.matches.MatchHistoryState
 import com.eywa.projectclava.main.mainActivity.screens.history.summary.HistorySummaryScreen
 import com.eywa.projectclava.main.mainActivity.screens.manage.SetupCourtsScreen
 import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListState
@@ -13,7 +15,6 @@ import com.eywa.projectclava.main.mainActivity.screens.matchUp.CreateMatchScreen
 import com.eywa.projectclava.main.mainActivity.screens.matchUp.CreateMatchState
 import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.mainScreens.CurrentMatchesScreen
-import com.eywa.projectclava.main.ui.mainScreens.PreviousMatchesScreen
 import com.eywa.projectclava.main.ui.mainScreens.UpcomingMatchesScreen
 import com.eywa.projectclava.main.ui.sharedUi.AvailableCourtsHeader
 import com.eywa.projectclava.main.ui.sharedUi.ClavaScreen
@@ -108,7 +109,7 @@ enum class NavRoute(val route: String) {
                     clubNightStartTime = preferencesState.clubNightStartTime,
                     databaseState = databaseState,
                     getTimeRemaining = getTimeRemaining,
-                    listener = { viewModel.handleIntent(it) }
+                    listener = { viewModel.handleIntent(it) },
             )
         }
     },
@@ -189,7 +190,9 @@ enum class NavRoute(val route: String) {
         }
     },
 
-    PREVIOUS_MATCHES("previous_matches") {
+    MATCH_HISTORY("match_history") {
+        override fun createInitialState() = MatchHistoryState()
+
         @Composable
         override fun ClavaNavigation(
                 navController: NavHostController,
@@ -200,21 +203,11 @@ enum class NavRoute(val route: String) {
                 preferencesState: DatastoreState,
                 isSoftKeyboardOpen: Boolean,
         ) {
-            PreviousMatchesScreen(
-                    matches = databaseState.matches,
-                    defaultTimeToAddSeconds = preferencesState.defaultTimeToAdd,
-                    addTimeListener = { match, timeToAdd ->
-                        viewModel.updateMatch(
-                                match.addTime(
-                                        currentTime(),
-                                        timeToAdd
-                                )
-                        )
-                    },
-                    deleteMatchListener = { viewModel.deleteMatch(it) },
-                    onTabSelectedListener = { navController.navigate(it.destination.route) },
-                    navigateListener = { navController.navigate(it.route) },
-                    missingContentNextStep = MissingContentNextStep.getMissingContent(databaseState),
+            MatchHistoryScreen(
+                    state = viewModel.getScreenState(this) as MatchHistoryState,
+                    databaseState = databaseState,
+                    defaultTimeToAdd = preferencesState.defaultTimeToAdd,
+                    listener = { viewModel.handleIntent(it) },
             )
         }
     },

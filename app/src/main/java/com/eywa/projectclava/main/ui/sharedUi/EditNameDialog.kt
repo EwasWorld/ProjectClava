@@ -7,7 +7,7 @@ interface NamedItem {
     val name: String
 }
 
-interface EditItemState<T : NamedItem> {
+interface EditDialogState<T : NamedItem> {
     val editItemName: String
     val editNameIsDirty: Boolean
     val editDialogOpenFor: T?
@@ -16,12 +16,12 @@ interface EditItemState<T : NamedItem> {
             editItemName: String = this.editItemName,
             editNameIsDirty: Boolean = this.editNameIsDirty,
             editDialogOpenFor: T? = this.editDialogOpenFor,
-    ): EditItemState<T>
+    ): EditDialogState<T>
 }
 
 sealed class EditDialogIntent {
     object EditItemSubmitted : EditDialogIntent() {
-        fun <T : NamedItem, E : EditItemState<T>> handle(
+        fun <T : NamedItem, E : EditDialogState<T>> handle(
                 currentState: E,
                 newStateListener: (E) -> Unit,
                 updateName: (editItem: T, newName: String) -> Unit,
@@ -38,7 +38,7 @@ sealed class EditDialogIntent {
         object EditItemCancelled : EditItemStateIntent()
 
         @Suppress("UNCHECKED_CAST")
-        fun <T : NamedItem, E : EditItemState<T>> handle(
+        fun <T : NamedItem, E : EditDialogState<T>> handle(
                 currentState: E,
                 newStateListener: (E) -> Unit,
         ) {
@@ -69,17 +69,17 @@ fun <T : NamedItem> EditNameDialog(
         typeContentDescription: String,
         textPlaceholder: String,
         nameIsDuplicate: (newName: String, nameOfItemBeingEdited: String?) -> Boolean,
-        editItemState: EditItemState<T>,
+        state: EditDialogState<T>,
         listener: (EditDialogIntent) -> Unit,
 ) {
     val okListener = { listener(EditDialogIntent.EditItemSubmitted) }
 
     ClavaDialog(
-            isShown = editItemState.editDialogOpenFor != null,
-            title = "Edit ${editItemState.editDialogOpenFor?.name}",
+            isShown = state.editDialogOpenFor != null,
+            title = "Edit ${state.editDialogOpenFor?.name}",
             okButtonText = "Edit",
-            okButtonEnabled = editItemState.editItemName.isNotBlank() &&
-                    !nameIsDuplicate(editItemState.editItemName, editItemState.editDialogOpenFor?.name),
+            okButtonEnabled = state.editItemName.isNotBlank() &&
+                    !nameIsDuplicate(state.editItemName, state.editDialogOpenFor?.name),
             onCancelListener = { listener(EditItemStateIntent.EditItemCancelled) },
             onOkListener = okListener
     ) {
@@ -87,12 +87,12 @@ fun <T : NamedItem> EditNameDialog(
                 typeContentDescription = typeContentDescription,
                 textPlaceholder = textPlaceholder,
                 nameIsDuplicate = nameIsDuplicate,
-                proposedItemName = editItemState.editItemName,
+                proposedItemName = state.editItemName,
                 onValueChangedListener = { listener(EditItemStateIntent.EditItemNameChanged(it)) },
                 onClearPressedListener = { listener(EditItemStateIntent.EditNameCleared) },
-                fieldIsDirty = editItemState.editNameIsDirty,
+                fieldIsDirty = state.editNameIsDirty,
                 onDoneListener = okListener,
-                itemBeingEdited = editItemState.editDialogOpenFor,
+                itemBeingEdited = state.editDialogOpenFor,
         )
     }
 }

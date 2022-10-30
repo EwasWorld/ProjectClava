@@ -70,7 +70,7 @@ fun <T : SetupListItem> SetupListScreen(
             typeContentDescription = setupListSettings.typeContentDescription,
             textPlaceholder = setupListSettings.getTextPlaceholder(state.useTextPlaceholderAlt),
             nameIsDuplicate = nameIsDuplicate,
-            editItemState = state,
+            state = state,
             listener = { listener(it.toSetupListIntent()) },
     )
 

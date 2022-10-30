@@ -41,7 +41,7 @@ fun ArchivedPlayersScreen(
             nameIsDuplicate = { newName, nameOfItemBeingEdited ->
                 newName != nameOfItemBeingEdited && databaseState.players.any { it.name == newName }
             },
-            editItemState = state,
+            state = state,
             listener = { listener(it.toArchivedPlayersIntent()) },
     )
 

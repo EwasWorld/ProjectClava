@@ -124,6 +124,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val matchId = matchRepo.insert(databaseMatch)
                 matchRepo.insert(*intent.players.map { DatabaseMatchPlayer(matchId.toInt(), it.id) }.toTypedArray())
             }
+            is DatabaseIntent.AddTimeToMatch -> matchRepo.update(
+                    intent.match.addTime(currentTime.latest(), intent.secondsToAdd).asDatabaseMatch()
+            )
 
             /*
              * Players
@@ -144,14 +147,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
             else -> throw NotImplementedError()
         }
-    }
-
-    fun updatePlayers(vararg player: Player) = viewModelScope.launch {
-        playerRepo.update(*player.map { it.asDatabasePlayer() }.toTypedArray())
-    }
-
-    fun deletePlayer(player: Player) = viewModelScope.launch {
-        playerRepo.delete(player.asDatabasePlayer())
     }
 
     fun updateMatch(match: Match) = viewModelScope.launch {

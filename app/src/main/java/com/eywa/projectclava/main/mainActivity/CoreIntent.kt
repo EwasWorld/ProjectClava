@@ -22,6 +22,7 @@ sealed class DatabaseIntent : CoreIntent {
      * Matches
      */
     data class UpdateMatch(val match: Match) : DatabaseIntent()
+    data class AddTimeToMatch(val match: Match, val secondsToAdd: Int) : DatabaseIntent()
     data class DeleteMatch(val match: Match) : DatabaseIntent()
     object DeleteAllMatches : DatabaseIntent()
     data class AddMatch(val players: Iterable<Player>) : DatabaseIntent()

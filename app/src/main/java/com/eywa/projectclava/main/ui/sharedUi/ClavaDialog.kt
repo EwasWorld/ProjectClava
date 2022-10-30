@@ -34,8 +34,7 @@ fun ClavaDialog(
             shape = RoundedCornerShape(28.dp),
             onDismissRequest = onCancelListener,
             properties = DialogProperties(usePlatformDefaultWidth = false),
-            title =
-            {
+            title = {
                 Column(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
@@ -45,7 +44,6 @@ fun ClavaDialog(
                             style = Typography.h4,
                     )
                     content()
-
                 }
             },
             buttons = {

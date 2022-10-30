@@ -6,7 +6,7 @@ import com.eywa.projectclava.R
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.mainActivity.screens.ScreenState
 import com.eywa.projectclava.main.ui.sharedUi.ClavaIconInfo
-import com.eywa.projectclava.main.ui.sharedUi.EditItemState
+import com.eywa.projectclava.main.ui.sharedUi.EditDialogState
 import com.eywa.projectclava.main.ui.sharedUi.NamedItem
 import com.eywa.projectclava.main.ui.sharedUi.TabSwitcherItem
 
@@ -31,7 +31,7 @@ data class SetupListState<T : SetupListItem>(
         override val editDialogOpenFor: T? = null,
         val useTextPlaceholderAlt: Boolean = false,
         val searchText: String? = null,
-) : ScreenState, EditItemState<T> {
+) : ScreenState, EditDialogState<T> {
     val isSearchExpanded = searchText != null
 
     override fun editItemCopy(
