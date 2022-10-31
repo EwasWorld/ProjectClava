@@ -6,11 +6,19 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.toWindowInsetsCompat
@@ -61,14 +69,15 @@ class MainActivity : ComponentActivity() {
 
                 val focusManager = LocalFocusManager.current
 
-                val closeDrawer = {
+                val changeDrawerState = { openDrawer: Boolean ->
                     scope.launch {
                         drawerState.animateTo(
-                                DrawerValue.Closed,
+                                if (openDrawer) DrawerValue.Open else DrawerValue.Closed,
                                 tween(300, easing = FastOutLinearInEasing)
                         )
                     }
                 }
+                val closeDrawer = { changeDrawerState(false) }
 
                 LaunchedEffect(Unit) {
                     scope.launch {
@@ -137,6 +146,22 @@ class MainActivity : ComponentActivity() {
                                         isSoftKeyboardOpen = isSoftKeyboardOpen,
                                 )
                             }
+                        }
+                    }
+
+                    Box(
+                            contentAlignment = Alignment.CenterStart,
+                            modifier = Modifier.fillMaxSize()
+                    ) {
+                        val rounding = 40
+                        Surface(
+                                shape = RoundedCornerShape(0, rounding, rounding, 0),
+                                color = ClavaColor.FabBackground,
+                                contentColor = ClavaColor.FabIcon,
+                                onClick = { changeDrawerState(true) },
+                                modifier = Modifier.size(width = 25.dp, height = 100.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Open menu")
                         }
                     }
                 }
