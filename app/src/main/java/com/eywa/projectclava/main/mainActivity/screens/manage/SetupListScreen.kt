@@ -128,7 +128,9 @@ fun <T : SetupListItem> SetupListScreen(
             }
         }
         else {
-            items((itemsToShow ?: items).sortedBy { it.name }) { item ->
+            items(setupListSettings.sortItems(itemsToShow ?: items).toList()) { genericItem ->
+                @Suppress("UNCHECKED_CAST")
+                val item = genericItem as T
                 val match = getMatch(item)
                 SelectableListItem(
                         enabled = item.enabled,

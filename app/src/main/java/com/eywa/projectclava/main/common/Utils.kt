@@ -2,6 +2,7 @@ package com.eywa.projectclava.main.common
 
 import android.os.Build
 import androidx.compose.ui.graphics.Color
+import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.main.model.TimeRemaining
 import com.eywa.projectclava.ui.theme.ClavaColor
@@ -57,4 +58,79 @@ fun Long?.asCalendar(): Calendar? = this?.let {
             )
         }
     }
+}
+
+/**
+ * @return the value as an Integer (0 if there was a [NumberFormatException])
+ */
+fun String.parseInt() =
+        try {
+            if (isNullOrBlank()) 0 else Integer.parseInt(this)
+        }
+        catch (e: NumberFormatException) {
+            0
+        }
+
+sealed class TextOrNumber : Comparable<TextOrNumber> {
+    data class Text(val value: String) : TextOrNumber() {
+        override fun compareTo(other: TextOrNumber) = when (other) {
+            is Number -> value.compareTo(other.value.toString())
+            is Text -> value.compareTo(other.value)
+        }
+    }
+
+    data class Number(val value: Int) : TextOrNumber() {
+        override fun compareTo(other: TextOrNumber) = when (other) {
+            is Number -> value.compareTo(other.value)
+            is Text -> value.toString().compareTo(other.value)
+        }
+    }
+}
+
+fun Iterable<Court>.sortByName() = sortedWith { court0, court1 ->
+    fun String.sliced(): List<TextOrNumber> {
+        val list = mutableListOf<TextOrNumber>()
+
+        var currentStringIsText = false
+        var currentString = ""
+        for (char in this) {
+            val charIsText = !char.isDigit()
+            if (currentString.isBlank()) {
+                currentString = "$char"
+                currentStringIsText = charIsText
+            }
+            else if (currentStringIsText == charIsText) {
+                currentString += char
+            }
+            else {
+                list.add(
+                        if (currentStringIsText) {
+                            TextOrNumber.Text(currentString)
+                        }
+                        else {
+                            TextOrNumber.Number(currentString.parseInt())
+                        }
+                )
+                currentString = "$char"
+                currentStringIsText = charIsText
+            }
+        }
+
+        if (currentString.isNotBlank()) {
+            list.add(
+                    if (currentStringIsText) {
+                        TextOrNumber.Text(currentString)
+                    }
+                    else {
+                        TextOrNumber.Number(currentString.parseInt())
+                    }
+            )
+        }
+        return list
+    }
+
+    court0.name.sliced().zip(court1.name.sliced())
+            .fold(0) { acc, (first, second) ->
+                if (acc != 0) acc else first.compareTo(second)
+            }
 }

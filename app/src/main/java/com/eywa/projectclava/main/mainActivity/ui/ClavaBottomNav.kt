@@ -62,7 +62,7 @@ fun ClavaBottomNav(
                 selectedIcon = ClavaIconInfo.PainterIcon(R.drawable.baseline_pending_24),
                 label = "Queue",
                 contentDescription = "Match queue",
-                destination = NavRoute.UPCOMING_MATCHES.route,
+                destination = NavRoute.MATCH_QUEUE.route,
                 currentRoute = currentRoute,
                 onClick = onClick,
         )

@@ -3,8 +3,10 @@ package com.eywa.projectclava.main.mainActivity.screens.manage
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import com.eywa.projectclava.R
+import com.eywa.projectclava.main.common.sortByName
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.mainActivity.screens.ScreenState
+import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.ui.sharedUi.ClavaIconInfo
 import com.eywa.projectclava.main.ui.sharedUi.EditDialogState
 import com.eywa.projectclava.main.ui.sharedUi.NamedItem
@@ -54,6 +56,7 @@ enum class SetupListSettings(
         private val textPlaceholderAlt: String?,
         val deleteIconInfo: ClavaIconInfo = ClavaIconInfo.VectorIcon(Icons.Default.Close, "Delete"),
         val selectedTab: SetupListTabSwitcherItem,
+        val sortItems: (Iterable<SetupListItem>) -> List<SetupListItem> = { items -> items.sortedBy { it.name } }
 ) {
     PLAYERS(
             typeContentDescription = "player",
@@ -67,6 +70,10 @@ enum class SetupListSettings(
             selectedTab = SetupListTabSwitcherItem.COURTS,
             textPlaceholder = "Court 1",
             textPlaceholderAlt = "1",
+            sortItems = {
+                @Suppress("UNCHECKED_CAST")
+                (it as Iterable<Court>).sortByName()
+            }
     )
     ;
 

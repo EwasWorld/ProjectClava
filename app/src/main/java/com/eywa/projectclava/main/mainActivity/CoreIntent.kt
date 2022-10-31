@@ -22,6 +22,7 @@ sealed class DatabaseIntent : CoreIntent {
      * Matches
      */
     data class DeleteMatch(val match: Match) : DatabaseIntent()
+    data class DeleteMatchById(val matchId: Int) : DatabaseIntent()
     object DeleteAllMatches : DatabaseIntent()
     data class AddMatch(val players: Iterable<Player>) : DatabaseIntent()
 
@@ -34,6 +35,7 @@ sealed class DatabaseIntent : CoreIntent {
     data class PauseMatch(val matchId: Int) : DatabaseIntent()
     data class ChangeMatchCourt(val matchId: Int, val court: Court) : DatabaseIntent()
     data class ResumeMatch(val matchId: Int, val court: Court, val resumeTimeSeconds: Int) : DatabaseIntent()
+    data class StartMatch(val matchId: Int, val court: Court, val timeSeconds: Int) : DatabaseIntent()
 
     /*
      * Players

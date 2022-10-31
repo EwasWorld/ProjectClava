@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
+import com.eywa.projectclava.main.common.sortByName
 import com.eywa.projectclava.main.model.Court
 
 @Composable
@@ -20,7 +21,7 @@ fun SelectCourtRadioButtons(
         onCourtSelected: (Court) -> Unit,
 ) {
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
-        items(availableCourts?.sortedBy { it.name } ?: listOf()) { court ->
+        items(availableCourts?.sortByName() ?: listOf()) { court ->
             Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable { onCourtSelected(court) }

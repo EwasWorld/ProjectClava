@@ -1,4 +1,4 @@
-package com.eywa.projectclava.main.ui.mainScreens
+package com.eywa.projectclava.main.mainActivity.screens.queue
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -12,7 +12,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,69 +21,28 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.main.common.*
-import com.eywa.projectclava.main.mainActivity.NavRoute
+import com.eywa.projectclava.main.mainActivity.screens.queue.MatchQueueIntent.*
 import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.DividerThickness
 import java.util.*
 
-@Composable
-fun UpcomingMatchesScreen(
-        courts: Iterable<Court>?,
-        matches: Iterable<Match> = listOf(),
-        getTimeRemaining: Match.() -> TimeRemaining?,
-        startMatchOkListener: (Match, Court, totalTimeSeconds: Int) -> Unit,
-        removeMatchListener: (Match) -> Unit,
-        defaultTimeSeconds: Int,
-        missingContentNextStep: Iterable<MissingContentNextStep>?,
-        navigateListener: (NavRoute) -> Unit,
-) {
-    var startMatchDialogOpenFor: Match? by remember { mutableStateOf(null) }
-    var selectedMatch: Match? by remember { mutableStateOf(null) }
-    UpcomingMatchesScreen(
-            courts = courts,
-            matches = matches,
-            getTimeRemaining = getTimeRemaining,
-            openStartMatchDialogListener = { startMatchDialogOpenFor = it },
-            startMatchDialogOpenFor = startMatchDialogOpenFor,
-            startMatchOkListener = { match, court, totalTimeSeconds ->
-                selectedMatch = null
-                startMatchOkListener(match, court, totalTimeSeconds)
-            },
-            startMatchCancelListener = { startMatchDialogOpenFor = null },
-            removeMatchListener = removeMatchListener,
-            selectedMatch = selectedMatch,
-            defaultTimeSeconds = defaultTimeSeconds,
-            selectMatchListener = { newSelection ->
-                selectedMatch = newSelection.takeIf { selectedMatch?.id != newSelection.id }
-            },
-            missingContentNextStep = missingContentNextStep,
-            navigateListener = navigateListener,
-    )
-}
 
 @Composable
-fun UpcomingMatchesScreen(
-        courts: Iterable<Court>?,
-        matches: Iterable<Match> = listOf(),
+fun MatchQueueScreen(
+        state: MatchQueueState,
+        databaseState: DatabaseState,
         getTimeRemaining: Match.() -> TimeRemaining?,
-        openStartMatchDialogListener: (Match) -> Unit,
-        startMatchDialogOpenFor: Match?,
-        startMatchOkListener: (Match, Court, totalTimeSeconds: Int) -> Unit,
-        startMatchCancelListener: () -> Unit,
-        removeMatchListener: (Match) -> Unit,
-        selectedMatch: Match?,
         defaultTimeSeconds: Int,
-        selectMatchListener: (Match) -> Unit,
-        missingContentNextStep: Iterable<MissingContentNextStep>?,
-        navigateListener: (NavRoute) -> Unit,
+        listener: (MatchQueueIntent) -> Unit,
 ) {
-    val availableCourts = courts?.getAvailable(matches)
-    val playerMatchStates = matches.getPlayerStates()
-    val sortedMatches = matches.filter { it.state is MatchState.NotStarted }.sortedBy { it.state }
+    val availableCourts = databaseState.courts.getAvailable(databaseState.matches)
+    val playerMatchStates = databaseState.matches.getPlayerStates()
+    val sortedMatches = databaseState.matches.filter { it.state is MatchState.NotStarted }.sortedBy { it.state }
 
-    val missingCourts = missingContentNextStep?.filter {
+    val missingContentNextStep = databaseState.getMissingContent()
+    val missingCourts = missingContentNextStep.filter {
         it == MissingContentNextStep.ADD_COURTS || it == MissingContentNextStep.ENABLE_COURTS
     }
     val missingContentMain = setOf(
@@ -92,31 +51,42 @@ fun UpcomingMatchesScreen(
             MissingContentNextStep.SETUP_A_MATCH
     ).let { allowed ->
         missingContentNextStep
-                ?.takeIf { states -> states.any { it == MissingContentNextStep.SETUP_A_MATCH } }
+                .takeIf { states -> states.any { it == MissingContentNextStep.SETUP_A_MATCH } }
                 ?.filter { allowed.contains(it) }
     }
 
     StartMatchDialog(
             availableCourts = availableCourts,
-            startMatchDialogOpenFor = startMatchDialogOpenFor,
-            startMatchOkListener = startMatchOkListener,
-            startMatchCancelListener = startMatchCancelListener,
-            defaultTimeSeconds = defaultTimeSeconds,
+            state = state,
+            listener = listener,
     )
 
     ClavaScreen(
             noContentText = if (missingContentMain != null) "No matches planned" else "No courts to put the matches on!",
             missingContentNextStep = missingContentMain ?: missingCourts,
-            navigateListener = navigateListener,
+            navigateListener = { listener(Navigate(it)) },
             headerContent = {
-                AvailableCourtsHeader(courts = courts, matches = matches, getTimeRemaining = getTimeRemaining)
+                AvailableCourtsHeader(
+                        courts = databaseState.courts,
+                        matches = databaseState.matches,
+                        getTimeRemaining = getTimeRemaining
+                )
             },
             footerContent = {
                 UpcomingMatchesScreenFooter(
                         getTimeRemaining = getTimeRemaining,
-                        openStartMatchDialogListener = openStartMatchDialogListener,
-                        removeMatchListener = removeMatchListener,
-                        selectedMatch = selectedMatch,
+                        openStartMatchDialogListener = {
+                            listener(
+                                    OpenStartMatchDialog(
+                                            initialSelectedCourt = availableCourts?.minByOrNull { it.name },
+                                            defaultTimeToAddSeconds = defaultTimeSeconds,
+                                    )
+                            )
+                        },
+                        removeMatchListener = { listener(MatchDeleted) },
+                        selectedMatch = state.selectedMatchId?.let { selectedId ->
+                            databaseState.matches.find { it.id == selectedId }
+                        },
                         playerMatchStates = playerMatchStates,
                         hasAvailableCourts = !availableCourts.isNullOrEmpty(),
                 )
@@ -131,7 +101,7 @@ fun UpcomingMatchesScreen(
                     .takeIf { it.isNotEmpty() }
 
             SelectableListItem(
-                    isSelected = selectedMatch == match,
+                    isSelected = state.selectedMatchId == match.id,
                     enabled = match.players.all { it.isPresent },
                     matchState = match.players
                             .mapNotNull { playerMatchStates[it.name] }
@@ -149,7 +119,7 @@ fun UpcomingMatchesScreen(
                         contentPadding = PaddingValues(10.dp),
                         modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable(onClick = { selectMatchListener(match) })
+                                .clickable(onClick = { listener(MatchClicked(match)) })
                 ) {
                     items(
                             match.players
@@ -186,8 +156,8 @@ fun UpcomingMatchesScreen(
 @Composable
 private fun UpcomingMatchesScreenFooter(
         getTimeRemaining: Match.() -> TimeRemaining?,
-        openStartMatchDialogListener: (Match) -> Unit,
-        removeMatchListener: (Match) -> Unit,
+        openStartMatchDialogListener: () -> Unit,
+        removeMatchListener: () -> Unit,
         selectedMatch: Match?,
         playerMatchStates: Map<String, Match?>,
         hasAvailableCourts: Boolean,
@@ -233,7 +203,7 @@ private fun UpcomingMatchesScreenFooter(
                                     contentDescription = "Remove match",
                             ),
                             enabled = selectedMatch != null,
-                            onClick = { selectedMatch?.let { removeMatchListener(it) } },
+                            onClick = { selectedMatch?.let { removeMatchListener() } },
                     ),
                     SelectedItemAction(
                             icon = ClavaIconInfo.VectorIcon(
@@ -247,7 +217,7 @@ private fun UpcomingMatchesScreenFooter(
                                         (playerMatchStates[it.name]?.isOnCourt?.not() ?: true)
                                                 && it.isPresent
                                     },
-                            onClick = { selectedMatch?.let { openStartMatchDialogListener(it) } },
+                            onClick = { selectedMatch?.let { openStartMatchDialogListener() } },
                     ),
             ),
     )
@@ -255,28 +225,21 @@ private fun UpcomingMatchesScreenFooter(
 
 @Composable
 private fun StartMatchDialog(
+        state: MatchQueueState,
         availableCourts: Iterable<Court>?,
-        startMatchDialogOpenFor: Match?,
-        startMatchOkListener: (Match, Court, totalTimeSeconds: Int) -> Unit,
-        startMatchCancelListener: () -> Unit,
-        defaultTimeSeconds: Int,
+        listener: (MatchQueueIntent) -> Unit,
 ) {
-    var selectedCourt by remember(startMatchDialogOpenFor) { mutableStateOf(availableCourts?.minByOrNull { it.name }) }
-    var timeSeconds by remember(startMatchDialogOpenFor) { mutableStateOf(TimePickerState(defaultTimeSeconds)) }
-
     ClavaDialog(
-            isShown = startMatchDialogOpenFor != null,
+            isShown = state.startMatchDialogIsOpen,
             title = "Choose a duration and court",
             okButtonText = "Start",
-            okButtonEnabled = selectedCourt != null && timeSeconds.isValid,
-            onCancelListener = startMatchCancelListener,
-            onOkListener = {
-                startMatchOkListener(startMatchDialogOpenFor!!, selectedCourt!!, timeSeconds.totalSeconds)
-            },
+            okButtonEnabled = state.selectedCourt != null && state.startMatchTimePickerState?.isValid == true,
+            onCancelListener = { listener(CloseStartMatchDialog) },
+            onOkListener = { listener(StartMatchSubmitted) },
     ) {
         TimePicker(
-                timePickerState = timeSeconds,
-                timeChangedListener = { timeSeconds = it },
+                timePickerState = state.startMatchTimePickerState ?: TimePickerState(0),
+                timeChangedListener = { listener(UpdateTimePicker(it)) },
                 modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.CenterHorizontally)
@@ -284,36 +247,33 @@ private fun StartMatchDialog(
         Divider(thickness = DividerThickness)
         SelectCourtRadioButtons(
                 availableCourts = availableCourts,
-                selectedCourt = selectedCourt,
-                onCourtSelected = { selectedCourt = it },
+                selectedCourt = state.selectedCourt,
+                onCourtSelected = { listener(UpdateSelectedCourt(it)) },
         )
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun UpcomingMatchesScreen_Preview(
+fun MatchQueueScreen_Preview(
         @PreviewParameter(UpcomingMatchesScreenPreviewParamProvider::class) params: UpcomingMatchesScreenPreviewParam
 ) {
     val currentTime = Calendar.getInstance(Locale.getDefault())
     val matches = generateMatches(5, currentTime) + generateMatches(4, currentTime, GeneratableMatchState.NOT_STARTED)
 
-    UpcomingMatchesScreen(
-            courts = generateCourts(4),
-            matches = matches,
+    MatchQueueScreen(
+            databaseState = DatabaseState(
+                    courts = generateCourts(4),
+                    matches = matches,
+            ),
             getTimeRemaining = { state.getTimeLeft(currentTime) },
-            removeMatchListener = {},
-            selectedMatch = params.selectedIndex?.let {
-                matches.filter { match -> match.state is MatchState.NotStarted }[it]
-            },
-            selectMatchListener = {},
-            openStartMatchDialogListener = {},
-            startMatchDialogOpenFor = if (params.startMatchDialogOpen) matches[0] else null,
-            startMatchOkListener = { _, _, _ -> },
-            startMatchCancelListener = {},
+            state = MatchQueueState(
+                    selectedMatchId = params.selectedIndex?.let {
+                        matches.filter { match -> match.state is MatchState.NotStarted }[it]
+                    }?.id,
+            ),
+            listener = {},
             defaultTimeSeconds = 15 * 60,
-            missingContentNextStep = null,
-            navigateListener = {},
     )
 }
 

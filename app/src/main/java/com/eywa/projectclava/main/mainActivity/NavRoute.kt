@@ -15,8 +15,9 @@ import com.eywa.projectclava.main.mainActivity.screens.matchUp.CreateMatchScreen
 import com.eywa.projectclava.main.mainActivity.screens.matchUp.CreateMatchState
 import com.eywa.projectclava.main.mainActivity.screens.ongoing.OngoingMatchesScreen
 import com.eywa.projectclava.main.mainActivity.screens.ongoing.OngoingMatchesState
+import com.eywa.projectclava.main.mainActivity.screens.queue.MatchQueueScreen
+import com.eywa.projectclava.main.mainActivity.screens.queue.MatchQueueState
 import com.eywa.projectclava.main.model.*
-import com.eywa.projectclava.main.ui.mainScreens.UpcomingMatchesScreen
 import com.eywa.projectclava.main.ui.sharedUi.AvailableCourtsHeader
 import com.eywa.projectclava.main.ui.sharedUi.ClavaScreen
 import java.util.*
@@ -115,7 +116,9 @@ enum class NavRoute(val route: String) {
         }
     },
 
-    UPCOMING_MATCHES("upcoming_matches") {
+    MATCH_QUEUE("match_queue") {
+        override fun createInitialState() = MatchQueueState()
+
         @Composable
         override fun ClavaNavigation(
                 navController: NavHostController,
@@ -126,23 +129,12 @@ enum class NavRoute(val route: String) {
                 preferencesState: DatastoreState,
                 isSoftKeyboardOpen: Boolean,
         ) {
-            UpcomingMatchesScreen(
-                    courts = databaseState.courts,
-                    matches = databaseState.matches,
+            MatchQueueScreen(
+                    databaseState = databaseState,
+                    state = viewModel.getScreenState(this) as MatchQueueState,
                     getTimeRemaining = getTimeRemaining,
-                    startMatchOkListener = { match, court, totalTimeSeconds ->
-                        viewModel.updateMatch(
-                                match.startMatch(
-                                        currentTime(),
-                                        court,
-                                        totalTimeSeconds
-                                )
-                        )
-                    },
-                    removeMatchListener = { viewModel.deleteMatch(it) },
                     defaultTimeSeconds = preferencesState.defaultMatchTime,
-                    navigateListener = { navController.navigate(it.route) },
-                    missingContentNextStep = MissingContentNextStep.getMissingContent(databaseState),
+                    listener = { viewModel.handleIntent(it) },
             )
         }
     },
@@ -214,6 +206,8 @@ enum class NavRoute(val route: String) {
 
     // TODO_HACKY Create a build variant for this
     TEST_PAGE("test") {
+        override fun createInitialState() = throw NotImplementedError("No initial state")
+
         @Composable
         override fun ClavaNavigation(
                 navController: NavHostController,
@@ -256,10 +250,7 @@ enum class NavRoute(val route: String) {
     },
     ;
 
-    open fun createInitialState(): ScreenState {
-        // TODO Make this abstract
-        throw NotImplementedError("No initial state")
-    }
+    abstract fun createInitialState(): ScreenState
 
     @Composable
     abstract fun ClavaNavigation(

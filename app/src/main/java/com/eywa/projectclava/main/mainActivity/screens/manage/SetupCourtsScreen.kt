@@ -54,8 +54,6 @@ private fun SetupListIntent.toAddCourtIntent() = when (this) {
 }
 
 
-// TODO Sort by number (plus on court-picking dialogs)
-// TODO Court picking dialogs: no courts available
 @Composable
 fun SetupCourtsScreen(
         state: SetupListState<Court>,

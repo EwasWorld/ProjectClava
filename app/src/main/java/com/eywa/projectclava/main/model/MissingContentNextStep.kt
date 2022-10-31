@@ -33,7 +33,7 @@ enum class MissingContentNextStep(
     ),
     START_A_MATCH(
             nextStepsText = "We need to start a match",
-            buttonRoute = NavRoute.UPCOMING_MATCHES,
+            buttonRoute = NavRoute.MATCH_QUEUE,
             isMatchStep = true,
     ),
     COMPLETE_A_MATCH(
@@ -44,31 +44,6 @@ enum class MissingContentNextStep(
     ;
 
     companion object {
-        @Deprecated(
-                message = "Moved to databaseState",
-                replaceWith = ReplaceWith("databaseState.getMissingContent()")
-        )
-        fun getMissingContent(
-                databaseState: DatabaseState
-        ): Set<MissingContentNextStep> {
-            val state = mutableSetOf<MissingContentNextStep>()
-
-            if (databaseState.players.none()) state.add(ADD_PLAYERS)
-            else if (databaseState.players.none { it.enabled }) state.add(ENABLE_PLAYERS)
-
-            if (databaseState.courts.none()) state.add(ADD_COURTS)
-            else if (databaseState.courts.none { it.enabled }) state.add(ENABLE_COURTS)
-
-            if (databaseState.matches.none()) {
-                state.addAll(values().filter { it.isMatchStep })
-                return state
-            }
-            if (databaseState.matches.none { it.isFinished }) state.add(COMPLETE_A_MATCH)
-            if (databaseState.matches.none { it.isCurrent }) state.add(START_A_MATCH)
-            if (databaseState.matches.none { it.isNotStarted }) state.add(SETUP_A_MATCH)
-            return state
-        }
-
         fun Iterable<MissingContentNextStep>?.getFirstStep(): MissingContentNextStep? {
             if (this == null || none()) return null
             if (count() == 1) return first()

@@ -11,10 +11,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
 import androidx.compose.ui.unit.dp
-import com.eywa.projectclava.main.common.GeneratableMatchState
-import com.eywa.projectclava.main.common.asTimeString
-import com.eywa.projectclava.main.common.generateCourts
-import com.eywa.projectclava.main.common.generateMatches
+import com.eywa.projectclava.main.common.*
 import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.TimeRemaining
@@ -30,6 +27,7 @@ fun AvailableCourtsHeader(
 ) {
     val availableCourtsString = courts
             ?.getAvailable(matches)
+            ?.sortByName()
             ?.joinToString { it.name.removePrefix("Court ").removePrefix("court ") }
             ?.let { "Available courts: $it" }
     val nextAvailableCourt = {

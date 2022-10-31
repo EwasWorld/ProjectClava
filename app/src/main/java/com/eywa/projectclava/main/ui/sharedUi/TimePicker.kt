@@ -23,16 +23,9 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.eywa.projectclava.main.common.parseInt
 import com.eywa.projectclava.ui.theme.Typography
 import kotlin.math.roundToInt
-
-fun String.parseInt() =
-        try {
-            if (isNullOrBlank()) 0 else Integer.parseInt(this)
-        }
-        catch (e: NumberFormatException) {
-            0
-        }
 
 data class TimePickerState(
         internal val minutes: String,

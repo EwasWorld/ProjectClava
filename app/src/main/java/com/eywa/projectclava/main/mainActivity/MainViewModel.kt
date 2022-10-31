@@ -31,7 +31,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var screenState by mutableStateOf(mapOf<NavRoute, ScreenState>())
 
     private val _effects: MutableSharedFlow<MainEffect?> =
-            MutableSharedFlow(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+            MutableSharedFlow(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     val effects: Flow<MainEffect?> = _effects
 
     /*
@@ -110,6 +110,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private suspend fun handleDatabaseIntent(intent: DatabaseIntent) {
+        fun matchFromId(id: Int) = databaseState.latest().matches.find { it.id == id }!!
+
         // Keep else so that when new DatabaseIntents are added, they cannot be ignored
         // Fool me once, shame on you >.>
         @Suppress("REDUNDANT_ELSE_IN_WHEN")
@@ -131,40 +133,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
              * Update match
              */
             is DatabaseIntent.UpdateMatch -> matchRepo.update(intent.match.asDatabaseMatch())
-            is DatabaseIntent.AddTimeToMatch ->
-                databaseState.latest().matches.find { it.id == intent.matchId }!!.let { match ->
-                    matchRepo.update(
-                            match.addTime(currentTime.latest(), intent.secondsToAdd).asDatabaseMatch()
-                    )
-                }
-            is DatabaseIntent.CompleteMatch ->
-                databaseState.latest().matches.find { it.id == intent.matchId }!!.let { match ->
-                    matchRepo.update(
-                            match.completeMatch(currentTime.latest()).asDatabaseMatch()
-                    )
-                }
-            is DatabaseIntent.PauseMatch ->
-                databaseState.latest().matches.find { it.id == intent.matchId }!!.let { match ->
-                    matchRepo.update(
-                            match.pauseMatch(currentTime.latest()).asDatabaseMatch()
-                    )
-                }
-            is DatabaseIntent.ResumeMatch ->
-                databaseState.latest().matches.find { it.id == intent.matchId }!!.let { match ->
-                    matchRepo.update(
-                            match.resumeMatch(
-                                    currentTime.latest(),
-                                    intent.court,
-                                    intent.resumeTimeSeconds
-                            ).asDatabaseMatch()
-                    )
-                }
-            is DatabaseIntent.ChangeMatchCourt ->
-                databaseState.latest().matches.find { it.id == intent.matchId }!!.let { match ->
-                    matchRepo.update(
-                            match.changeCourt(intent.court).asDatabaseMatch()
-                    )
-                }
+            is DatabaseIntent.AddTimeToMatch -> matchRepo.update(
+                    matchFromId(intent.matchId)
+                            .addTime(currentTime.latest(), intent.secondsToAdd)
+                            .asDatabaseMatch()
+            )
+            is DatabaseIntent.CompleteMatch -> matchRepo.update(
+                    matchFromId(intent.matchId).completeMatch(currentTime.latest()).asDatabaseMatch()
+            )
+            is DatabaseIntent.PauseMatch -> matchRepo.update(
+                    matchFromId(intent.matchId).pauseMatch(currentTime.latest()).asDatabaseMatch()
+            )
+            is DatabaseIntent.ResumeMatch -> matchRepo.update(
+                    matchFromId(intent.matchId)
+                            .resumeMatch(currentTime.latest(), intent.court, intent.resumeTimeSeconds)
+                            .asDatabaseMatch()
+            )
+            is DatabaseIntent.ChangeMatchCourt -> matchRepo.update(
+                    matchFromId(intent.matchId).changeCourt(intent.court).asDatabaseMatch()
+            )
+            is DatabaseIntent.DeleteMatchById -> matchRepo.delete(matchFromId(intent.matchId).asDatabaseMatch())
+            is DatabaseIntent.StartMatch -> matchRepo.update(
+                    matchFromId(intent.matchId)
+                            .startMatch(currentTime.latest(), intent.court, intent.timeSeconds)
+                            .asDatabaseMatch()
+            )
 
             /*
              * Players

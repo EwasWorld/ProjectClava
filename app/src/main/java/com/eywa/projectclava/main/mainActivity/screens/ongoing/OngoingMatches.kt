@@ -60,7 +60,7 @@ sealed class OngoingMatchesIntent : ScreenIntent<OngoingMatchesState> {
     data class OpenResumeDialog(
             val match: Match,
             val initialSelectedCourt: Court?,
-            val defaultTimeToAddSeconds: Int
+            val defaultTimeToAddSeconds: Int,
     ) : OngoingMatchesIntent()
 
     object ResumeDialogSubmit : OngoingMatchesIntent()
@@ -85,18 +85,33 @@ sealed class OngoingMatchesIntent : ScreenIntent<OngoingMatchesState> {
             /*
              * Database action on selected match
              */
-            CompleteMatch -> handle(DatabaseIntent.CompleteMatch(currentState.selectedMatchId!!))
+            CompleteMatch -> {
+                handle(DatabaseIntent.CompleteMatch(currentState.selectedMatchId!!))
+                newStateListener(
+                        currentState.copy(
+                                selectedMatchId = null,
+                                selectedCourt = null,
+                                openDialog = null,
+                                timeToAdd = null,
+                                resumeTime = null,
+                        )
+                )
+            }
             PauseMatch -> handle(DatabaseIntent.PauseMatch(currentState.selectedMatchId!!))
-            ChangeCourtDialogSubmit -> handle(
-                    DatabaseIntent.ChangeMatchCourt(currentState.selectedMatchId!!, currentState.selectedCourt!!)
-            )
-            ResumeDialogSubmit -> handle(
-                    DatabaseIntent.ResumeMatch(
-                            matchId = currentState.selectedMatchId!!,
-                            court = currentState.selectedCourt!!,
-                            resumeTimeSeconds = currentState.resumeTime!!.totalSeconds,
-                    )
-            )
+            ChangeCourtDialogSubmit -> {
+                handle(DatabaseIntent.ChangeMatchCourt(currentState.selectedMatchId!!, currentState.selectedCourt!!))
+                newStateListener(currentState.copy(openDialog = null))
+            }
+            ResumeDialogSubmit -> {
+                handle(
+                        DatabaseIntent.ResumeMatch(
+                                matchId = currentState.selectedMatchId!!,
+                                court = currentState.selectedCourt!!,
+                                resumeTimeSeconds = currentState.resumeTime!!.totalSeconds,
+                        )
+                )
+                newStateListener(currentState.copy(openDialog = null))
+            }
 
             /*
              * Open/Close dialog
