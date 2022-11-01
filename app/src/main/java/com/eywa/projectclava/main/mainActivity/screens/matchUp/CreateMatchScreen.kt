@@ -45,7 +45,7 @@ fun CreateMatchScreen(
             .filter { (player, _) -> selectedPlayerNames.contains(player) }
             // Ignore matches from before club night started
             .mapValues { entry ->
-                entry.value.filter { !it.isFinished || it.getFinishTime()!!.after(clubNightStartTime) }
+                entry.value.filter { !it.isFinished || it.getTime().after(clubNightStartTime) }
             }
             .values
             .flatten()
@@ -113,7 +113,7 @@ fun CreateMatchScreen(
 
                             // Get the latest finish time of the set
                             fun List<Match>.latestFinishTime() =
-                                    filter { !it.isNotStarted }.maxOf { it.getFinishTime()!! }
+                                    filter { !it.isNotStarted }.maxOf { it.getTime() }
                             matches0.latestFinishTime().compareTo(matches1.latestFinishTime())
                         })
         ) { (player, matches) ->

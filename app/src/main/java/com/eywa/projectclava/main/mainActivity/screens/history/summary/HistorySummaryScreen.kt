@@ -33,9 +33,9 @@ fun HistorySummaryScreen(
     // Most recent first
     val matchesGroupedByDate = databaseState.matches
             .filter { it.isFinished }
-            .groupBy { it.getFinishTime()?.asDateString()!! }
+            .groupBy { it.getTime().asDateString() }
             .entries
-            .sortedByDescending { it.value.first().getFinishTime() }
+            .sortedByDescending { it.value.first().getTime() }
 
     ClavaScreen(
             noContentText = "No matches have been completed",
@@ -54,8 +54,8 @@ fun HistorySummaryScreen(
     ) {
         items(matchesGroupedByDate) { (dateString, matches) ->
             val isSingleMatch = matches.count() == 1
-            val firstMatch = matches.minByOrNull { it.getFinishTime()!! }!!.getFinishTime()!!.asTimeString()
-            val lastMatch = matches.maxByOrNull { it.getFinishTime()!! }!!.getFinishTime()!!.asTimeString()
+            val firstMatch = matches.minOfOrNull { it.getTime() }!!.asTimeString()
+            val lastMatch = matches.minOfOrNull { it.getTime() }!!.asTimeString()
             val players = matches
                     .flatMap { it.players }
                     .groupBy { it.name }

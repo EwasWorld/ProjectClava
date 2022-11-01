@@ -19,7 +19,7 @@ fun MatchStateIndicator(match: Match?, timeRemaining: () -> TimeRemaining? = { n
                 is MatchState.NotStarted -> "Not played"
                 is MatchState.Paused,
                 is MatchState.OnCourt -> timeRemaining()!!.asTimeString()
-                is MatchState.Completed -> match.getFinishTime()!!.asTimeString()
+                is MatchState.Completed -> match.getTime().asTimeString()
             },
             style = Typography.body1,
     )

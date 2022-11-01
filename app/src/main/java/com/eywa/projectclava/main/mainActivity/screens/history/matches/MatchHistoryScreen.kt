@@ -116,16 +116,16 @@ fun MatchHistoryScreen(
         items(finishedMatches.withIndex().toList()) { (index, match) ->
             val isSelected = state.selectedMatchId == match.id
 
-            val date = match.getFinishTime()!!.asDateString()
+            val date = match.getTime().asDateString()
             val matchesPreviousDate = index
                     .takeIf { it > 0 }
-                    ?.let { finishedMatches[it - 1].getFinishTime()!!.asDateString() == date }
+                    ?.let { finishedMatches[it - 1].getTime().asDateString() == date }
                     ?: false
 
             Column {
                 if (!matchesPreviousDate) {
                     Text(
-                            text = match.getFinishTime()!!.asDateString(),
+                            text = match.getTime().asDateString(),
                             style = Typography.h3,
                             modifier = Modifier
                                     .padding(

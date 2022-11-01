@@ -84,11 +84,19 @@ data class Match(
     val isCurrent
         get() = isPaused || isOnCourt
 
-    fun getFinishTime() = when (state) {
+    /**
+     * Gets the time associated with this match.
+     * If the match is
+     * - complete: returns the time it ended
+     * - on court: returns when it will end
+     * - paused: returns when it was paused
+     * - not started: returns when it was created
+     */
+    fun getTime() = when (state) {
         is MatchState.Completed -> state.matchEndTime
         is MatchState.OnCourt -> state.matchEndTime
         is MatchState.Paused -> state.matchPausedAt
-        else -> null
+        is MatchState.NotStarted -> state.createdAt
     }
 
     val court
@@ -97,12 +105,7 @@ data class Match(
     fun asDatabaseMatch() = DatabaseMatch(
             id = id,
             stateType = state::class.simpleName!!,
-            stateDate = when (state) {
-                is MatchState.NotStarted -> state.createdAt
-                is MatchState.OnCourt -> state.matchEndTime
-                is MatchState.Completed -> state.matchEndTime
-                is MatchState.Paused -> state.matchPausedAt
-            },
+            stateDate = getTime(),
             stateSecondsLeft = state
                     .takeIf { it is MatchState.Paused }
                     ?.let { (it as MatchState.Paused).remainingTimeSeconds },

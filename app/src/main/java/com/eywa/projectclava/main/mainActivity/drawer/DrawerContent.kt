@@ -4,6 +4,8 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Switch
@@ -99,12 +101,16 @@ fun DrawerContent(
     }
 
     Column(
-            modifier = Modifier.padding(vertical = 15.dp)
+            modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(vertical = 15.dp)
     ) {
         Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(5.dp),
-                modifier = Modifier.padding(horizontal = 25.dp, vertical = 10.dp)
+                modifier = Modifier
+                        .padding(top = 10.dp)
+                        .padding(horizontal = 25.dp)
         ) {
             Text(
                     text = "Cut-off:",
@@ -121,7 +127,38 @@ fun DrawerContent(
                     modifier = Modifier.clickable { datePicker.show() }
             )
         }
-        DrawerTextButton(text = "Archived players") { listener(DrawerIntent.Navigate(NavRoute.ARCHIVED_PLAYERS)) }
+        // TODO Make this collapsable?
+        Text(
+                text = "On the Match Up screen, an icon will appear next to people who the selected players have already played." +
+                        " Matches played before this cut-off will not be counted." +
+                        " It's good to set it to just before your club night or event starts!",
+                style = Typography.body1,
+                modifier = Modifier
+                        .padding(
+                                start = 35.dp,
+                                end = 25.dp,
+                                bottom = 10.dp,
+                                top = 5.dp,
+                        )
+        )
+        DrawerTextButton(text = "View archived players") { listener(DrawerIntent.Navigate(NavRoute.ARCHIVED_PLAYERS)) }
+        Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                        .clickable { listener(DrawerIntent.TogglePrependCourt) }
+                        .fillMaxWidth()
+                        .padding(horizontal = 25.dp, vertical = 5.dp)
+        ) {
+            Text(
+                    text = "Prepend 'Court' to new courts",
+                    style = drawerTextStyle,
+                    modifier = Modifier.weight(1f)
+            )
+            Switch(
+                    checked = preferencesState.prependCourt,
+                    onCheckedChange = { listener(DrawerIntent.TogglePrependCourt) }
+            )
+        }
 
         DrawerDivider()
         Column(
@@ -150,6 +187,7 @@ fun DrawerContent(
                         }
                     }
             )
+            // TODO Add an amber threshold
             DefaultTimePicker(
                     title = "Overrun indicator threshold:",
                     errorSuffix = "Threshold is still " + preferencesState.overrunIndicatorThreshold.asTimeString(),
@@ -161,23 +199,6 @@ fun DrawerContent(
                         }
                     }
             )
-            Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                            .clickable { listener(DrawerIntent.TogglePrependCourt) }
-                            .fillMaxWidth()
-                            .padding(horizontal = 25.dp)
-            ) {
-                Text(
-                        text = "Prepend 'Court' to new courts",
-                        style = drawerTextStyle,
-                        modifier = Modifier.weight(1f)
-                )
-                Switch(
-                        checked = preferencesState.prependCourt,
-                        onCheckedChange = { listener(DrawerIntent.TogglePrependCourt) }
-                )
-            }
         }
 
 //        DrawerDivider()
@@ -225,6 +246,7 @@ fun DrawerContent(
                 updateExpandedItemIndex = { expandedItemIndex = it },
         ) {
             DrawerTextButton(text = "Delete all matches") { listener(DrawerIntent.DeleteAllMatches) }
+            DrawerTextButton(text = "Clear settings") { listener(DrawerIntent.ClearDatastore) }
         }
     }
 }

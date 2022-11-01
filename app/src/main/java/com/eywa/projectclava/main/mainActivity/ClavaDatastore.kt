@@ -18,22 +18,27 @@ data class DatastoreState(
         val overrunIndicatorThreshold: Int = 10,
         val defaultMatchTime: Int = 15 * 60,
         val defaultTimeToAdd: Int = 2 * 60,
-        // Default to 4am today
+        // Default: winds back from now to 4am
         val clubNightStartTime: Calendar = Calendar.getInstance(Locale.getDefault()).apply {
+            if (get(Calendar.HOUR_OF_DAY) < 4) {
+                add(Calendar.DAY_OF_MONTH, -1)
+            }
             set(Calendar.HOUR_OF_DAY, 4)
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
         },
+        val isDefaultClubNightStartTime: Boolean = true,
         val prependCourt: Boolean = true,
 )
 
-interface DataStoreIntent : CoreIntent {
-    data class UpdateClubNightStartTime(val value: UpdateCalendarInfo) : DataStoreIntent
-    data class UpdateClubNightStartTimeCalendar(val value: Calendar) : DataStoreIntent
-    data class UpdateOverrunIndicatorThreshold(val value: Int) : DataStoreIntent
-    data class UpdateDefaultMatchTime(val value: Int) : DataStoreIntent
-    data class UpdateDefaultTimeToAdd(val value: Int) : DataStoreIntent
-    object TogglePrependCourt : DataStoreIntent
+sealed class DataStoreIntent : CoreIntent {
+    data class UpdateClubNightStartTime(val value: UpdateCalendarInfo) : DataStoreIntent()
+    data class UpdateClubNightStartTimeCalendar(val value: Calendar) : DataStoreIntent()
+    data class UpdateOverrunIndicatorThreshold(val value: Int) : DataStoreIntent()
+    data class UpdateDefaultMatchTime(val value: Int) : DataStoreIntent()
+    data class UpdateDefaultTimeToAdd(val value: Int) : DataStoreIntent()
+    object TogglePrependCourt : DataStoreIntent()
+    object ClearDatastore : DataStoreIntent()
 }
 
 class ClavaDatastore(private val dataStore: DataStore<Preferences>) {
@@ -49,7 +54,7 @@ class ClavaDatastore(private val dataStore: DataStore<Preferences>) {
             state = state.copy(defaultTimeToAdd = it)
         }
         preferences[DatastoreKeys.CLUB_NIGHT_START_TIME]?.let {
-            state = state.copy(clubNightStartTime = it.asCalendar()!!)
+            state = state.copy(clubNightStartTime = it.asCalendar()!!, isDefaultClubNightStartTime = false)
         }
         preferences[DatastoreKeys.PREPEND_COURT]?.let {
             state = state.copy(prependCourt = it)
@@ -79,6 +84,7 @@ class ClavaDatastore(private val dataStore: DataStore<Preferences>) {
                         it[DatastoreKeys.OVERRUN_INDICATOR_THRESHOLD] = action.value
                     is DataStoreIntent.TogglePrependCourt ->
                         it[DatastoreKeys.PREPEND_COURT] = !currentState.prependCourt
+                    DataStoreIntent.ClearDatastore -> it.clear()
                     else -> throw NotImplementedError()
                 }
             }

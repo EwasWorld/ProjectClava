@@ -28,14 +28,15 @@ import androidx.navigation.compose.rememberNavController
 import com.eywa.projectclava.main.mainActivity.drawer.DrawerContent
 import com.eywa.projectclava.main.mainActivity.drawer.DrawerIntent
 import com.eywa.projectclava.main.mainActivity.ui.ClavaBottomNav
-import com.eywa.projectclava.main.model.DatabaseState
+import com.eywa.projectclava.main.ui.sharedUi.ClavaDialog
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.ProjectClavaTheme
+import com.eywa.projectclava.ui.theme.Typography
 import kotlinx.coroutines.launch
 import java.util.*
 
 /*
- * Time spent: 38 hrs
+ * Time spent: 50 hrs
  */
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
@@ -60,8 +61,8 @@ class MainActivity : ComponentActivity() {
             ProjectClavaTheme {
                 val currentTime by viewModel.currentTime.collectAsState(initial = Calendar.getInstance())
 
-                val databaseState by viewModel.databaseState.collectAsState(initial = DatabaseState())
-                val preferences by viewModel.preferences.collectAsState(initial = DatastoreState())
+                val databaseState by viewModel.databaseState.collectAsState(initial = null)
+                val preferences by viewModel.preferences.collectAsState(initial = null)
 
                 val navController = rememberNavController()
                 val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -78,8 +79,34 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 val closeDrawer = { changeDrawerState(false) }
+                var showUpdateClubNightStartTimeDialog by remember { mutableStateOf(false) }
+
+                if (preferences == null || databaseState == null) {
+                    Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                    return@ProjectClavaTheme
+                }
 
                 LaunchedEffect(Unit) {
+                    // If no match has happened in the last 8 hours, offer to update the cut-off
+                    if (!preferences!!.isDefaultClubNightStartTime) {
+                        val matchTimes = databaseState!!.matches.map { it.getTime() }
+                        val eightHrsAgo = (currentTime.clone() as Calendar).apply { add(Calendar.HOUR_OF_DAY, -8) }
+
+                        if (
+                        // If there's been no match activity in the past X hours
+                            matchTimes.none { it.after(eightHrsAgo) }
+                            // But there has been activity since club night started
+                            && matchTimes.any { it.after(preferences!!.clubNightStartTime) }
+                        ) {
+                            showUpdateClubNightStartTimeDialog = true
+                        }
+                    }
+
                     scope.launch {
                         viewModel.effects.collect { effect ->
                             when (effect) {
@@ -95,16 +122,25 @@ class MainActivity : ComponentActivity() {
                     focusManager.clearFocus()
                 }
 
+                UpdateClubNightStartTimeDialog(
+                        isShown = showUpdateClubNightStartTimeDialog,
+                        onCancel = { showUpdateClubNightStartTimeDialog = false },
+                        onOk = {
+                            viewModel.handleIntent(DrawerIntent.UpdateClubNightStartTimeCalendar(currentTime))
+                            showUpdateClubNightStartTimeDialog = false
+                        }
+                )
+
                 Scaffold(
                         backgroundColor = ClavaColor.Background,
                         scaffoldState = rememberScaffoldState(drawerState = drawerState),
                         bottomBar = {
                             if (!isSoftKeyboardOpen) {
                                 ClavaBottomNav(
-                                        hasOverrunningMatch = databaseState.matches.any {
+                                        hasOverrunningMatch = databaseState!!.matches.any {
                                             if (!it.isOnCourt) return@any false
                                             val remaining = it.state.getTimeLeft(currentTime) ?: return@any false
-                                            remaining.isEndingSoon(preferences.overrunIndicatorThreshold)
+                                            remaining.isEndingSoon(preferences!!.overrunIndicatorThreshold)
                                         },
                                         navController = navController,
                                 )
@@ -113,8 +149,8 @@ class MainActivity : ComponentActivity() {
                         drawerContent = {
                             DrawerContent(
                                     currentTime = { currentTime },
-                                    preferencesState = preferences,
-                                    databaseState = databaseState,
+                                    preferencesState = preferences!!,
+                                    databaseState = databaseState!!,
                                     isDrawerOpen = drawerState.isOpen,
                                     closeDrawer = { closeDrawer() },
                                     listener = {
@@ -141,8 +177,8 @@ class MainActivity : ComponentActivity() {
                                         currentTime = { currentTime },
                                         getTimeRemaining = { state.getTimeLeft(currentTime) },
                                         viewModel = viewModel,
-                                        databaseState = databaseState,
-                                        preferencesState = preferences,
+                                        databaseState = databaseState!!,
+                                        preferencesState = preferences!!,
                                         isSoftKeyboardOpen = isSoftKeyboardOpen,
                                 )
                             }
@@ -167,5 +203,26 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun UpdateClubNightStartTimeDialog(
+        isShown: Boolean,
+        onCancel: () -> Unit,
+        onOk: () -> Unit,
+) {
+    ClavaDialog(
+            isShown = isShown,
+            title = "Update start time",
+            okButtonText = "Ok",
+            onCancelListener = onCancel,
+            onOkListener = onOk,
+    ) {
+        Text(
+                text = "I noticed no matches have been completed for a while." +
+                        " Would you like to reset indicators for who's played who?",
+                style = Typography.body1,
+        )
     }
 }
