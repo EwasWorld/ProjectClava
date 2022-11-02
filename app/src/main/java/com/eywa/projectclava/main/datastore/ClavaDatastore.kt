@@ -1,45 +1,16 @@
-package com.eywa.projectclava.main.mainActivity
+package com.eywa.projectclava.main.datastore
 
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
-import com.eywa.projectclava.main.common.UpdateCalendarInfo
 import com.eywa.projectclava.main.common.asCalendar
 import kotlinx.coroutines.flow.map
-import java.util.*
 
 private const val USER_PREFERENCES_NAME = "clava_user_preferences"
 
 // TODO_HACKY Use dependency injection?
 val Context.dataStore by preferencesDataStore(name = USER_PREFERENCES_NAME)
-
-data class DatastoreState(
-        val overrunIndicatorThreshold: Int = 10,
-        val defaultMatchTime: Int = 15 * 60,
-        val defaultTimeToAdd: Int = 2 * 60,
-        // Default: winds back from now to 4am
-        val clubNightStartTime: Calendar = Calendar.getInstance(Locale.getDefault()).apply {
-            if (get(Calendar.HOUR_OF_DAY) < 4) {
-                add(Calendar.DAY_OF_MONTH, -1)
-            }
-            set(Calendar.HOUR_OF_DAY, 4)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-        },
-        val isDefaultClubNightStartTime: Boolean = true,
-        val prependCourt: Boolean = true,
-)
-
-sealed class DataStoreIntent : CoreIntent {
-    data class UpdateClubNightStartTime(val value: UpdateCalendarInfo) : DataStoreIntent()
-    data class UpdateClubNightStartTimeCalendar(val value: Calendar) : DataStoreIntent()
-    data class UpdateOverrunIndicatorThreshold(val value: Int) : DataStoreIntent()
-    data class UpdateDefaultMatchTime(val value: Int) : DataStoreIntent()
-    data class UpdateDefaultTimeToAdd(val value: Int) : DataStoreIntent()
-    object TogglePrependCourt : DataStoreIntent()
-    object ClearDatastore : DataStoreIntent()
-}
 
 class ClavaDatastore(private val dataStore: DataStore<Preferences>) {
     fun getPreferences() = dataStore.data.map { preferences ->

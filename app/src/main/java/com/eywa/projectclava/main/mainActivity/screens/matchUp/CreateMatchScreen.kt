@@ -33,7 +33,7 @@ import java.util.*
 @Composable
 fun CreateMatchScreen(
         state: CreateMatchState,
-        databaseState: DatabaseState,
+        databaseState: ModelState,
         clubNightStartTime: Calendar,
         getTimeRemaining: Match.() -> TimeRemaining?,
         listener: (CreateMatchIntent) -> Unit,
@@ -248,7 +248,7 @@ fun CreateMatchScreen_Preview() {
             state = CreateMatchState(
                     selectedPlayers = generatePlayers(2),
             ),
-            databaseState = DatabaseState(
+            databaseState = ModelState(
                     players = generatePlayers(15),
                     matches = generateMatches(5, Calendar.getInstance(Locale.getDefault())),
             ),
@@ -269,7 +269,7 @@ fun Individual_CreateMatchScreen_Preview(
     CreateMatchScreen(
             state = CreateMatchState(
             ),
-            databaseState = DatabaseState(
+            databaseState = ModelState(
                     players = players,
                     matches = match,
             ),

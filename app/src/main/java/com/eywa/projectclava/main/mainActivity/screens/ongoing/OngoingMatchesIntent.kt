@@ -1,44 +1,20 @@
 package com.eywa.projectclava.main.mainActivity.screens.ongoing
 
-import com.eywa.projectclava.main.mainActivity.CoreIntent
-import com.eywa.projectclava.main.mainActivity.DatabaseIntent
-import com.eywa.projectclava.main.mainActivity.MainEffect
+import com.eywa.projectclava.main.database.DatabaseIntent
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.mainActivity.screens.ScreenIntent
-import com.eywa.projectclava.main.mainActivity.screens.ScreenState
+import com.eywa.projectclava.main.mainActivity.viewModel.CoreIntent
+import com.eywa.projectclava.main.mainActivity.viewModel.MainEffect
 import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.main.ui.sharedUi.AddTimeDialogIntent
-import com.eywa.projectclava.main.ui.sharedUi.AddTimeDialogState
 import com.eywa.projectclava.main.ui.sharedUi.TimePickerState
 
 
-enum class OngoingMatchesDialog {
-    ADD_TIME, CHANGE_COURT, RESUME
-}
+fun AddTimeDialogIntent.toOngoingMatchesIntent(defaultTimeToAddSeconds: Int) =
+        OngoingMatchesIntent.AddTimeIntent(this, defaultTimeToAddSeconds)
 
-data class OngoingMatchesState(
-        val openDialog: OngoingMatchesDialog? = null,
-        override val selectedMatchId: Int? = null,
-        override val timeToAdd: TimePickerState? = null,
-        val selectedCourt: Court? = null,
-        val resumeTime: TimePickerState? = null,
-) : AddTimeDialogState, ScreenState {
-    override val addTimeDialogIsOpen: Boolean = openDialog == OngoingMatchesDialog.ADD_TIME
-    override fun addTimeCopy(
-            addTimeDialogIsOpen: Boolean,
-            timeToAdd: TimePickerState?,
-    ) = copy(
-            openDialog = when {
-                // If a different dialog is open, keep it
-                openDialog != null && openDialog != OngoingMatchesDialog.ADD_TIME -> openDialog
-                addTimeDialogIsOpen -> OngoingMatchesDialog.ADD_TIME
-                else -> null
-            },
-            timeToAdd = timeToAdd,
-    )
-}
 
 sealed class OngoingMatchesIntent : ScreenIntent<OngoingMatchesState> {
     override val screen: NavRoute = NavRoute.ONGOING_MATCHES
@@ -144,6 +120,3 @@ sealed class OngoingMatchesIntent : ScreenIntent<OngoingMatchesState> {
         }
     }
 }
-
-fun AddTimeDialogIntent.toOngoingMatchesIntent(defaultTimeToAddSeconds: Int) =
-        OngoingMatchesIntent.AddTimeIntent(this, defaultTimeToAddSeconds)

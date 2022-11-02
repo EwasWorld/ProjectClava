@@ -16,9 +16,9 @@ import com.eywa.projectclava.main.common.asTimeString
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.mainActivity.screens.history.HistoryTabSwitcherItem
-import com.eywa.projectclava.main.model.DatabaseState
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.MissingContentNextStep
+import com.eywa.projectclava.main.model.ModelState
 import com.eywa.projectclava.main.ui.sharedUi.ClavaScreen
 import com.eywa.projectclava.main.ui.sharedUi.TabSwitcher
 import com.eywa.projectclava.main.ui.sharedUi.WrappingRow
@@ -27,7 +27,7 @@ import java.util.*
 
 @Composable
 fun HistorySummaryScreen(
-        databaseState: DatabaseState,
+        databaseState: ModelState,
         navigateListener: (NavRoute) -> Unit,
 ) {
     // Most recent first
@@ -133,7 +133,7 @@ fun HistorySummaryScreen_Preview() {
         )
     }
     HistorySummaryScreen(
-            databaseState = DatabaseState(
+            databaseState = ModelState(
                     matches = matches,
             ),
             navigateListener = {},

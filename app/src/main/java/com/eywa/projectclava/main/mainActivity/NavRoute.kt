@@ -2,23 +2,25 @@ package com.eywa.projectclava.main.mainActivity
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import com.eywa.projectclava.main.datastore.DatastoreState
 import com.eywa.projectclava.main.mainActivity.screens.ScreenState
 import com.eywa.projectclava.main.mainActivity.screens.archivedPlayers.ArchivedPlayersScreen
 import com.eywa.projectclava.main.mainActivity.screens.archivedPlayers.ArchivedPlayersState
 import com.eywa.projectclava.main.mainActivity.screens.help.HelpScreen
-import com.eywa.projectclava.main.mainActivity.screens.help.HelpScreenState
+import com.eywa.projectclava.main.mainActivity.screens.help.HelpState
 import com.eywa.projectclava.main.mainActivity.screens.history.matches.MatchHistoryScreen
 import com.eywa.projectclava.main.mainActivity.screens.history.matches.MatchHistoryState
 import com.eywa.projectclava.main.mainActivity.screens.history.summary.HistorySummaryScreen
-import com.eywa.projectclava.main.mainActivity.screens.manage.SetupCourtsScreen
 import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListState
-import com.eywa.projectclava.main.mainActivity.screens.manage.SetupPlayersScreen
+import com.eywa.projectclava.main.mainActivity.screens.manage.setupPlayer.SetupPlayersScreen
+import com.eywa.projectclava.main.mainActivity.screens.manage.ui.SetupCourtsScreen
 import com.eywa.projectclava.main.mainActivity.screens.matchUp.CreateMatchScreen
 import com.eywa.projectclava.main.mainActivity.screens.matchUp.CreateMatchState
 import com.eywa.projectclava.main.mainActivity.screens.ongoing.OngoingMatchesScreen
 import com.eywa.projectclava.main.mainActivity.screens.ongoing.OngoingMatchesState
 import com.eywa.projectclava.main.mainActivity.screens.queue.MatchQueueScreen
 import com.eywa.projectclava.main.mainActivity.screens.queue.MatchQueueState
+import com.eywa.projectclava.main.mainActivity.viewModel.MainViewModel
 import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.sharedUi.AvailableCourtsHeader
 import com.eywa.projectclava.main.ui.sharedUi.ClavaScreen
@@ -34,7 +36,7 @@ enum class NavRoute(val route: String) {
                 currentTime: () -> Calendar,
                 getTimeRemaining: Match.() -> TimeRemaining?,
                 viewModel: MainViewModel,
-                databaseState: DatabaseState,
+                databaseState: ModelState,
                 preferencesState: DatastoreState,
                 isSoftKeyboardOpen: Boolean,
         ) {
@@ -58,7 +60,7 @@ enum class NavRoute(val route: String) {
                 currentTime: () -> Calendar,
                 getTimeRemaining: Match.() -> TimeRemaining?,
                 viewModel: MainViewModel,
-                databaseState: DatabaseState,
+                databaseState: ModelState,
                 preferencesState: DatastoreState,
                 isSoftKeyboardOpen: Boolean,
         ) {
@@ -79,7 +81,7 @@ enum class NavRoute(val route: String) {
                 currentTime: () -> Calendar,
                 getTimeRemaining: Match.() -> TimeRemaining?,
                 viewModel: MainViewModel,
-                databaseState: DatabaseState,
+                databaseState: ModelState,
                 preferencesState: DatastoreState,
                 isSoftKeyboardOpen: Boolean,
         ) {
@@ -104,7 +106,7 @@ enum class NavRoute(val route: String) {
                 currentTime: () -> Calendar,
                 getTimeRemaining: Match.() -> TimeRemaining?,
                 viewModel: MainViewModel,
-                databaseState: DatabaseState,
+                databaseState: ModelState,
                 preferencesState: DatastoreState,
                 isSoftKeyboardOpen: Boolean,
         ) {
@@ -127,7 +129,7 @@ enum class NavRoute(val route: String) {
                 currentTime: () -> Calendar,
                 getTimeRemaining: Match.() -> TimeRemaining?,
                 viewModel: MainViewModel,
-                databaseState: DatabaseState,
+                databaseState: ModelState,
                 preferencesState: DatastoreState,
                 isSoftKeyboardOpen: Boolean,
         ) {
@@ -150,7 +152,7 @@ enum class NavRoute(val route: String) {
                 currentTime: () -> Calendar,
                 getTimeRemaining: Match.() -> TimeRemaining?,
                 viewModel: MainViewModel,
-                databaseState: DatabaseState,
+                databaseState: ModelState,
                 preferencesState: DatastoreState,
                 isSoftKeyboardOpen: Boolean,
         ) {
@@ -173,7 +175,7 @@ enum class NavRoute(val route: String) {
                 currentTime: () -> Calendar,
                 getTimeRemaining: Match.() -> TimeRemaining?,
                 viewModel: MainViewModel,
-                databaseState: DatabaseState,
+                databaseState: ModelState,
                 preferencesState: DatastoreState,
                 isSoftKeyboardOpen: Boolean,
         ) {
@@ -195,7 +197,7 @@ enum class NavRoute(val route: String) {
                 currentTime: () -> Calendar,
                 getTimeRemaining: Match.() -> TimeRemaining?,
                 viewModel: MainViewModel,
-                databaseState: DatabaseState,
+                databaseState: ModelState,
                 preferencesState: DatastoreState,
                 isSoftKeyboardOpen: Boolean
         ) {
@@ -207,7 +209,7 @@ enum class NavRoute(val route: String) {
     },
 
     HELP_SCREEN("help") {
-        override fun createInitialState() = HelpScreenState()
+        override fun createInitialState() = HelpState()
 
         @Composable
         override fun ClavaNavigation(
@@ -215,12 +217,12 @@ enum class NavRoute(val route: String) {
                 currentTime: () -> Calendar,
                 getTimeRemaining: Match.() -> TimeRemaining?,
                 viewModel: MainViewModel,
-                databaseState: DatabaseState,
+                databaseState: ModelState,
                 preferencesState: DatastoreState,
                 isSoftKeyboardOpen: Boolean
         ) {
             HelpScreen(
-                    state = viewModel.getScreenState(this) as HelpScreenState,
+                    state = viewModel.getScreenState(this) as HelpState,
                     listener = { viewModel.handleIntent(it) },
             )
         }
@@ -236,7 +238,7 @@ enum class NavRoute(val route: String) {
                 currentTime: () -> Calendar,
                 getTimeRemaining: Match.() -> TimeRemaining?,
                 viewModel: MainViewModel,
-                databaseState: DatabaseState,
+                databaseState: ModelState,
                 preferencesState: DatastoreState,
                 isSoftKeyboardOpen: Boolean
         ) {
@@ -280,7 +282,7 @@ enum class NavRoute(val route: String) {
             currentTime: () -> Calendar,
             getTimeRemaining: Match.() -> TimeRemaining?,
             viewModel: MainViewModel,
-            databaseState: DatabaseState,
+            databaseState: ModelState,
             preferencesState: DatastoreState,
             isSoftKeyboardOpen: Boolean,
     )

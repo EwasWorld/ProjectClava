@@ -29,6 +29,8 @@ import com.eywa.projectclava.R
 import com.eywa.projectclava.main.mainActivity.drawer.DrawerContent
 import com.eywa.projectclava.main.mainActivity.drawer.DrawerIntent
 import com.eywa.projectclava.main.mainActivity.ui.ClavaBottomNav
+import com.eywa.projectclava.main.mainActivity.viewModel.MainEffect
+import com.eywa.projectclava.main.mainActivity.viewModel.MainViewModel
 import com.eywa.projectclava.main.ui.sharedUi.ClavaDialog
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.ProjectClavaTheme
@@ -79,7 +81,6 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }
-                val closeDrawer = { changeDrawerState(false) }
                 var showUpdateClubNightStartTimeDialog by remember { mutableStateOf(false) }
 
                 if (preferences == null || databaseState == null) {
@@ -111,7 +112,12 @@ class MainActivity : ComponentActivity() {
                     scope.launch {
                         viewModel.effects.collect { effect ->
                             when (effect) {
-                                is MainEffect.Navigate -> navController.navigate(effect.destination.route)
+                                is MainEffect.Navigate -> {
+                                    navController.navigate(effect.destination.route)
+                                    changeDrawerState(false)
+                                }
+                                MainEffect.OpenDrawer -> changeDrawerState(true)
+                                MainEffect.CloseDrawer -> changeDrawerState(false)
                                 null -> {}
                             }
                         }
@@ -153,16 +159,7 @@ class MainActivity : ComponentActivity() {
                                     preferencesState = preferences!!,
                                     databaseState = databaseState!!,
                                     isDrawerOpen = drawerState.isOpen,
-                                    closeDrawer = { closeDrawer() },
-                                    listener = {
-                                        if (it is DrawerIntent.Navigate) {
-                                            navController.navigate(it.value.route)
-                                            closeDrawer()
-                                        }
-                                        else {
-                                            viewModel.handleIntent(it)
-                                        }
-                                    }
+                                    listener = { viewModel.handleIntent(it) }
                             )
                         },
                 ) { padding ->
@@ -194,7 +191,7 @@ class MainActivity : ComponentActivity() {
                                 verticalArrangement = Arrangement.spacedBy(20.dp)
                         ) {
                             LeftEdgeButton(
-                                    onClick = { changeDrawerState(true) },
+                                    onClick = { viewModel.handleIntent(MainEffect.OpenDrawer) },
                                     height = 100.dp,
                             ) {
                                 Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Open menu")

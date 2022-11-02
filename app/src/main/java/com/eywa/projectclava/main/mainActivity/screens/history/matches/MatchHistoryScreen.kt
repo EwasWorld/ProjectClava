@@ -14,72 +14,20 @@ import com.eywa.projectclava.R
 import com.eywa.projectclava.main.common.GeneratableMatchState
 import com.eywa.projectclava.main.common.asDateString
 import com.eywa.projectclava.main.common.generateMatches
-import com.eywa.projectclava.main.mainActivity.CoreIntent
-import com.eywa.projectclava.main.mainActivity.DatabaseIntent
-import com.eywa.projectclava.main.mainActivity.MainEffect
-import com.eywa.projectclava.main.mainActivity.NavRoute
-import com.eywa.projectclava.main.mainActivity.screens.ScreenIntent
-import com.eywa.projectclava.main.mainActivity.screens.ScreenState
 import com.eywa.projectclava.main.mainActivity.screens.history.HistoryTabSwitcherItem
 import com.eywa.projectclava.main.mainActivity.screens.history.matches.MatchHistoryIntent.*
-import com.eywa.projectclava.main.model.DatabaseState
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.MissingContentNextStep
+import com.eywa.projectclava.main.model.ModelState
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
-
-data class MatchHistoryState(
-        override val selectedMatchId: Int? = null,
-        override val addTimeDialogIsOpen: Boolean = false,
-        override val timeToAdd: TimePickerState? = null,
-) : ScreenState, AddTimeDialogState {
-    override fun addTimeCopy(
-            addTimeDialogIsOpen: Boolean,
-            timeToAdd: TimePickerState?,
-    ) = copy(
-            addTimeDialogIsOpen = addTimeDialogIsOpen,
-            timeToAdd = timeToAdd,
-    )
-}
-
-sealed class MatchHistoryIntent : ScreenIntent<MatchHistoryState> {
-    override val screen: NavRoute = NavRoute.MATCH_HISTORY
-
-    data class MatchClicked(val match: Match) : MatchHistoryIntent()
-    data class MatchDeleted(val match: Match) : MatchHistoryIntent()
-
-    data class AddTimeIntent(
-            val value: AddTimeDialogIntent,
-            val defaultTimeToAdd: Int,
-    ) : MatchHistoryIntent()
-
-    data class Navigate(val destination: NavRoute) : MatchHistoryIntent()
-
-    override fun handle(
-            currentState: MatchHistoryState,
-            handle: (CoreIntent) -> Unit,
-            newStateListener: (MatchHistoryState) -> Unit
-    ) {
-        when (this) {
-            is AddTimeIntent -> value.handle(defaultTimeToAdd, currentState, newStateListener, handle)
-            is MatchClicked -> newStateListener(
-                    currentState.copy(selectedMatchId = match.id.takeIf { currentState.selectedMatchId != match.id })
-            )
-            is MatchDeleted -> handle(DatabaseIntent.DeleteMatch(match))
-            is Navigate -> handle(MainEffect.Navigate(destination))
-        }
-    }
-}
-
-fun AddTimeDialogIntent.toMatchHistoryIntent(defaultTimeToAdd: Int) =
-        AddTimeIntent(this, defaultTimeToAdd)
 
 
 @Composable
 fun MatchHistoryScreen(
         state: MatchHistoryState,
-        databaseState: DatabaseState,
+        databaseState: ModelState,
         defaultTimeToAdd: Int,
         listener: (MatchHistoryIntent) -> Unit,
 ) {
@@ -166,7 +114,7 @@ private fun PreviousMatchesScreenFooter(
         deleteMatchListener: (Match) -> Unit,
 ) {
     SelectedItemActions(
-            text = selectedMatch?.players?.joinToString { it.name } ?: "No match selected",
+            text = selectedMatch?.playerNameString() ?: "No match selected",
             buttons = listOf(
                     SelectedItemAction(
                             icon = ClavaIconInfo.PainterIcon(
@@ -193,7 +141,7 @@ private fun PreviousMatchesScreenFooter(
 fun MatchHistoryScreen_Preview() {
     val currentTime = Calendar.getInstance(Locale.getDefault())
     MatchHistoryScreen(
-            databaseState = DatabaseState(
+            databaseState = ModelState(
                     matches = generateMatches(4, currentTime, GeneratableMatchState.COMPLETE),
             ),
             defaultTimeToAdd = 2 * 60,

@@ -4,8 +4,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.eywa.projectclava.main.mainActivity.CoreIntent
-import com.eywa.projectclava.main.mainActivity.DatabaseIntent
+import com.eywa.projectclava.main.database.DatabaseIntent
+import com.eywa.projectclava.main.mainActivity.viewModel.CoreIntent
 import com.eywa.projectclava.main.ui.sharedUi.AddTimeDialogIntent.*
 
 interface SelectableMatch {

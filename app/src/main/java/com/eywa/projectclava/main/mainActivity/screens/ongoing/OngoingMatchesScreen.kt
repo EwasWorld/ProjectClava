@@ -29,7 +29,7 @@ import java.util.*
 @Composable
 fun OngoingMatchesScreen(
         state: OngoingMatchesState,
-        databaseState: DatabaseState,
+        databaseState: ModelState,
         getTimeRemaining: Match.() -> TimeRemaining?,
         defaultTimeToAddSeconds: Int,
         listener: (OngoingMatchesIntent) -> Unit,
@@ -128,7 +128,7 @@ private fun CurrentMatchesScreenFooter(
             text = when {
                 selectedMatch == null -> "No match selected"
                 selectedMatch.court != null -> selectedMatch.court!!.name
-                selectedMatch.isPaused -> selectedMatch.players.joinToString { it.name }
+                selectedMatch.isPaused -> selectedMatch.playerNameString()
                 else -> "Unidentifiable match selected"
             },
             buttons = listOf(
@@ -249,7 +249,7 @@ fun OngoingMatchesScreen_Preview(
     val currentTime = Calendar.getInstance(Locale.getDefault())
     val matches = generateMatches(params.matchCount, currentTime)
     OngoingMatchesScreen(
-            databaseState = DatabaseState(
+            databaseState = ModelState(
                     courts = generateCourts(params.matchCount + params.availableCourtsCount),
                     matches = matches,
             ),

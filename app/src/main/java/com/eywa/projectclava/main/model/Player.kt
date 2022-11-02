@@ -1,7 +1,7 @@
 package com.eywa.projectclava.main.model
 
 import com.eywa.projectclava.main.database.player.DatabasePlayer
-import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListItem
+import com.eywa.projectclava.main.mainActivity.screens.manage.helperClasses.SetupListItem
 
 fun DatabasePlayer.asPlayer() = Player(id, name, isPresent, isArchived)
 

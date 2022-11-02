@@ -1,4 +1,4 @@
-package com.eywa.projectclava.main.mainActivity.screens.manage
+package com.eywa.projectclava.main.mainActivity.screens.manage.ui
 
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.Icon
@@ -11,57 +11,22 @@ import com.eywa.projectclava.R
 import com.eywa.projectclava.main.common.asTimeString
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
-import com.eywa.projectclava.main.mainActivity.CoreIntent
-import com.eywa.projectclava.main.mainActivity.DatabaseIntent
-import com.eywa.projectclava.main.mainActivity.NavRoute
-import com.eywa.projectclava.main.mainActivity.screens.ScreenIntent
+import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListState
+import com.eywa.projectclava.main.mainActivity.screens.manage.helperClasses.SetupListSettings
+import com.eywa.projectclava.main.mainActivity.screens.manage.setupCourt.SetupCourtIntent
+import com.eywa.projectclava.main.mainActivity.screens.manage.setupCourt.toSetupCourtIntent
 import com.eywa.projectclava.main.model.*
 import java.util.*
-
-sealed class AddCourtIntent : ScreenIntent<SetupListState<Court>> {
-    override val screen: NavRoute = NavRoute.ADD_COURT
-
-    object AddCourtSubmitted : AddCourtIntent()
-    data class CourtDeleted(val court: Court) : AddCourtIntent()
-    data class CourtClicked(val court: Court) : AddCourtIntent()
-
-    data class ScreenIntent(val value: SetupListIntent.SetupListStateIntent) : AddCourtIntent()
-
-    override fun handle(
-            currentState: SetupListState<Court>,
-            handle: (CoreIntent) -> Unit,
-            newStateListener: (SetupListState<Court>) -> Unit
-    ) {
-        when (this) {
-            is AddCourtSubmitted -> {
-                handle(DatabaseIntent.AddCourt(currentState.addItemName.trim()))
-                SetupListIntent.SetupListStateIntent.AddNameCleared.handle(currentState, handle, newStateListener)
-            }
-            is CourtClicked -> handle(DatabaseIntent.UpdateCourt(court.copy(canBeUsed = !court.canBeUsed)))
-            is CourtDeleted -> handle(DatabaseIntent.DeleteCourt(court))
-            is ScreenIntent -> value.handle(currentState, handle, newStateListener) { editCourt, newName ->
-                handle(DatabaseIntent.UpdateCourt(editCourt.copy(name = newName.trim())))
-            }
-        }
-    }
-}
-
-private fun SetupListIntent.toAddCourtIntent() = when (this) {
-    is SetupListIntent.SetupListStateIntent -> AddCourtIntent.ScreenIntent(this)
-    SetupListIntent.SetupListItemIntent.AddItemSubmitted -> AddCourtIntent.AddCourtSubmitted
-    is SetupListIntent.SetupListItemIntent.ItemClicked<*> -> AddCourtIntent.CourtClicked(value as Court)
-    is SetupListIntent.SetupListItemIntent.ItemDeleted<*> -> AddCourtIntent.CourtDeleted(value as Court)
-}
 
 
 @Composable
 fun SetupCourtsScreen(
         state: SetupListState<Court>,
-        databaseState: DatabaseState,
+        databaseState: ModelState,
         isSoftKeyboardOpen: Boolean,
         prependCourt: Boolean = true,
         getTimeRemaining: Match.() -> TimeRemaining?,
-        listener: (AddCourtIntent) -> Unit,
+        listener: (SetupCourtIntent) -> Unit,
 ) {
     SetupListScreen(
             setupListSettings = SetupListSettings.COURTS,
@@ -85,7 +50,7 @@ fun SetupCourtsScreen(
                         getTimeRemaining = getTimeRemaining
                 )
             },
-            listener = { listener(it.toAddCourtIntent()) },
+            listener = { listener(it.toSetupCourtIntent()) },
     )
 }
 
@@ -94,7 +59,7 @@ fun RowScope.ExtraContent(match: Match, getTimeRemaining: Match.() -> TimeRemain
     if (match.court == null) return
 
     Text(
-            text = match.players.joinToString { it.name },
+            text = match.playerNameString(),
             modifier = Modifier.weight(1f)
     )
     Text(
@@ -114,7 +79,7 @@ fun SetupCourtsScreen_Preview() {
     val currentTime = Calendar.getInstance(Locale.getDefault())
     SetupCourtsScreen(
             state = SetupListState(),
-            databaseState = DatabaseState(
+            databaseState = ModelState(
                     courts = generateCourts(10),
                     matches = generateMatches(5, currentTime),
             ),

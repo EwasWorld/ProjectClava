@@ -18,8 +18,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.R
-import com.eywa.projectclava.main.model.DatabaseState
 import com.eywa.projectclava.main.model.MissingContentNextStep
+import com.eywa.projectclava.main.model.ModelState
 import com.eywa.projectclava.main.ui.sharedUi.ClavaScreen
 import com.eywa.projectclava.main.ui.sharedUi.EditDialogIntent
 import com.eywa.projectclava.main.ui.sharedUi.EditNameDialog
@@ -29,7 +29,7 @@ import com.eywa.projectclava.ui.theme.Typography
 
 @Composable
 fun ArchivedPlayersScreen(
-        databaseState: DatabaseState,
+        databaseState: ModelState,
         state: ArchivedPlayersState,
         listener: (ArchivedPlayersIntent) -> Unit,
 ) {

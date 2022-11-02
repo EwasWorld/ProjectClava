@@ -1,10 +1,15 @@
 package com.eywa.projectclava.main.mainActivity.screens.manage
 
-import com.eywa.projectclava.main.mainActivity.CoreIntent
-import com.eywa.projectclava.main.mainActivity.MainEffect
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListIntent.SetupListStateIntent
+import com.eywa.projectclava.main.mainActivity.screens.manage.helperClasses.SetupListItem
+import com.eywa.projectclava.main.mainActivity.viewModel.CoreIntent
+import com.eywa.projectclava.main.mainActivity.viewModel.MainEffect
 import com.eywa.projectclava.main.ui.sharedUi.EditDialogIntent
+
+
+fun EditDialogIntent.toSetupListIntent() =
+        SetupListStateIntent.EditItemStateIntent(this)
 
 
 sealed class SetupListIntent {
@@ -57,6 +62,3 @@ sealed class SetupListIntent {
         }
     }
 }
-
-fun EditDialogIntent.toSetupListIntent() =
-        SetupListStateIntent.EditItemStateIntent(this)

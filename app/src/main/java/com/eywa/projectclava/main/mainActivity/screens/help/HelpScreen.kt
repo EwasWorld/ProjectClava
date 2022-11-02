@@ -32,8 +32,8 @@ import com.eywa.projectclava.ui.theme.asClickableStyle
 
 @Composable
 fun HelpScreen(
-        state: HelpScreenState,
-        listener: (HelpScreenIntent) -> Unit,
+        state: HelpState,
+        listener: (HelpIntent) -> Unit,
 ) {
     val horizontalPadding = 20.dp
     val textPadding = 10.dp
@@ -41,8 +41,8 @@ fun HelpScreen(
 
     HelpNavigationDialog(
             isShown = state.isHelpNavigationDialogShown,
-            onCancelListener = { listener(HelpScreenIntent.CloseNavDialog) },
-            goToHelpScreen = { listener(HelpScreenIntent.GoToHelpScreen(it)) },
+            onCancelListener = { listener(HelpIntent.CloseNavDialog) },
+            goToHelpScreen = { listener(HelpIntent.GoToHelpScreen(it)) },
     )
 
     Column(
@@ -77,7 +77,7 @@ fun HelpScreen(
                             .padding(top = 15.dp)
                             .fillMaxWidth()
             ) {
-                content.content(this) { listener(HelpScreenIntent.Navigate(it)) }
+                content.content(this) { listener(HelpIntent.Navigate(it)) }
 
                 content.contentDescription.forEach { description ->
                     Text(
@@ -108,13 +108,13 @@ fun HelpScreen(
                 Text(
                         text = "Take me to this screen",
                         style = Typography.h4.asClickableStyle(),
-                        modifier = Modifier.clickable { listener(HelpScreenIntent.Navigate(screen)) }
+                        modifier = Modifier.clickable { listener(HelpIntent.Navigate(screen)) }
                 )
             }
             Text(
                     text = "Help me with something else",
                     style = Typography.h4.asClickableStyle(),
-                    modifier = Modifier.clickable { listener(HelpScreenIntent.OpenNavDialog) }
+                    modifier = Modifier.clickable { listener(HelpIntent.OpenNavDialog) }
             )
         }
     }
@@ -190,7 +190,7 @@ private fun HelpNavigationDialog(
 @Composable
 fun NavBar_HelpScreen_Preview() {
     HelpScreen(
-            state = HelpScreenState(),
+            state = HelpState(),
             listener = {},
     )
 }
@@ -207,7 +207,7 @@ fun ColoursHelp_Preview() {
 @Composable
 fun HelpNavigationDialog_Preview() {
     HelpScreen(
-            state = HelpScreenState(isHelpNavigationDialogShown = true),
+            state = HelpState(isHelpNavigationDialogShown = true),
             listener = {},
     )
 }
@@ -219,7 +219,7 @@ fun HelpNavigationDialog_Preview() {
 @Composable
 fun AddPlayer_HelpScreen_Preview() {
     HelpScreen(
-            state = HelpScreenState(screen = NavRoute.ADD_PLAYER),
+            state = HelpState(screen = NavRoute.ADD_PLAYER),
             listener = {},
     )
 }

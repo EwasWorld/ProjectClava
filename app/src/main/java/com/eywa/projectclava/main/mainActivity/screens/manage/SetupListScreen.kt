@@ -1,4 +1,4 @@
-package com.eywa.projectclava.main.mainActivity.screens.manage
+package com.eywa.projectclava.main.mainActivity.screens.manage.ui
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -36,8 +36,14 @@ import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.common.generatePlayers
+import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListIntent
 import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListIntent.SetupListItemIntent
 import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListIntent.SetupListStateIntent
+import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListState
+import com.eywa.projectclava.main.mainActivity.screens.manage.helperClasses.SetupListItem
+import com.eywa.projectclava.main.mainActivity.screens.manage.helperClasses.SetupListSettings
+import com.eywa.projectclava.main.mainActivity.screens.manage.helperClasses.SetupListTabSwitcherItem
+import com.eywa.projectclava.main.mainActivity.screens.manage.toSetupListIntent
 import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.ClavaColor
@@ -328,7 +334,7 @@ fun SetupListScreen_Preview() {
 fun ExtraInfo_SetupListScreen_Preview() {
     val currentTime = Calendar.getInstance(Locale.getDefault())
     SetupCourtsScreen(
-            databaseState = DatabaseState(
+            databaseState = ModelState(
                     courts = generateCourts(10),
                     matches = generateMatches(5, currentTime),
             ),

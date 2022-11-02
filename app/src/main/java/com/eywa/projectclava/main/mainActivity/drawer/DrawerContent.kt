@@ -19,10 +19,10 @@ import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.main.common.UpdateCalendarInfo
 import com.eywa.projectclava.main.common.asDateString
 import com.eywa.projectclava.main.common.asTimeString
-import com.eywa.projectclava.main.mainActivity.DatastoreState
+import com.eywa.projectclava.main.datastore.DatastoreState
 import com.eywa.projectclava.main.mainActivity.NavRoute
-import com.eywa.projectclava.main.model.DatabaseState
 import com.eywa.projectclava.main.model.MatchState
+import com.eywa.projectclava.main.model.ModelState
 import com.eywa.projectclava.main.ui.sharedUi.TimePicker
 import com.eywa.projectclava.main.ui.sharedUi.TimePickerState
 import com.eywa.projectclava.ui.theme.DividerThickness
@@ -36,9 +36,8 @@ private val drawerTextStyle = Typography.h4
 fun DrawerContent(
         currentTime: () -> Calendar,
         preferencesState: DatastoreState,
-        databaseState: DatabaseState,
+        databaseState: ModelState,
         isDrawerOpen: Boolean,
-        closeDrawer: () -> Unit,
         listener: (DrawerIntent) -> Unit,
 ) {
     val context = LocalContext.current
@@ -217,7 +216,6 @@ fun DrawerContent(
             DrawerTextButton(text = "Mark all players as not present") {
                 listener(DrawerIntent.UpdatePlayers(databaseState.players.map { it.copy(isPresent = false) }))
                 listener(DrawerIntent.Navigate(NavRoute.ADD_PLAYER))
-                closeDrawer()
             }
             DrawerTextButton(text = "Clear matches and set cut off to now") {
                 databaseState.matches.forEach {
@@ -331,9 +329,8 @@ fun DrawerContent_Preview() {
     DrawerContent(
             currentTime = { currentTime },
             preferencesState = DatastoreState(),
-            databaseState = DatabaseState(),
+            databaseState = ModelState(),
             isDrawerOpen = true,
-            closeDrawer = {},
             listener = {},
     )
 }

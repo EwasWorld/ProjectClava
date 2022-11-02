@@ -33,7 +33,7 @@ import java.util.*
 @Composable
 fun MatchQueueScreen(
         state: MatchQueueState,
-        databaseState: DatabaseState,
+        databaseState: ModelState,
         getTimeRemaining: Match.() -> TimeRemaining?,
         defaultTimeSeconds: Int,
         listener: (MatchQueueIntent) -> Unit,
@@ -202,7 +202,7 @@ private fun UpcomingMatchesScreenFooter(
     }
 
     SelectedItemActions(
-            text = selectedMatch?.players?.sortedBy { it.name }?.joinToString { it.name } ?: "No match selected",
+            text = selectedMatch?.playerNameString() ?: "No match selected",
             extraText = extraText,
             color = color,
             buttons = listOf(
@@ -271,7 +271,7 @@ fun MatchQueueScreen_Preview(
     val matches = generateMatches(5, currentTime) + generateMatches(4, currentTime, GeneratableMatchState.NOT_STARTED)
 
     MatchQueueScreen(
-            databaseState = DatabaseState(
+            databaseState = ModelState(
                     courts = generateCourts(4),
                     matches = matches,
             ),

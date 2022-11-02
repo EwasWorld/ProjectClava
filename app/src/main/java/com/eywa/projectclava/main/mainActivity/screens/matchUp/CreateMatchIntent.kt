@@ -1,19 +1,11 @@
 package com.eywa.projectclava.main.mainActivity.screens.matchUp
 
-import com.eywa.projectclava.main.mainActivity.CoreIntent
-import com.eywa.projectclava.main.mainActivity.DatabaseIntent
-import com.eywa.projectclava.main.mainActivity.MainEffect
+import com.eywa.projectclava.main.database.DatabaseIntent
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.mainActivity.screens.ScreenIntent
-import com.eywa.projectclava.main.mainActivity.screens.ScreenState
+import com.eywa.projectclava.main.mainActivity.viewModel.CoreIntent
+import com.eywa.projectclava.main.mainActivity.viewModel.MainEffect
 import com.eywa.projectclava.main.model.Player
-
-data class CreateMatchState(
-        /**
-         * the players who will form the next match
-         */
-        val selectedPlayers: Iterable<Player> = setOf(),
-) : ScreenState
 
 
 sealed class CreateMatchIntent : ScreenIntent<CreateMatchState> {

@@ -31,7 +31,7 @@ private fun boldUnderlined(start: Int, end: Int, style: SpanStyle = SpanStyle())
         end,
 )
 
-val DEFAULT_HELP_INFO = ScreenHelpData(
+val DEFAULT_HELP_INFO = HelpData(
         title = "Bottom Navigation Icons",
         body = "Press an icon to get to where you want to go!",
         helpContent = HelpContent(
@@ -59,7 +59,7 @@ val DEFAULT_HELP_INFO = ScreenHelpData(
 )
 
 private object HelpStrings {
-    val ADD_PLAYER = ScreenHelpData(
+    val ADD_PLAYER = HelpData(
             title = "Manage Players",
             body = "Add, archive, enable, and disable players.",
             showColourHelp = true,
@@ -97,7 +97,7 @@ private object HelpStrings {
             ),
     )
 
-    val ADD_COURT = ScreenHelpData(
+    val ADD_COURT = HelpData(
             title = "Manage Courts",
             body = "Add, remove, enable, and disable courts.",
             showColourHelp = true,
@@ -135,7 +135,7 @@ private object HelpStrings {
             ),
     )
 
-    val CREATE_MATCH = ScreenHelpData(
+    val CREATE_MATCH = HelpData(
             title = "Match Up",
             body = "Select players and press the tick to queue up a game.",
             showColourHelp = true,
@@ -175,7 +175,7 @@ private object HelpStrings {
             ),
     )
 
-    val MATCH_QUEUE = ScreenHelpData(
+    val MATCH_QUEUE = HelpData(
             title = "Game Queue",
             body = "Start games by assigning them a court and a duration.",
             showColourHelp = true,
@@ -208,7 +208,7 @@ private object HelpStrings {
             ),
     )
 
-    val ONGOING_MATCHES = ScreenHelpData(
+    val ONGOING_MATCHES = HelpData(
             title = "Ongoing Games",
             body = "View in-progress and paused games. You can mark games as completed, pause them, add time, and change courts from here.",
             showColourHelp = true,
@@ -233,7 +233,7 @@ private object HelpStrings {
             ),
     )
 
-    val MATCH_HISTORY = ScreenHelpData(
+    val MATCH_HISTORY = HelpData(
             title = "Match History",
             body = "View all finished games. You can restart or delete games from here.",
             helpContent = HelpImage(
@@ -254,7 +254,7 @@ private object HelpStrings {
             ),
     )
 
-    val HISTORY_SUMMARY = ScreenHelpData(
+    val HISTORY_SUMMARY = HelpData(
             title = "Summary",
             body = "View each day's attendees.",
             showColourHelp = true,
@@ -282,7 +282,7 @@ fun Parameterised_HelpScreen_Preview(
         @PreviewParameter(HelpScreenPreviewParamProvider::class) params: NavRoute?
 ) {
     HelpScreen(
-            state = HelpScreenState(screen = params),
+            state = HelpState(screen = params),
             listener = {},
     )
 }

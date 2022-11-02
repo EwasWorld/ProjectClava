@@ -1,7 +1,12 @@
 package com.eywa.projectclava.main.mainActivity.drawer
 
 import com.eywa.projectclava.main.common.UpdateCalendarInfo
-import com.eywa.projectclava.main.mainActivity.*
+import com.eywa.projectclava.main.database.DatabaseIntent
+import com.eywa.projectclava.main.datastore.DataStoreIntent
+import com.eywa.projectclava.main.mainActivity.NavRoute
+import com.eywa.projectclava.main.mainActivity.viewModel.CoreIntent
+import com.eywa.projectclava.main.mainActivity.viewModel.MainEffect
+import com.eywa.projectclava.main.mainActivity.viewModel.MainIntent
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.Player
 import java.util.*
@@ -20,18 +25,20 @@ sealed class DrawerIntent : MainIntent {
     data class DeleteMatch(val value: Match) : DrawerIntent()
     object DeleteAllMatches : DrawerIntent()
 
-    fun map(): CoreIntent = when (this) {
-        is Navigate -> MainEffect.Navigate(value)
-        is UpdateClubNightStartTime -> DataStoreIntent.UpdateClubNightStartTime(value)
-        is UpdateClubNightStartTimeCalendar -> DataStoreIntent.UpdateClubNightStartTimeCalendar(value)
-        is UpdateDefaultMatchTime -> DataStoreIntent.UpdateDefaultMatchTime(value)
-        is UpdateDefaultTimeToAdd -> DataStoreIntent.UpdateDefaultTimeToAdd(value)
-        is UpdateOverrunIndicatorThreshold -> DataStoreIntent.UpdateOverrunIndicatorThreshold(value)
-        is TogglePrependCourt -> DataStoreIntent.TogglePrependCourt
-        DeleteAllMatches -> DatabaseIntent.DeleteAllMatches
-        is DeleteMatch -> DatabaseIntent.DeleteMatch(value)
-        is UpdatePlayers -> DatabaseIntent.UpdatePlayers(value)
-        is UpdateMatch -> DatabaseIntent.UpdateMatch(value)
-        ClearDatastore -> DataStoreIntent.ClearDatastore
-    }
+    fun handle(handle: (CoreIntent) -> Unit) = handle(
+            when (this) {
+                is Navigate -> MainEffect.Navigate(value)
+                is UpdateClubNightStartTime -> DataStoreIntent.UpdateClubNightStartTime(value)
+                is UpdateClubNightStartTimeCalendar -> DataStoreIntent.UpdateClubNightStartTimeCalendar(value)
+                is UpdateDefaultMatchTime -> DataStoreIntent.UpdateDefaultMatchTime(value)
+                is UpdateDefaultTimeToAdd -> DataStoreIntent.UpdateDefaultTimeToAdd(value)
+                is UpdateOverrunIndicatorThreshold -> DataStoreIntent.UpdateOverrunIndicatorThreshold(value)
+                is TogglePrependCourt -> DataStoreIntent.TogglePrependCourt
+                DeleteAllMatches -> DatabaseIntent.DeleteAllMatches
+                is DeleteMatch -> DatabaseIntent.DeleteMatch(value)
+                is UpdatePlayers -> DatabaseIntent.UpdatePlayers(value)
+                is UpdateMatch -> DatabaseIntent.UpdateMatch(value)
+                ClearDatastore -> DataStoreIntent.ClearDatastore
+            }
+    )
 }

@@ -1,22 +1,14 @@
 package com.eywa.projectclava.main.mainActivity.screens.queue
 
-import com.eywa.projectclava.main.mainActivity.CoreIntent
-import com.eywa.projectclava.main.mainActivity.DatabaseIntent
-import com.eywa.projectclava.main.mainActivity.MainEffect
+import com.eywa.projectclava.main.database.DatabaseIntent
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.mainActivity.screens.ScreenIntent
-import com.eywa.projectclava.main.mainActivity.screens.ScreenState
+import com.eywa.projectclava.main.mainActivity.viewModel.CoreIntent
+import com.eywa.projectclava.main.mainActivity.viewModel.MainEffect
 import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.ui.sharedUi.TimePickerState
 
-
-data class MatchQueueState(
-        val selectedMatchId: Int? = null,
-        val startMatchDialogIsOpen: Boolean = false,
-        val selectedCourt: Court? = null,
-        val startMatchTimePickerState: TimePickerState? = null,
-) : ScreenState
 
 sealed class MatchQueueIntent : ScreenIntent<MatchQueueState> {
     override val screen: NavRoute = NavRoute.MATCH_QUEUE

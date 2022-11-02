@@ -17,7 +17,10 @@ import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.main.mainActivity.NavRoute
 
 
-data class ScreenHelpData(
+/**
+ * Help data for a particular screen
+ */
+data class HelpData(
         val title: String,
         val body: String? = null,
         val showColourHelp: Boolean = false,
@@ -36,6 +39,9 @@ data class ScreenHelpData(
     )
 }
 
+/**
+ * An image (usually with labels) and a description of the image
+ */
 data class HelpImage(
         @DrawableRes val imageId: Int,
         val imageDescription: List<AnnotatedString>,
@@ -56,6 +62,9 @@ data class HelpImage(
         contentDescription = imageDescription,
 )
 
+/**
+ * Help content and a description of the content
+ */
 open class HelpContent(
         val content: @Composable ColumnScope.(navListener: (NavRoute) -> Unit) -> Unit,
         val contentDescription: List<AnnotatedString>,
