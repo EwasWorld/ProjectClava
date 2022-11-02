@@ -12,8 +12,6 @@ import com.eywa.projectclava.R
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.mainActivity.ui.ClavaBottomNav
 
-// TODO What happens if I delete all the players in a match?
-
 fun NavRoute.getHelpInfo() = when (this) {
     NavRoute.ADD_PLAYER -> HelpStrings.ADD_PLAYER
     NavRoute.ADD_COURT -> HelpStrings.ADD_COURT
@@ -182,7 +180,6 @@ private object HelpStrings {
             body = "Start games by assigning them a court and a duration.",
             showColourHelp = true,
             helpContent = HelpImage(
-                    // TODO Retake screenshot - Amy/Ben row should be green...
                     imageId = R.drawable.help_queue,
                     imageDescription = listOf(
                             AnnotatedString(

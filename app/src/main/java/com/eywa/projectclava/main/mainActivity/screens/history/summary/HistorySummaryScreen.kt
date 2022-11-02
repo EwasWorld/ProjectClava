@@ -82,6 +82,14 @@ fun HistorySummaryScreen(
                         style = Typography.body1,
                 )
                 WrappingRow(modifier = Modifier.padding(start = 10.dp)) {
+                    // If players were deleted but matches remain
+                    if (players.none()) {
+                        Text(
+                                text = "No data",
+                                style = Typography.body1,
+                        )
+                    }
+
                     players.forEachIndexed { index, (name, matchCount) ->
                         Row(
                                 verticalAlignment = Alignment.CenterVertically,

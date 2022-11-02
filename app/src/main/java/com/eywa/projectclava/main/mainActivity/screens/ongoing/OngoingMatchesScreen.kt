@@ -107,7 +107,7 @@ fun OngoingMatchesScreen(
                         MatchStateIndicator(match = match, getTimeRemaining = getTimeRemaining)
                     }
                     Text(
-                            text = match.players.sortedBy { it.name }.joinToString(limit = 10) { it.name },
+                            text = match.playerNameString(),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                     )

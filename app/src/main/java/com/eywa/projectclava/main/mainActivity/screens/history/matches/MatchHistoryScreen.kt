@@ -146,8 +146,8 @@ fun MatchHistoryScreen(
                                     .padding(10.dp)
                     ) {
                         Text(
-                                text = match.players.sortedBy { it.name }.joinToString(limit = 10) { it.name },
-                                style = Typography.h4,
+                                text = match.playerNameString(),
+                                style = if (match.players.any()) Typography.h4 else Typography.body1,
                                 modifier = Modifier.weight(1f)
                         )
                         Spacer(modifier = Modifier.width(10.dp))

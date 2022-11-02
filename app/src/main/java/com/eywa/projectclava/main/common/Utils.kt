@@ -8,6 +8,7 @@ import com.eywa.projectclava.main.model.TimeRemaining
 import com.eywa.projectclava.ui.theme.ClavaColor
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
 private const val dateFormat = "d MMM yy"
@@ -35,10 +36,17 @@ fun asTimeString(minutes: Int?, seconds: Int?): String {
     if (minutes == null || seconds == null) return "--:--"
 
     val initialSign = if (seconds < 0 || minutes < 0) "-" else ""
-    return initialSign +
-            abs(minutes) +
-            ":" +
-            abs(seconds).toString().padStart(2, '0')
+
+    return initialSign + when {
+        // Over a day
+        abs(minutes) >= 60 * 24 -> "1 day+"
+        // Over an hour
+        abs(minutes) >= 60 -> {
+            val hours = TimeUnit.MINUTES.toHours(abs(minutes).toLong())
+            "" + hours + " hour" + (if (hours == 1L) "" else "s")
+        }
+        else -> "" + abs(minutes) + ":" + abs(seconds).toString().padStart(2, '0')
+    }
 }
 
 fun Long?.asCalendar(): Calendar? = this?.let {

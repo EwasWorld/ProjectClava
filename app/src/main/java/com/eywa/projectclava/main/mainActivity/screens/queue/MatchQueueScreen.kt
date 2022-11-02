@@ -26,6 +26,7 @@ import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.ui.sharedUi.*
 import com.eywa.projectclava.ui.theme.ClavaColor
 import com.eywa.projectclava.ui.theme.DividerThickness
+import com.eywa.projectclava.ui.theme.Typography
 import java.util.*
 
 
@@ -38,7 +39,7 @@ fun MatchQueueScreen(
         listener: (MatchQueueIntent) -> Unit,
 ) {
     val availableCourts = databaseState.courts.getAvailable(databaseState.matches)
-    val playerMatchStates = databaseState.matches.getPlayerStates()
+    val playerMatchStates = databaseState.matches.getPlayerStatus()
     val sortedMatches = databaseState.matches.filter { it.state is MatchState.NotStarted }.sortedBy { it.state }
 
     val missingContentNextStep = databaseState.getMissingContent()
@@ -106,13 +107,12 @@ fun MatchQueueScreen(
                     match = match.players
                             .mapNotNull { playerMatchStates[it.name] }
                             .maxByOrNull { it.state }
-                            ?.takeIf { !it.isFinished }
                             ?.let { foundMatch ->
                                 if (foundMatch.state !is MatchState.NotStarted) return@let foundMatch
                                 // If anyone is in an earlier upcoming mach, use the NotStarted colour
                                 matchingPlayersInEarlierUpcoming?.let { foundMatch }
                             },
-                    getTimeRemaining = { match.getTimeRemaining() },
+                    getTimeRemaining = getTimeRemaining,
             ) {
                 LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(5.dp),
@@ -121,6 +121,15 @@ fun MatchQueueScreen(
                                 .fillMaxWidth()
                                 .clickable(onClick = { listener(MatchClicked(match)) })
                 ) {
+                    if (match.players.none()) {
+                        item {
+                            Text(
+                                    text = "No player data",
+                                    style = Typography.body1,
+                            )
+                        }
+                    }
+
                     items(
                             match.players
                                     .map { it to playerMatchStates[it.name] }
@@ -143,6 +152,7 @@ fun MatchQueueScreen(
                         ) {
                             Text(
                                     text = player.name,
+                                    style = Typography.body1,
                                     modifier = Modifier.padding(vertical = 3.dp, horizontal = 5.dp)
                             )
                         }

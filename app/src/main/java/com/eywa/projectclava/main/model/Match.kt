@@ -6,21 +6,28 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
+/**
+ * Map player to their matches
+ */
 fun Iterable<Match>.getPlayerMatches() =
-        map { it.players.map { player -> player to it } }
-                .flatten()
+        flatMap { it.players.map { player -> player to it } }
                 .groupBy { it.first.name }
                 .map { (_, pairs) -> pairs.first().first.name to pairs.map { it.second } }
                 .toMap()
 
-fun Iterable<Match>.getPlayerStates() =
+/**
+ * Gets the status of a player (whether they're on court, queued, etc.)
+ */
+fun Iterable<Match>.getPlayerStatus() =
         getPlayerMatches()
                 .mapValues { (_, matches) ->
-                    when (matches.size) {
+                    val unfinishedMatches = matches.filter { !it.isFinished }
+
+                    when (unfinishedMatches.size) {
                         0 -> null
-                        1 -> matches.first()
+                        1 -> unfinishedMatches.first()
                         // Take the value with the largest remaining time
-                        else -> matches.maxByOrNull { it.state }
+                        else -> unfinishedMatches.maxByOrNull { it.state }
                     }
                 }
                 .toMap()
@@ -95,6 +102,11 @@ data class Match(
         is MatchState.OnCourt -> state.matchEndTime
         is MatchState.Paused -> state.matchPausedAt
         is MatchState.NotStarted -> state.createdAt
+    }
+
+    fun playerNameString() = when {
+        players.none() -> "No player data"
+        else -> players.sortedBy { it.name }.joinToString(limit = 10) { it.name }
     }
 
     val court
