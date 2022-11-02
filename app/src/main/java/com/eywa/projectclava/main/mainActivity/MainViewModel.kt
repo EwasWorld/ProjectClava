@@ -16,6 +16,7 @@ import com.eywa.projectclava.main.database.player.PlayerRepo
 import com.eywa.projectclava.main.mainActivity.drawer.DrawerIntent
 import com.eywa.projectclava.main.mainActivity.screens.ScreenIntent
 import com.eywa.projectclava.main.mainActivity.screens.ScreenState
+import com.eywa.projectclava.main.mainActivity.screens.help.HelpScreenState
 import com.eywa.projectclava.main.model.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
@@ -87,7 +88,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             /*
              * CoreIntents
              */
-            is MainEffect -> viewModelScope.launch(context = Dispatchers.Default) { _effects.emit(intent) }
+            is MainEffect -> {
+                if (intent is MainEffect.Navigate && intent.destination == NavRoute.HELP_SCREEN) {
+                    val currentState = getScreenState(NavRoute.HELP_SCREEN) as HelpScreenState
+                    NavRoute.HELP_SCREEN.updateScreenState(currentState.copy(screen = intent.currentRoute))
+                }
+
+                viewModelScope.launch(context = Dispatchers.Default) { _effects.emit(intent) }
+            }
             is DatabaseIntent -> viewModelScope.launch { handleDatabaseIntent(intent) }
             is DataStoreIntent -> viewModelScope.launch {
                 clavaDatastore.handle(intent, preferences.latest())

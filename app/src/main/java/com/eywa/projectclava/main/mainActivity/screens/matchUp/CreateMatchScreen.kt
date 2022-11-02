@@ -118,12 +118,11 @@ fun CreateMatchScreen(
                         })
         ) { (player, matches) ->
             val match = matches?.getPlayerColouringMatch()
-            val timeRemaining = { match?.getTimeRemaining() }
 
             SelectableListItem(
-                    matchState = match?.state,
+                    match = match,
                     isSelected = selectedPlayerNames.contains(player.name),
-                    timeRemaining = timeRemaining,
+                    getTimeRemaining = getTimeRemaining,
             ) {
                 Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -147,7 +146,7 @@ fun CreateMatchScreen(
                     }
 
                     Spacer(modifier = Modifier.weight(1f))
-                    MatchStateIndicator(matches?.maxByOrNull { it.state }, timeRemaining)
+                    MatchStateIndicator(matches?.maxByOrNull { it.state }, getTimeRemaining)
                 }
             }
         }
@@ -224,8 +223,8 @@ private fun CreateMatchScreenFooter(
 
                     SelectableListItem(
                             enabled = player.enabled,
-                            matchState = match?.state,
-                            timeRemaining = { match?.getTimeRemaining() }
+                            match = match,
+                            getTimeRemaining = { match?.getTimeRemaining() }
                     ) {
                         Text(
                                 text = player.name + if (playedBefore[player.name] == true) "*" else "",

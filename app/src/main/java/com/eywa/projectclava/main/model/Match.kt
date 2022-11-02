@@ -36,8 +36,6 @@ fun Iterable<Match>.getPlayerColouringMatch() = (
 
 fun Iterable<Match>.getCourtsInUse() = filter { it.isOnCourt }.map { it.court!! }
 
-fun Iterable<Match>.getNextMatchToFinish() = filter { it.isOnCourt }.minByOrNull { it.state }
-
 fun Iterable<Match>.getLatestMatchForCourt(court: Court) =
         filter { it.court?.name == court.name }.getLatestFinishingMatch()
 
@@ -168,26 +166,20 @@ data class Match(
     }
 
     /**
-     * If the match is finished, will transform to a paused state with [timeToAdd] remaining
+     * If the match is overrunning, will add the time to the current time rather than the matchEndTime.
+     * If the match is complete, it will become paused with [timeToAdd] seconds remaining.
      */
     fun addTime(currentTime: Calendar, timeToAdd: Int) = when (state) {
         is MatchState.Paused -> copy(
                 state = state.copy(remainingTimeSeconds = state.remainingTimeSeconds + timeToAdd)
         )
         is MatchState.OnCourt -> {
+            val initialTime = if (state.matchEndTime.after(currentTime)) state.matchEndTime else currentTime
             copy(
-                    state = if (state.matchEndTime.after(currentTime)) {
-                        state.copy(
-                                matchEndTime = (state.matchEndTime.clone() as Calendar)
-                                        .apply { add(Calendar.SECOND, timeToAdd) }
-                        )
-                    }
-                    else {
-                        MatchState.Paused(
-                                matchPausedAt = state.matchEndTime,
-                                remainingTimeSeconds = timeToAdd.toLong(),
-                        )
-                    }
+                    state = state.copy(
+                            matchEndTime = (initialTime.clone() as Calendar)
+                                    .apply { add(Calendar.SECOND, timeToAdd) }
+                    )
             )
         }
         is MatchState.Completed -> copy(

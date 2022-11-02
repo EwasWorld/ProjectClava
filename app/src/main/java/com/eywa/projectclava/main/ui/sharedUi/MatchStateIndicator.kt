@@ -12,13 +12,13 @@ import com.eywa.projectclava.main.model.TimeRemaining
 import com.eywa.projectclava.ui.theme.Typography
 
 @Composable
-fun MatchStateIndicator(match: Match?, timeRemaining: () -> TimeRemaining? = { null }) {
+fun MatchStateIndicator(match: Match?, getTimeRemaining: Match.() -> TimeRemaining? = { null }) {
     Text(
             text = when (match?.state) {
                 null,
                 is MatchState.NotStarted -> "Not played"
                 is MatchState.Paused,
-                is MatchState.OnCourt -> timeRemaining()!!.asTimeString()
+                is MatchState.OnCourt -> match.getTimeRemaining()!!.asTimeString()
                 is MatchState.Completed -> match.getTime().asTimeString()
             },
             style = Typography.body1,

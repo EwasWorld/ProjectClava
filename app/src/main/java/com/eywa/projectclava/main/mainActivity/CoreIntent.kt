@@ -14,7 +14,7 @@ import com.eywa.projectclava.main.model.Player
 interface CoreIntent : MainIntent
 
 sealed class MainEffect : CoreIntent {
-    data class Navigate(val destination: NavRoute) : MainEffect()
+    data class Navigate(val destination: NavRoute, val currentRoute: NavRoute? = null) : MainEffect()
 }
 
 sealed class DatabaseIntent : CoreIntent {

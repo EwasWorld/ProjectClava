@@ -103,16 +103,16 @@ fun MatchQueueScreen(
             SelectableListItem(
                     isSelected = state.selectedMatchId == match.id,
                     enabled = match.players.all { it.isPresent },
-                    matchState = match.players
+                    match = match.players
                             .mapNotNull { playerMatchStates[it.name] }
                             .maxByOrNull { it.state }
                             ?.takeIf { !it.isFinished }
                             ?.let { foundMatch ->
-                                if (foundMatch.state !is MatchState.NotStarted) return@let foundMatch.state
+                                if (foundMatch.state !is MatchState.NotStarted) return@let foundMatch
                                 // If anyone is in an earlier upcoming mach, use the NotStarted colour
-                                matchingPlayersInEarlierUpcoming?.let { foundMatch.state }
+                                matchingPlayersInEarlierUpcoming?.let { foundMatch }
                             },
-                    timeRemaining = { match.getTimeRemaining() },
+                    getTimeRemaining = { match.getTimeRemaining() },
             ) {
                 LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(5.dp),
@@ -133,13 +133,13 @@ fun MatchQueueScreen(
                     ) { (player, playerMatch) ->
                         SelectableListItem(
                                 enabled = player.enabled,
-                                matchState = playerMatch?.state?.let { matchState ->
-                                    if (matchState !is MatchState.NotStarted) return@let matchState
+                                match = playerMatch?.let { match ->
+                                    if (!match.isNotStarted) return@let match
                                     matchingPlayersInEarlierUpcoming
                                             ?.takeIf { it.find { p -> p.name == player.name } != null }
-                                            ?.let { matchState }
+                                            ?.let { match }
                                 },
-                                timeRemaining = { playerMatch?.getTimeRemaining() },
+                                getTimeRemaining = getTimeRemaining,
                         ) {
                             Text(
                                     text = player.name,
@@ -177,8 +177,7 @@ private fun UpcomingMatchesScreenFooter(
                     ?.maxByOrNull { it.value!!.state }
                     ?: mapOf(null to null).asIterable().first()
 
-            color = latestMatch?.state?.takeIf { it !is MatchState.NotStarted }
-                    ?.asColor(selectedMatch?.getTimeRemaining())
+            color = latestMatch?.takeIf { !it.isNotStarted }?.asColor(getTimeRemaining)
             extraText = when (latestMatch?.state) {
                 null,
                 is MatchState.NotStarted,
@@ -186,7 +185,7 @@ private fun UpcomingMatchesScreenFooter(
                 is MatchState.Paused -> "${latestPlayer?.name}'s match is paused"
                 is MatchState.OnCourt -> {
                     "${latestPlayer?.name} is on ${latestMatch.court!!.name}" +
-                            "\nTime remaining: " + selectedMatch?.getTimeRemaining().asTimeString()
+                            "\nTime remaining: " + latestMatch.getTimeRemaining().asTimeString()
                 }
             }
         }

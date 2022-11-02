@@ -55,6 +55,7 @@ fun <T : SetupListItem> SetupListScreen(
         getTimeRemaining: Match.() -> TimeRemaining?,
         nameIsDuplicate: (newName: String, nameOfItemBeingEdited: String?) -> Boolean,
         hasExtraContent: (T) -> Boolean = { false },
+        isDeleteItemEnabled: (T) -> Boolean = { true },
         extraContent: @Composable RowScope.(T) -> Unit = {},
         listener: (SetupListIntent) -> Unit,
 ) {
@@ -134,8 +135,8 @@ fun <T : SetupListItem> SetupListScreen(
                 val match = getMatch(item)
                 SelectableListItem(
                         enabled = item.enabled,
-                        matchState = match?.state,
-                        timeRemaining = { match?.getTimeRemaining() },
+                        match = match,
+                        getTimeRemaining = getTimeRemaining,
                 ) {
                     Column(
                             modifier = Modifier.clickable {
@@ -165,6 +166,7 @@ fun <T : SetupListItem> SetupListScreen(
                                 )
                             }
                             IconButton(
+                                    enabled = isDeleteItemEnabled(item),
                                     onClick = {
                                         listener(SetupListItemIntent.ItemDeleted(item))
                                         focusManager.clearFocus()

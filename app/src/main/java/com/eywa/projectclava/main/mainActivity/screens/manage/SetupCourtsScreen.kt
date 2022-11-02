@@ -78,6 +78,7 @@ fun SetupCourtsScreen(
             getMatch = { databaseState.matches.getLatestMatchForCourt(it) },
             getTimeRemaining = getTimeRemaining,
             hasExtraContent = { databaseState.matches.getLatestMatchForCourt(it) != null },
+            isDeleteItemEnabled = { databaseState.matches.getLatestMatchForCourt(it) == null },
             extraContent = {
                 ExtraContent(
                         match = databaseState.matches.getLatestMatchForCourt(it)!!,

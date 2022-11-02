@@ -5,6 +5,8 @@ import androidx.navigation.NavHostController
 import com.eywa.projectclava.main.mainActivity.screens.ScreenState
 import com.eywa.projectclava.main.mainActivity.screens.archivedPlayers.ArchivedPlayersScreen
 import com.eywa.projectclava.main.mainActivity.screens.archivedPlayers.ArchivedPlayersState
+import com.eywa.projectclava.main.mainActivity.screens.help.HelpScreen
+import com.eywa.projectclava.main.mainActivity.screens.help.HelpScreenState
 import com.eywa.projectclava.main.mainActivity.screens.history.matches.MatchHistoryScreen
 import com.eywa.projectclava.main.mainActivity.screens.history.matches.MatchHistoryState
 import com.eywa.projectclava.main.mainActivity.screens.history.summary.HistorySummaryScreen
@@ -204,6 +206,26 @@ enum class NavRoute(val route: String) {
         }
     },
 
+    HELP_SCREEN("help") {
+        override fun createInitialState() = HelpScreenState()
+
+        @Composable
+        override fun ClavaNavigation(
+                navController: NavHostController,
+                currentTime: () -> Calendar,
+                getTimeRemaining: Match.() -> TimeRemaining?,
+                viewModel: MainViewModel,
+                databaseState: DatabaseState,
+                preferencesState: DatastoreState,
+                isSoftKeyboardOpen: Boolean
+        ) {
+            HelpScreen(
+                    state = viewModel.getScreenState(this) as HelpScreenState,
+                    listener = { viewModel.handleIntent(it) },
+            )
+        }
+    },
+
     // TODO_HACKY Create a build variant for this
     TEST_PAGE("test") {
         override fun createInitialState() = throw NotImplementedError("No initial state")
@@ -262,4 +284,8 @@ enum class NavRoute(val route: String) {
             preferencesState: DatastoreState,
             isSoftKeyboardOpen: Boolean,
     )
+
+    companion object {
+        fun get(route: String?) = values().find { it.route == route }
+    }
 }

@@ -13,13 +13,51 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.eywa.projectclava.ui.theme.Typography
 
-@OptIn(ExperimentalComposeUiApi::class)
+private enum class ButtonStatus { ENABLED, DISABLED, GONE }
+
 @Composable
 fun ClavaDialog(
         isShown: Boolean,
         title: String,
         okButtonText: String,
         okButtonEnabled: Boolean = true,
+        onCancelListener: () -> Unit,
+        onOkListener: () -> Unit,
+        content: @Composable ColumnScope.() -> Unit
+) = ClavaDialog(
+        isShown = isShown,
+        title = title,
+        okButtonText = okButtonText,
+        okButtonStatus = if (okButtonEnabled) ButtonStatus.ENABLED else ButtonStatus.DISABLED,
+        onCancelListener = onCancelListener,
+        onOkListener = onOkListener,
+        content = content,
+)
+
+@Composable
+fun ClavaDialog(
+        isShown: Boolean,
+        title: String,
+        onCancelListener: () -> Unit,
+        content: @Composable ColumnScope.() -> Unit
+) = ClavaDialog(
+        isShown = isShown,
+        title = title,
+        okButtonText = "",
+        okButtonStatus = ButtonStatus.GONE,
+        onCancelListener = onCancelListener,
+        onOkListener = { },
+        content = content,
+)
+
+
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+private fun ClavaDialog(
+        isShown: Boolean,
+        title: String,
+        okButtonText: String,
+        okButtonStatus: ButtonStatus = ButtonStatus.ENABLED,
         onCancelListener: () -> Unit,
         onOkListener: () -> Unit,
         content: @Composable ColumnScope.() -> Unit
@@ -58,14 +96,16 @@ fun ClavaDialog(
                     ) {
                         Text("Cancel")
                     }
-                    Button(
-                            enabled = okButtonEnabled,
-                            onClick = {
-                                onOkListener()
-                                onCancelListener()
-                            },
-                    ) {
-                        Text(okButtonText)
+                    if (okButtonStatus != ButtonStatus.GONE) {
+                        Button(
+                                enabled = okButtonStatus == ButtonStatus.ENABLED,
+                                onClick = {
+                                    onOkListener()
+                                    onCancelListener()
+                                },
+                        ) {
+                            Text(okButtonText)
+                        }
                     }
                 }
             },

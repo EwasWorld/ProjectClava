@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -25,7 +26,7 @@ fun ClavaBottomNav(
     ClavaBottomNav(
             currentRoute = current?.destination?.route,
             hasOverrunningMatch = hasOverrunningMatch,
-            onClick = { navController.navigate(it) }
+            onClick = { navController.navigate(it.route) }
     )
 }
 
@@ -33,7 +34,7 @@ fun ClavaBottomNav(
 fun ClavaBottomNav(
         currentRoute: String?,
         hasOverrunningMatch: Boolean,
-        onClick: (destination: String) -> Unit,
+        onClick: (destination: NavRoute) -> Unit,
 ) {
     BottomNavigation(
             backgroundColor = ClavaColor.BottomNavBackground,
@@ -44,7 +45,7 @@ fun ClavaBottomNav(
                 selectedIcon = ClavaIconInfo.PainterIcon(R.drawable.baseline_assignment_24),
                 label = "Manage",
                 contentDescription = "Manage players and courts",
-                destinations = listOf(NavRoute.ADD_PLAYER.route, NavRoute.ADD_COURT.route),
+                destinations = listOf(NavRoute.ADD_PLAYER, NavRoute.ADD_COURT),
                 currentRoute = currentRoute,
                 onClick = onClick,
         )
@@ -53,7 +54,7 @@ fun ClavaBottomNav(
                 selectedIcon = ClavaIconInfo.PainterIcon(R.drawable.baseline_groups_24),
                 label = "Match up",
                 contentDescription = "Match up players",
-                destination = NavRoute.CREATE_MATCH.route,
+                destination = NavRoute.CREATE_MATCH,
                 currentRoute = currentRoute,
                 onClick = onClick,
         )
@@ -62,7 +63,7 @@ fun ClavaBottomNav(
                 selectedIcon = ClavaIconInfo.PainterIcon(R.drawable.baseline_pending_24),
                 label = "Queue",
                 contentDescription = "Match queue",
-                destination = NavRoute.MATCH_QUEUE.route,
+                destination = NavRoute.MATCH_QUEUE,
                 currentRoute = currentRoute,
                 onClick = onClick,
         )
@@ -71,7 +72,7 @@ fun ClavaBottomNav(
                 label = "Ongoing",
                 contentDescription = "Ongoing matches",
                 badgeContent = if (hasOverrunningMatch) "" else null,
-                destination = NavRoute.ONGOING_MATCHES.route,
+                destination = NavRoute.ONGOING_MATCHES,
                 currentRoute = currentRoute,
                 onClick = onClick,
         )
@@ -79,7 +80,7 @@ fun ClavaBottomNav(
                 icon = ClavaIconInfo.PainterIcon(R.drawable.baseline_history_24),
                 label = "History",
                 contentDescription = "Match history",
-                destinations = listOf(NavRoute.MATCH_HISTORY.route, NavRoute.HISTORY_SUMMARY.route),
+                destinations = listOf(NavRoute.MATCH_HISTORY, NavRoute.HISTORY_SUMMARY),
                 currentRoute = currentRoute,
                 onClick = onClick,
         )
@@ -93,9 +94,9 @@ fun RowScope.ClavaBottomNavItem(
         label: String,
         contentDescription: String,
         badgeContent: String? = null,
-        destination: String,
+        destination: NavRoute,
         currentRoute: String?,
-        onClick: (destination: String) -> Unit,
+        onClick: (destination: NavRoute) -> Unit,
 ) = ClavaBottomNavItem(
         icon = icon,
         selectedIcon = selectedIcon,
@@ -118,12 +119,12 @@ fun RowScope.ClavaBottomNavItem(
         label: String,
         contentDescription: String,
         badgeContent: String? = null,
-        destinations: Iterable<String>,
+        destinations: Iterable<NavRoute>,
         currentRoute: String?,
-        onClick: (destination: String) -> Unit,
+        onClick: (destination: NavRoute) -> Unit,
 ) {
     require(destinations.any()) { "No destinations for nav button" }
-    val isSelected = destinations.contains(currentRoute)
+    val isSelected = destinations.map { it.route }.contains(currentRoute)
     BottomNavigationItem(
             selected = isSelected,
             onClick = { onClick(destinations.first()) },
@@ -144,7 +145,9 @@ fun RowScope.ClavaBottomNavItem(
             label = {
                 Text(
                         text = label,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                 )
             },
             modifier = Modifier.semantics { this.contentDescription = contentDescription }

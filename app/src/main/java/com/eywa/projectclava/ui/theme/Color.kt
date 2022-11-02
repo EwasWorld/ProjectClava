@@ -49,6 +49,8 @@ object ClavaColor {
     val OnTabSwitcherNotSelected = Color.Black
     val TabSwitcherBorder = Color.LightGray
 
+    val HelpScreenBackground = Color.White
+
     val Divider = Color.Black.copy(alpha = 0.12f)
 }
 

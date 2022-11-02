@@ -80,11 +80,10 @@ fun OngoingMatchesScreen(
                         .sortedBy { it.state }
         ) { match ->
             val isSelected = state.selectedMatchId == match.id
-            val timeRemaining = { match.getTimeRemaining() }
 
             SelectableListItem(
-                    timeRemaining = timeRemaining,
-                    matchState = match.state,
+                    getTimeRemaining = getTimeRemaining,
+                    match = match,
                     isSelected = isSelected,
             ) {
                 Column(
@@ -105,7 +104,7 @@ fun OngoingMatchesScreen(
                                 modifier = Modifier.weight(1f)
                         )
                         Spacer(modifier = Modifier.width(10.dp))
-                        MatchStateIndicator(match = match, timeRemaining = timeRemaining)
+                        MatchStateIndicator(match = match, getTimeRemaining = getTimeRemaining)
                     }
                     Text(
                             text = match.players.sortedBy { it.name }.joinToString(limit = 10) { it.name },

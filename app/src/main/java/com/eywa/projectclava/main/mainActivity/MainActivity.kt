@@ -6,10 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -18,6 +16,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener
 import androidx.core.view.WindowInsetsCompat
@@ -25,6 +25,7 @@ import androidx.core.view.WindowInsetsCompat.toWindowInsetsCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.eywa.projectclava.R
 import com.eywa.projectclava.main.mainActivity.drawer.DrawerContent
 import com.eywa.projectclava.main.mainActivity.drawer.DrawerIntent
 import com.eywa.projectclava.main.mainActivity.ui.ClavaBottomNav
@@ -36,7 +37,7 @@ import kotlinx.coroutines.launch
 import java.util.*
 
 /*
- * Time spent: 50 hrs
+ * Time spent: 54 hrs
  */
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
@@ -189,20 +190,63 @@ class MainActivity : ComponentActivity() {
                             contentAlignment = Alignment.CenterStart,
                             modifier = Modifier.fillMaxSize()
                     ) {
-                        val rounding = 40
-                        Surface(
-                                shape = RoundedCornerShape(0, rounding, rounding, 0),
-                                color = ClavaColor.FabBackground,
-                                contentColor = ClavaColor.FabIcon,
-                                onClick = { changeDrawerState(true) },
-                                modifier = Modifier.size(width = 25.dp, height = 100.dp)
+                        Column(
+                                verticalArrangement = Arrangement.spacedBy(20.dp)
                         ) {
-                            Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Open menu")
+                            LeftEdgeButton(
+                                    onClick = { changeDrawerState(true) },
+                                    height = 100.dp,
+                            ) {
+                                Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Open menu")
+                            }
+
+                            val currentRoute = NavRoute.get(navController.currentDestination?.route)
+                            if (currentRoute != NavRoute.HELP_SCREEN) {
+                                LeftEdgeButton(
+                                        onClick = {
+                                            viewModel.handleIntent(
+                                                    MainEffect.Navigate(NavRoute.HELP_SCREEN, currentRoute)
+                                            )
+                                        },
+                                        alpha = 0.4f,
+                                        height = 60.dp,
+                                ) {
+                                    Icon(
+                                            painter = painterResource(R.drawable.baseline_question_mark_24),
+                                            contentDescription = "Help",
+                                            modifier = Modifier.padding(3.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun LeftEdgeButton(
+        onClick: () -> Unit,
+        alpha: Float = 1f,
+        height: Dp,
+        content: @Composable () -> Unit,
+) {
+    val rounding = 60
+    Box(
+            contentAlignment = Alignment.CenterStart,
+            modifier = Modifier
+                    .clickable { onClick() }
+                    .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+    ) {
+        Surface(
+                shape = RoundedCornerShape(0, rounding, rounding, 0),
+                color = ClavaColor.FabBackground.copy(alpha = alpha),
+                contentColor = ClavaColor.FabIcon,
+                content = content,
+                modifier = Modifier.size(width = 25.dp, height = height)
+        )
     }
 }
 
