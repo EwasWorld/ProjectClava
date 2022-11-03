@@ -26,15 +26,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.eywa.projectclava.R
-import com.eywa.projectclava.main.mainActivity.drawer.DrawerContent
-import com.eywa.projectclava.main.mainActivity.drawer.DrawerIntent
-import com.eywa.projectclava.main.mainActivity.ui.ClavaBottomNav
+import com.eywa.projectclava.main.features.drawer.DrawerContent
+import com.eywa.projectclava.main.features.drawer.DrawerIntent
+import com.eywa.projectclava.main.features.ui.ClavaBottomNav
+import com.eywa.projectclava.main.features.ui.ClavaDialog
 import com.eywa.projectclava.main.mainActivity.viewModel.MainEffect
 import com.eywa.projectclava.main.mainActivity.viewModel.MainViewModel
-import com.eywa.projectclava.main.ui.sharedUi.ClavaDialog
-import com.eywa.projectclava.ui.theme.ClavaColor
-import com.eywa.projectclava.ui.theme.ProjectClavaTheme
-import com.eywa.projectclava.ui.theme.Typography
+import com.eywa.projectclava.main.theme.ClavaColor
+import com.eywa.projectclava.main.theme.ProjectClavaTheme
+import com.eywa.projectclava.main.theme.Typography
 import kotlinx.coroutines.launch
 import java.util.*
 

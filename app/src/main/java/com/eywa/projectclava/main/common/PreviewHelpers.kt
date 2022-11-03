@@ -1,6 +1,9 @@
 package com.eywa.projectclava.main.common
 
-import com.eywa.projectclava.main.model.*
+import com.eywa.projectclava.main.model.Court
+import com.eywa.projectclava.main.model.Match
+import com.eywa.projectclava.main.model.MatchState
+import com.eywa.projectclava.main.model.Player
 import java.util.*
 
 fun generatePlayers(count: Int): List<Player> {
@@ -23,11 +26,6 @@ fun generatePlayers(count: Int): List<Player> {
 fun generateCourt(courtNumber: Int, courtEnabled: Boolean = true) = Court(1, courtNumber.toString(), courtEnabled)
 
 fun generateCourts(count: Int) = List(count) { generateCourt(it + 1, it % 6 != 5) }.shuffled()
-
-fun generateMatchTimeRemaining(
-        matches: List<Match>,
-        currentTime: Calendar,
-): Map<Int, TimeRemaining?> = matches.associate { it.id to it.state.getTimeLeft(currentTime) }
 
 fun generateMatches(
         count: Int,

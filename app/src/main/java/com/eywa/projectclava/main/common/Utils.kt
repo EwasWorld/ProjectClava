@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.Color
 import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.TimeRemaining
-import com.eywa.projectclava.ui.theme.ClavaColor
+import com.eywa.projectclava.main.theme.ClavaColor
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -13,9 +13,6 @@ import kotlin.math.abs
 
 private const val dateFormat = "d MMM yy"
 private const val timeFormat = "HH:mm"
-
-fun Calendar.asDateTimeString(): String =
-        SimpleDateFormat("$dateFormat $timeFormat", Locale.getDefault()).format(this.time)
 
 fun Calendar.asDateString(): String = SimpleDateFormat(dateFormat, Locale.getDefault()).format(this.time)
 fun Calendar.asTimeString(): String = SimpleDateFormat(timeFormat, Locale.getDefault()).format(this.time)
@@ -79,7 +76,7 @@ fun String.parseInt() =
             0
         }
 
-sealed class TextOrNumber : Comparable<TextOrNumber> {
+private sealed class TextOrNumber : Comparable<TextOrNumber> {
     data class Text(val value: String) : TextOrNumber() {
         override fun compareTo(other: TextOrNumber) = when (other) {
             is Number -> value.compareTo(other.value.toString())

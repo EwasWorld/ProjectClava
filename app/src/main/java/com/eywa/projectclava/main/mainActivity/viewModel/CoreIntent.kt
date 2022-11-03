@@ -2,7 +2,7 @@ package com.eywa.projectclava.main.mainActivity.viewModel
 
 import com.eywa.projectclava.main.database.DatabaseIntent
 import com.eywa.projectclava.main.datastore.DataStoreIntent
-import com.eywa.projectclava.main.mainActivity.drawer.DrawerIntent
+import com.eywa.projectclava.main.features.drawer.DrawerIntent
 
 /**
  * Things that must be handled by the viewmodel like [DatabaseIntent], [DataStoreIntent], [MainEffect].

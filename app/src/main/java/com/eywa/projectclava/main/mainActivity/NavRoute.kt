@@ -3,27 +3,26 @@ package com.eywa.projectclava.main.mainActivity
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import com.eywa.projectclava.main.datastore.DatastoreState
-import com.eywa.projectclava.main.mainActivity.screens.ScreenState
-import com.eywa.projectclava.main.mainActivity.screens.archivedPlayers.ArchivedPlayersScreen
-import com.eywa.projectclava.main.mainActivity.screens.archivedPlayers.ArchivedPlayersState
-import com.eywa.projectclava.main.mainActivity.screens.help.HelpScreen
-import com.eywa.projectclava.main.mainActivity.screens.help.HelpState
-import com.eywa.projectclava.main.mainActivity.screens.history.matches.MatchHistoryScreen
-import com.eywa.projectclava.main.mainActivity.screens.history.matches.MatchHistoryState
-import com.eywa.projectclava.main.mainActivity.screens.history.summary.HistorySummaryScreen
-import com.eywa.projectclava.main.mainActivity.screens.manage.SetupListState
-import com.eywa.projectclava.main.mainActivity.screens.manage.setupPlayer.SetupPlayersScreen
-import com.eywa.projectclava.main.mainActivity.screens.manage.ui.SetupCourtsScreen
-import com.eywa.projectclava.main.mainActivity.screens.matchUp.CreateMatchScreen
-import com.eywa.projectclava.main.mainActivity.screens.matchUp.CreateMatchState
-import com.eywa.projectclava.main.mainActivity.screens.ongoing.OngoingMatchesScreen
-import com.eywa.projectclava.main.mainActivity.screens.ongoing.OngoingMatchesState
-import com.eywa.projectclava.main.mainActivity.screens.queue.MatchQueueScreen
-import com.eywa.projectclava.main.mainActivity.screens.queue.MatchQueueState
+import com.eywa.projectclava.main.features.screens.archivedPlayers.ArchivedPlayersScreen
+import com.eywa.projectclava.main.features.screens.archivedPlayers.ArchivedPlayersState
+import com.eywa.projectclava.main.features.screens.help.HelpScreen
+import com.eywa.projectclava.main.features.screens.help.HelpState
+import com.eywa.projectclava.main.features.screens.history.matches.MatchHistoryScreen
+import com.eywa.projectclava.main.features.screens.history.matches.MatchHistoryState
+import com.eywa.projectclava.main.features.screens.history.summary.HistorySummaryScreen
+import com.eywa.projectclava.main.features.screens.manage.SetupListState
+import com.eywa.projectclava.main.features.screens.manage.setupPlayer.SetupPlayersScreen
+import com.eywa.projectclava.main.features.screens.manage.ui.SetupCourtsScreen
+import com.eywa.projectclava.main.features.screens.matchUp.CreateMatchScreen
+import com.eywa.projectclava.main.features.screens.matchUp.CreateMatchState
+import com.eywa.projectclava.main.features.screens.ongoing.OngoingMatchesScreen
+import com.eywa.projectclava.main.features.screens.ongoing.OngoingMatchesState
+import com.eywa.projectclava.main.features.screens.queue.MatchQueueScreen
+import com.eywa.projectclava.main.features.screens.queue.MatchQueueState
+import com.eywa.projectclava.main.features.ui.AvailableCourtsHeader
+import com.eywa.projectclava.main.features.ui.ClavaScreen
 import com.eywa.projectclava.main.mainActivity.viewModel.MainViewModel
 import com.eywa.projectclava.main.model.*
-import com.eywa.projectclava.main.ui.sharedUi.AvailableCourtsHeader
-import com.eywa.projectclava.main.ui.sharedUi.ClavaScreen
 import java.util.*
 
 enum class NavRoute(val route: String) {
@@ -274,7 +273,7 @@ enum class NavRoute(val route: String) {
     },
     ;
 
-    abstract fun createInitialState(): ScreenState
+    abstract fun createInitialState(): com.eywa.projectclava.main.features.screens.ScreenState
 
     @Composable
     abstract fun ClavaNavigation(

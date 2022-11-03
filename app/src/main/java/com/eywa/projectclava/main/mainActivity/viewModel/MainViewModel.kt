@@ -14,11 +14,9 @@ import com.eywa.projectclava.main.database.player.PlayerRepo
 import com.eywa.projectclava.main.datastore.ClavaDatastore
 import com.eywa.projectclava.main.datastore.DataStoreIntent
 import com.eywa.projectclava.main.datastore.dataStore
+import com.eywa.projectclava.main.features.drawer.DrawerIntent
+import com.eywa.projectclava.main.features.screens.help.HelpState
 import com.eywa.projectclava.main.mainActivity.NavRoute
-import com.eywa.projectclava.main.mainActivity.drawer.DrawerIntent
-import com.eywa.projectclava.main.mainActivity.screens.ScreenIntent
-import com.eywa.projectclava.main.mainActivity.screens.ScreenState
-import com.eywa.projectclava.main.mainActivity.screens.help.HelpState
 import com.eywa.projectclava.main.model.ModelState
 import com.eywa.projectclava.main.model.asCourt
 import com.eywa.projectclava.main.model.asMatch
@@ -34,7 +32,7 @@ fun <T> SharedFlow<T>.latest() = replayCache.first()
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     val currentTime = MutableSharedFlow<Calendar>(1)
-    private var screenState by mutableStateOf(mapOf<NavRoute, ScreenState>())
+    private var screenState by mutableStateOf(mapOf<NavRoute, com.eywa.projectclava.main.features.screens.ScreenState>())
 
     private val _effects: MutableSharedFlow<MainEffect?> =
             MutableSharedFlow(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -84,7 +82,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun getScreenState(screen: NavRoute) = screenState[screen]
             ?: screen.createInitialState().also { screen.updateScreenState(it) }
 
-    private fun NavRoute.updateScreenState(newState: ScreenState) {
+    private fun NavRoute.updateScreenState(newState: com.eywa.projectclava.main.features.screens.ScreenState) {
         screenState = screenState.plus(this to newState)
     }
 
@@ -117,9 +115,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
              * Screens
              */
             is DrawerIntent -> intent.handle { handleIntent(it) }
-            is ScreenIntent<*> -> {
+            is com.eywa.projectclava.main.features.screens.ScreenIntent<*> -> {
                 @Suppress("UNCHECKED_CAST")
-                (intent as ScreenIntent<ScreenState>).handle(
+                (intent as com.eywa.projectclava.main.features.screens.ScreenIntent<com.eywa.projectclava.main.features.screens.ScreenState>).handle(
                         currentState = getScreenState(intent.screen),
                         handle = { handleIntent(it) },
                         newStateListener = { intent.screen.updateScreenState(it) },

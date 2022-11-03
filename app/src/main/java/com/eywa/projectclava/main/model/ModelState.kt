@@ -1,5 +1,7 @@
 package com.eywa.projectclava.main.model
 
+import com.eywa.projectclava.main.common.MissingContentNextStep
+
 data class ModelState(
         val courts: Iterable<Court> = listOf(),
         val matches: Iterable<Match> = listOf(),

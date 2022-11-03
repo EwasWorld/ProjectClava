@@ -1,7 +1,7 @@
 package com.eywa.projectclava
 
-import com.eywa.projectclava.main.model.MissingContentNextStep
-import com.eywa.projectclava.main.model.MissingContentNextStep.Companion.getFirstStep
+import com.eywa.projectclava.main.common.MissingContentNextStep
+import com.eywa.projectclava.main.common.MissingContentNextStep.Companion.getFirstStep
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
