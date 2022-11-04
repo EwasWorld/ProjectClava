@@ -51,7 +51,7 @@ fun HistorySummaryScreen(
         items(matchesGroupedByDate) { (dateString, matches) ->
             val isSingleMatch = matches.count() == 1
             val firstMatch = matches.minOfOrNull { it.getTime() }!!.asTimeString()
-            val lastMatch = matches.minOfOrNull { it.getTime() }!!.asTimeString()
+            val lastMatch = matches.maxOfOrNull { it.getTime() }!!.asTimeString()
             val players = matches
                     .flatMap { it.players }
                     .groupBy { it.name }

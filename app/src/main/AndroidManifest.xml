@@ -17,7 +17,6 @@
         <activity
             android:name=".main.mainActivity.MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.ProjectClava"
             android:windowSoftInputMode="adjustResize"
             >

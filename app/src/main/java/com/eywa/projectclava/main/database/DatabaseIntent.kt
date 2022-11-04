@@ -127,7 +127,7 @@ private interface CourtIntent : DatabaseIntent {
 
         when (this) {
             is AddCourt -> {
-                val prefix = if (prependCourt) "Court " else ""
+                val prefix = if (prependCourt && !name.startsWith("Court ", ignoreCase = true)) "Court " else ""
                 courtRepo.insertAll(DatabaseCourt(0, prefix + name))
             }
             is DeleteCourt -> courtRepo.delete(court.asDatabaseCourt())

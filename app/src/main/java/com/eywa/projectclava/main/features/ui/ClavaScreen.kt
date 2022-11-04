@@ -116,13 +116,13 @@ fun ClavaScreen(
                 enter = expandVertically(),
                 exit = shrinkVertically(),
         ) {
-            footerContent?.let {
+            Column {
                 Divider(thickness = DividerThickness)
                 Surface(
                         color = ClavaColor.HeaderFooterBackground,
                         modifier = Modifier.fillMaxWidth()
                 ) {
-                    footerContent()
+                    footerContent?.invoke()
                 }
             }
         }
