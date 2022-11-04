@@ -1,6 +1,8 @@
 package com.eywa.projectclava.main.features.screens.manage
 
+import com.eywa.projectclava.main.features.screens.ScreenState
 import com.eywa.projectclava.main.features.screens.manage.helperClasses.SetupListItem
+import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogState
 import com.eywa.projectclava.main.features.ui.editNameDialog.EditDialogState
 
 
@@ -12,7 +14,8 @@ data class SetupListState<T : SetupListItem>(
         override val editDialogOpenFor: T? = null,
         val useTextPlaceholderAlt: Boolean = false,
         val searchText: String? = null,
-) : com.eywa.projectclava.main.features.screens.ScreenState, EditDialogState<T> {
+        val deleteItemDialogState: ConfirmDialogState<T>? = null,
+) : ScreenState, EditDialogState<T> {
     val isSearchExpanded = searchText != null
 
     override fun editItemCopy(

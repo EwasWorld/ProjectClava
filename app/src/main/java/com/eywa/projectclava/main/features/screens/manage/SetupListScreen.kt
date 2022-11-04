@@ -46,6 +46,9 @@ import com.eywa.projectclava.main.features.screens.manage.ui.SetupCourtsScreen
 import com.eywa.projectclava.main.features.ui.ClavaScreen
 import com.eywa.projectclava.main.features.ui.NamedItemTextField
 import com.eywa.projectclava.main.features.ui.SelectableListItem
+import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialog
+import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogIntent
+import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogType
 import com.eywa.projectclava.main.features.ui.editNameDialog.EditDialogIntent
 import com.eywa.projectclava.main.features.ui.editNameDialog.EditNameDialog
 import com.eywa.projectclava.main.features.ui.topTabSwitcher.TabSwitcher
@@ -69,7 +72,6 @@ fun <T : SetupListItem> SetupListScreen(
         extraContent: @Composable RowScope.(T) -> Unit = {},
         listener: (SetupListIntent) -> Unit,
 ) {
-    // TODO Add an are you sure to deletion
     val focusManager = LocalFocusManager.current
 
     val itemsToShow = state.searchText
@@ -77,11 +79,18 @@ fun <T : SetupListItem> SetupListScreen(
             ?.let { searchTxt -> items.filter { it.name.contains(searchTxt, ignoreCase = true) } }
             ?.takeIf { it.isNotEmpty() }
 
+    // TODO More generic way to handle multiple dialogs and prevent them all showing at once
+    // TODO Move some of the setupListSettings to an EditNameDialog settings?
     EditNameDialog(
             typeContentDescription = setupListSettings.typeContentDescription,
             textPlaceholder = setupListSettings.getTextPlaceholder(state.useTextPlaceholderAlt),
             nameIsDuplicate = nameIsDuplicate,
             state = state,
+            listener = { listener(it.toSetupListIntent()) },
+    )
+    ConfirmDialog(
+            state = state.deleteItemDialogState,
+            type = ConfirmDialogType.DELETE,
             listener = { listener(it.toSetupListIntent()) },
     )
 
@@ -178,7 +187,14 @@ fun <T : SetupListItem> SetupListScreen(
                             IconButton(
                                     enabled = isDeleteItemEnabled(item),
                                     onClick = {
-                                        listener(ItemDeleted(item))
+                                        listener(
+                                                if (setupListSettings.confirmBeforeDelete) {
+                                                    ConfirmDialogIntent.Open(item).toSetupListIntent()
+                                                }
+                                                else {
+                                                    ItemDeleted(item)
+                                                }
+                                        )
                                         focusManager.clearFocus()
                                     }
                             ) {

@@ -16,7 +16,8 @@ enum class SetupListSettings(
         private val textPlaceholderAlt: String?,
         val deleteIconInfo: ClavaIconInfo = ClavaIconInfo.VectorIcon(Icons.Default.Close, "Delete"),
         val selectedTab: SetupListTabSwitcherItem,
-        val sortItems: (Iterable<SetupListItem>) -> List<SetupListItem> = { items -> items.sortedBy { it.name } }
+        val sortItems: (Iterable<SetupListItem>) -> List<SetupListItem> = { items -> items.sortedBy { it.name } },
+        val confirmBeforeDelete: Boolean = true,
 ) {
     PLAYERS(
             typeContentDescription = "player",
@@ -24,6 +25,7 @@ enum class SetupListSettings(
             selectedTab = SetupListTabSwitcherItem.PLAYERS,
             textPlaceholder = "John Doe",
             textPlaceholderAlt = null,
+            confirmBeforeDelete = false,
     ),
     COURTS(
             typeContentDescription = "court",

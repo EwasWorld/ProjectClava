@@ -23,6 +23,9 @@ import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.main.common.*
 import com.eywa.projectclava.main.features.screens.queue.MatchQueueIntent.*
 import com.eywa.projectclava.main.features.ui.*
+import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialog
+import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogIntent
+import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogType
 import com.eywa.projectclava.main.features.ui.timePicker.TimePicker
 import com.eywa.projectclava.main.features.ui.timePicker.TimePickerState
 import com.eywa.projectclava.main.model.*
@@ -63,6 +66,11 @@ fun MatchQueueScreen(
             state = state,
             listener = listener,
     )
+    ConfirmDialog(
+            state.deleteMatchDialogState,
+            type = ConfirmDialogType.DELETE,
+            listener = { listener(it.toMatchQueueIntent()) },
+    )
 
     ClavaScreen(
             noContentText = if (missingContentMain != null) "No matches planned" else "No courts to put the matches on!",
@@ -86,7 +94,10 @@ fun MatchQueueScreen(
                                     )
                             )
                         },
-                        removeMatchListener = { listener(MatchDeleted) },
+                        deleteMatchListener = {
+                            val match = databaseState.matches.find { it.id == state.selectedMatchId }!!
+                            listener(ConfirmDialogIntent.Open(match).toMatchQueueIntent())
+                        },
                         selectedMatch = state.selectedMatchId?.let { selectedId ->
                             databaseState.matches.find { it.id == selectedId }
                         },
@@ -169,11 +180,12 @@ fun MatchQueueScreen(
 private fun UpcomingMatchesScreenFooter(
         getTimeRemaining: Match.() -> TimeRemaining?,
         openStartMatchDialogListener: () -> Unit,
-        removeMatchListener: () -> Unit,
+        deleteMatchListener: () -> Unit,
         selectedMatch: Match?,
         playerMatchStates: Map<String, Match?>,
         hasAvailableCourts: Boolean,
 ) {
+    // TODO Add a button to swap one player in this match with someone in another match?
     val extraText: String?
     val color: Color?
     selectedMatch?.players?.find { !it.isPresent }.let { disabledPlayer ->
@@ -211,10 +223,10 @@ private fun UpcomingMatchesScreenFooter(
                     SelectedItemAction(
                             icon = ClavaIconInfo.VectorIcon(
                                     imageVector = Icons.Default.Close,
-                                    contentDescription = "Remove match",
+                                    contentDescription = "Delete match",
                             ),
                             enabled = selectedMatch != null,
-                            onClick = { selectedMatch?.let { removeMatchListener() } },
+                            onClick = { selectedMatch?.let { deleteMatchListener() } },
                     ),
                     SelectedItemAction(
                             icon = ClavaIconInfo.VectorIcon(

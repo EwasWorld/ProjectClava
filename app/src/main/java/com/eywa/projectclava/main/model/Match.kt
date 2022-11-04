@@ -2,6 +2,7 @@ package com.eywa.projectclava.main.model
 
 import com.eywa.projectclava.main.database.match.DatabaseMatch
 import com.eywa.projectclava.main.database.match.DatabaseMatchFull
+import com.eywa.projectclava.main.features.ui.editNameDialog.NamedItem
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
@@ -70,7 +71,14 @@ data class Match(
         val id: Int,
         val players: Iterable<Player>,
         val state: MatchState,
-) {
+) : NamedItem {
+    override val name: String
+        get() = when {
+            court != null -> "match on court ${court!!.name}"
+            players.any() -> "match between " + playerNameString()
+            else -> "match"
+        }
+
     val isNotStarted
         get() = state is MatchState.NotStarted
 

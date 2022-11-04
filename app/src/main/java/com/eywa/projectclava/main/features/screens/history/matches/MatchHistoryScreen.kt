@@ -16,10 +16,14 @@ import com.eywa.projectclava.main.common.MissingContentNextStep
 import com.eywa.projectclava.main.common.asDateString
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.features.screens.history.HistoryTabSwitcherItem
-import com.eywa.projectclava.main.features.screens.history.matches.MatchHistoryIntent.*
+import com.eywa.projectclava.main.features.screens.history.matches.MatchHistoryIntent.MatchClicked
+import com.eywa.projectclava.main.features.screens.history.matches.MatchHistoryIntent.Navigate
 import com.eywa.projectclava.main.features.ui.*
 import com.eywa.projectclava.main.features.ui.addTimeDialog.AddTimeDialog
 import com.eywa.projectclava.main.features.ui.addTimeDialog.AddTimeDialogIntent
+import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialog
+import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogIntent
+import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogType
 import com.eywa.projectclava.main.features.ui.topTabSwitcher.TabSwitcher
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.ModelState
@@ -38,6 +42,11 @@ fun MatchHistoryScreen(
             state = state,
             listener = { listener(it.toMatchHistoryIntent(defaultTimeToAdd)) },
     )
+    ConfirmDialog(
+            state = state.deleteMatchDialogState,
+            type = ConfirmDialogType.DELETE,
+            listener = { listener(it.toMatchHistoryIntent()) },
+    )
 
     val finishedMatches = databaseState.matches.filter { it.isFinished }.sortedByDescending { it.state }
     ClavaScreen(
@@ -53,7 +62,7 @@ fun MatchHistoryScreen(
                         openAddTimeDialogListener = {
                             listener(AddTimeDialogIntent.AddTimeOpened.toMatchHistoryIntent(defaultTimeToAdd))
                         },
-                        deleteMatchListener = { listener(MatchDeleted(it)) }
+                        deleteMatchListener = { listener(ConfirmDialogIntent.Open(it).toMatchHistoryIntent()) }
                 )
             },
             headerContent = {

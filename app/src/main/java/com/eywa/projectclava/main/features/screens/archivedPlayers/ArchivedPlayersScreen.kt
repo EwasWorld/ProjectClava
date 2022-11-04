@@ -21,6 +21,9 @@ import com.eywa.projectclava.R
 import com.eywa.projectclava.main.common.MissingContentNextStep
 import com.eywa.projectclava.main.features.ui.ClavaScreen
 import com.eywa.projectclava.main.features.ui.SelectableListItem
+import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialog
+import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogIntent
+import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogType
 import com.eywa.projectclava.main.features.ui.editNameDialog.EditDialogIntent
 import com.eywa.projectclava.main.features.ui.editNameDialog.EditNameDialog
 import com.eywa.projectclava.main.model.ModelState
@@ -42,6 +45,11 @@ fun ArchivedPlayersScreen(
                 newName != nameOfItemBeingEdited && databaseState.players.any { it.name == newName }
             },
             state = state,
+            listener = { listener(it.toArchivedPlayersIntent()) },
+    )
+    ConfirmDialog(
+            state = state.deletePlayerDialogState,
+            type = ConfirmDialogType.DELETE,
             listener = { listener(it.toArchivedPlayersIntent()) },
     )
 
@@ -92,7 +100,7 @@ fun ArchivedPlayersScreen(
                         )
                     }
                     IconButton(
-                            onClick = { listener(ArchivedPlayersIntent.ItemDeleted(player)) }
+                            onClick = { listener(ConfirmDialogIntent.Open(player).toArchivedPlayersIntent()) }
                     ) {
                         Icon(
                                 imageVector = Icons.Default.Close,
