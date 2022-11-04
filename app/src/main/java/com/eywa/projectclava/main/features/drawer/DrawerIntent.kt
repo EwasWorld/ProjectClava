@@ -24,21 +24,31 @@ sealed class DrawerIntent : MainIntent {
     data class UpdateMatch(val value: Match) : DrawerIntent()
     data class DeleteMatch(val value: Match) : DrawerIntent()
     object DeleteAllMatches : DrawerIntent()
+    object DeleteAllData : DrawerIntent()
 
-    fun handle(handle: (CoreIntent) -> Unit) = handle(
-            when (this) {
-                is Navigate -> MainEffect.Navigate(value)
-                is UpdateClubNightStartTime -> DataStoreIntent.UpdateClubNightStartTime(value)
-                is UpdateClubNightStartTimeCalendar -> DataStoreIntent.UpdateClubNightStartTimeCalendar(value)
-                is UpdateDefaultMatchTime -> DataStoreIntent.UpdateDefaultMatchTime(value)
-                is UpdateDefaultTimeToAdd -> DataStoreIntent.UpdateDefaultTimeToAdd(value)
-                is UpdateOverrunIndicatorThreshold -> DataStoreIntent.UpdateOverrunIndicatorThreshold(value)
-                is TogglePrependCourt -> DataStoreIntent.TogglePrependCourt
-                DeleteAllMatches -> DatabaseIntent.DeleteAllMatches
-                is DeleteMatch -> DatabaseIntent.DeleteMatch(value)
-                is UpdatePlayers -> DatabaseIntent.UpdatePlayers(value)
-                is UpdateMatch -> DatabaseIntent.UpdateMatch(value)
-                ClearDatastore -> DataStoreIntent.ClearDatastore
+    fun handle(handle: (CoreIntent) -> Unit) {
+        when (this) {
+            DeleteAllData -> {
+                handle(DatabaseIntent.DeleteAllData)
+                handle(DataStoreIntent.ClearDatastore)
             }
-    )
+            else -> handle(
+                    when (this) {
+                        is Navigate -> MainEffect.Navigate(value)
+                        is UpdateClubNightStartTime -> DataStoreIntent.UpdateClubNightStartTime(value)
+                        is UpdateClubNightStartTimeCalendar -> DataStoreIntent.UpdateClubNightStartTimeCalendar(value)
+                        is UpdateDefaultMatchTime -> DataStoreIntent.UpdateDefaultMatchTime(value)
+                        is UpdateDefaultTimeToAdd -> DataStoreIntent.UpdateDefaultTimeToAdd(value)
+                        is UpdateOverrunIndicatorThreshold -> DataStoreIntent.UpdateOverrunIndicatorThreshold(value)
+                        is TogglePrependCourt -> DataStoreIntent.TogglePrependCourt
+                        DeleteAllMatches -> DatabaseIntent.DeleteAllMatches
+                        is DeleteMatch -> DatabaseIntent.DeleteMatch(value)
+                        is UpdatePlayers -> DatabaseIntent.UpdatePlayers(value)
+                        is UpdateMatch -> DatabaseIntent.UpdateMatch(value)
+                        ClearDatastore -> DataStoreIntent.ClearDatastore
+                        else -> throw NotImplementedError()
+                    }
+            )
+        }
+    }
 }

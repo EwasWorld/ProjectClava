@@ -10,6 +10,8 @@ import java.util.*
 
 
 sealed interface DatabaseIntent : CoreIntent {
+    object DeleteAllData : GlobalIntent
+
     /*
      * Matches
      */
@@ -53,6 +55,20 @@ sealed interface DatabaseIntent : CoreIntent {
             db: ClavaDatabase,
             prependCourt: Boolean,
     )
+}
+
+private interface GlobalIntent : DatabaseIntent {
+    override suspend fun handle(
+            currentTime: Calendar,
+            currentState: ModelState,
+            db: ClavaDatabase,
+            prependCourt: Boolean
+    ) {
+        when (this) {
+            DeleteAllData -> db.clearAllTables()
+            else -> throw NotImplementedError()
+        }
+    }
 }
 
 private interface MatchIntent : DatabaseIntent {

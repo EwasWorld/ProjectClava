@@ -245,6 +245,7 @@ fun DrawerContent(
         ) {
             DrawerTextButton(text = "Delete all matches") { listener(DrawerIntent.DeleteAllMatches) }
             DrawerTextButton(text = "Clear settings") { listener(DrawerIntent.ClearDatastore) }
+            DrawerTextButton(text = "Delete everything") { listener(DrawerIntent.DeleteAllData) }
         }
     }
 }
