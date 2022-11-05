@@ -1,19 +1,14 @@
 package com.eywa.projectclava.main.mainActivity.viewModel
 
-import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eywa.projectclava.main.database.ClavaDatabase
 import com.eywa.projectclava.main.database.DatabaseIntent
-import com.eywa.projectclava.main.database.court.CourtRepo
-import com.eywa.projectclava.main.database.match.MatchRepo
-import com.eywa.projectclava.main.database.player.PlayerRepo
 import com.eywa.projectclava.main.datastore.ClavaDatastore
 import com.eywa.projectclava.main.datastore.DataStoreIntent
-import com.eywa.projectclava.main.datastore.dataStore
 import com.eywa.projectclava.main.features.drawer.DrawerIntent
 import com.eywa.projectclava.main.features.screens.ScreenIntent
 import com.eywa.projectclava.main.features.screens.ScreenState
@@ -24,16 +19,24 @@ import com.eywa.projectclava.main.model.ModelState
 import com.eywa.projectclava.main.model.asCourt
 import com.eywa.projectclava.main.model.asMatch
 import com.eywa.projectclava.main.model.asPlayer
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
+import javax.inject.Inject
+
 
 fun <T> SharedFlow<T>.latest() = replayCache.first()
 
-class MainViewModel(application: Application) : AndroidViewModel(application) {
+
+@HiltViewModel
+class MainViewModel @Inject constructor(
+        private val db: ClavaDatabase,
+        private val clavaDatastore: ClavaDatastore,
+) : ViewModel() {
     val currentTime = MutableSharedFlow<Calendar>(1)
     private var screenState by mutableStateOf(mapOf<NavRoute, ScreenState>())
 
@@ -42,22 +45,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val effects: Flow<MainEffect?> = _effects
 
     /*
-     * Repos
-     */
-    private val db = ClavaDatabase.getInstance(application)
-    private val playerRepo: PlayerRepo = db.playerRepo()
-    private val courtRepo: CourtRepo = db.courtRepo()
-    private val matchRepo: MatchRepo = db.matchRepo()
-
-    /*
-     * Main state
+     * Database state
      */
     val databaseState: SharedFlow<ModelState>
 
     init {
-        val courtsFlow = courtRepo.getAll().map { it.map { dbMatch -> dbMatch.asCourt() } }
-        val playersFlow = playerRepo.getAll().map { it.map { dbMatch -> dbMatch.asPlayer() } }
-        val matchesFlow = matchRepo.getAll().map { it.map { dbMatch -> dbMatch.asMatch() } }
+        val courtsFlow = db.courtRepo().getAll().map { it.map { dbMatch -> dbMatch.asCourt() } }
+        val playersFlow = db.playerRepo().getAll().map { it.map { dbMatch -> dbMatch.asPlayer() } }
+        val matchesFlow = db.matchRepo().getAll().map { it.map { dbMatch -> dbMatch.asMatch() } }
 
         databaseState = courtsFlow
                 .combine(playersFlow) { courts, matches -> courts to matches }
@@ -68,7 +63,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /*
      * Datastore
      */
-    private val clavaDatastore = ClavaDatastore((application.applicationContext).dataStore)
     val preferences = clavaDatastore
             .getPreferences()
             .shareIn(viewModelScope, SharingStarted.Eagerly, 1)
@@ -133,6 +127,5 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             else -> throw NotImplementedError()
         }
     }
-
 }
 

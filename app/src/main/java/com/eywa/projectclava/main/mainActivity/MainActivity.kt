@@ -35,12 +35,14 @@ import com.eywa.projectclava.main.mainActivity.viewModel.MainViewModel
 import com.eywa.projectclava.main.theme.ClavaColor
 import com.eywa.projectclava.main.theme.ProjectClavaTheme
 import com.eywa.projectclava.main.theme.Typography
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.util.*
 
 /*
  * Time spent: 54 hrs
  */
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
 

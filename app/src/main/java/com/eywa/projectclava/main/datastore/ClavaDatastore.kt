@@ -7,12 +7,14 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.eywa.projectclava.main.common.asCalendar
 import kotlinx.coroutines.flow.map
 
+
 private const val USER_PREFERENCES_NAME = "clava_user_preferences"
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = USER_PREFERENCES_NAME)
 
-// TODO_HACKY Use dependency injection?
-val Context.dataStore by preferencesDataStore(name = USER_PREFERENCES_NAME)
 
-class ClavaDatastore(private val dataStore: DataStore<Preferences>) {
+class ClavaDatastore(context: Context) {
+    private val dataStore: DataStore<Preferences> = context.dataStore
+
     fun getPreferences() = dataStore.data.map { preferences ->
         var state = DatastoreState()
         preferences[DatastoreKeys.OVERRUN_INDICATOR_THRESHOLD]?.let {

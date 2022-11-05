@@ -1,6 +1,5 @@
 package com.eywa.projectclava.main.database
 
-import android.content.Context
 import androidx.room.*
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
@@ -84,25 +83,6 @@ abstract class ClavaDatabase : RoomDatabase() {
     }
 
     companion object {
-        private const val DATABASE_NAME = "clava_database"
-
-        private var dbLock = Object()
-        private var INSTANCE: ClavaDatabase? = null
-
-        // TODO_HACKY Use dependency injection xD
-        fun getInstance(applicationContext: Context): ClavaDatabase {
-            synchronized(dbLock) {
-                if (INSTANCE == null) {
-                    INSTANCE = Room
-                            .databaseBuilder(
-                                    applicationContext,
-                                    ClavaDatabase::class.java, DATABASE_NAME
-                            )
-                            .addMigrations(Migrations.MIGRATION_2_3)
-                            .build()
-                }
-                return INSTANCE!!
-            }
-        }
+        const val DATABASE_NAME = "clava_database"
     }
 }

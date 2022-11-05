@@ -13,6 +13,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ProjectClava"
         tools:targetApi="31"
+        android:name=".main.app.ClavaApplication"
         >
         <activity
             android:name=".main.mainActivity.MainActivity"
