@@ -1,7 +1,9 @@
 package com.eywa.projectclava.mainActivity
 
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import com.eywa.projectclava.main.common.asTimeString
 import com.eywa.projectclava.main.datastore.DatastoreState
 import com.eywa.projectclava.main.features.ui.AvailableCourtsHeader
 import com.eywa.projectclava.main.features.ui.ClavaScreen
@@ -13,7 +15,7 @@ import com.eywa.projectclava.main.model.TimeRemaining
 import java.util.*
 
 enum class DebugNavRoute(override val route: String) : NavRoute {
-    TEST_PAGE("test") {
+    TEST_PAGE("test_page") {
         override fun createInitialState() = throw NotImplementedError("No initial state")
 
         @Composable
@@ -26,7 +28,7 @@ enum class DebugNavRoute(override val route: String) : NavRoute {
                 preferencesState: DatastoreState,
                 isSoftKeyboardOpen: Boolean
         ) {
-//            val filtered = matches.filterKeys { it.isCurrent }.entries
+            val filtered = databaseState.matches.filter { it.isCurrent }
 
             ClavaScreen(
                     noContentText = "No content",
@@ -40,19 +42,12 @@ enum class DebugNavRoute(override val route: String) : NavRoute {
                         )
                     },
                     footerContent = {
-//                        Text(
-//                                text = filtered.firstOrNull()?.key?.players?.joinToString { it.name } ?: "No players"
-//                        )
+                        Text(text = filtered.firstOrNull()?.playerNameString() ?: "No players")
                     }
             ) {
-//                item {
-////                    SelectableListItem() {
-////
-////                    }
-//                    Text(
-//                            text = filtered.firstOrNull()?.value?.asTimeString() ?: "No Time"
-//                    )
-//                }
+                item {
+                    Text(text = filtered.firstOrNull()?.getTimeRemaining().asTimeString())
+                }
             }
         }
     },

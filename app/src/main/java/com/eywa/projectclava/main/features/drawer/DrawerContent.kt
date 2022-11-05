@@ -23,6 +23,7 @@ import com.eywa.projectclava.main.datastore.DatastoreState
 import com.eywa.projectclava.main.features.ui.timePicker.TimePicker
 import com.eywa.projectclava.main.features.ui.timePicker.TimePickerState
 import com.eywa.projectclava.main.mainActivity.MainNavRoute
+import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.main.model.ModelState
 import com.eywa.projectclava.main.theme.DividerThickness
@@ -38,6 +39,7 @@ fun DrawerContent(
         preferencesState: DatastoreState,
         databaseState: ModelState,
         isDrawerOpen: Boolean,
+        extraNavLocations: List<NavRoute>?,
         listener: (DrawerIntent) -> Unit,
 ) {
     val context = LocalContext.current
@@ -200,11 +202,13 @@ fun DrawerContent(
             )
         }
 
-//        DrawerDivider()
-//        // TODO_HACKY Create a build variant for this
-//        DrawerTextButton(text = "Go to test page") {
-//            navController.navigate(NavRoute.TEST_PAGE.route)
-//        }
+
+        if (!extraNavLocations.isNullOrEmpty()) {
+            DrawerDivider()
+            extraNavLocations.forEach { route ->
+                DrawerTextButton(text = "Go to ${route.route}") { listener(DrawerIntent.Navigate(route)) }
+            }
+        }
 
         DrawerDivider()
         ExpandableSection(
@@ -333,5 +337,6 @@ fun DrawerContent_Preview() {
             databaseState = ModelState(),
             isDrawerOpen = true,
             listener = {},
+            extraNavLocations = listOf(MainNavRoute.ADD_COURT),
     )
 }

@@ -38,6 +38,7 @@ import com.eywa.projectclava.main.theme.Typography
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.util.*
+import javax.inject.Inject
 
 /*
  * Time spent: 54 hrs
@@ -46,13 +47,14 @@ import java.util.*
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
 
+    @Inject
+    lateinit var navRoutes: Array<out NavRoute>
+
     @OptIn(ExperimentalMaterialApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        check(MainNavRoute.values().map { it.route }.distinct().size == MainNavRoute.values().size) {
-            "Duplicate NavRoute found"
-        }
+        check(navRoutes.map { it.route }.distinct().size == navRoutes.size) { "Duplicate NavRoute found" }
 
         var isSoftKeyboardOpen by mutableStateOf(false)
 
@@ -161,7 +163,8 @@ class MainActivity : ComponentActivity() {
                                     preferencesState = preferences!!,
                                     databaseState = databaseState!!,
                                     isDrawerOpen = drawerState.isOpen,
-                                    listener = { viewModel.handleIntent(it) }
+                                    extraNavLocations = navRoutes.filterNot { it is MainNavRoute },
+                                    listener = { viewModel.handleIntent(it) },
                             )
                         },
                 ) { padding ->
@@ -170,7 +173,7 @@ class MainActivity : ComponentActivity() {
                             startDestination = MainNavRoute.ADD_PLAYER.route,
                             modifier = Modifier.padding(bottom = padding.calculateBottomPadding()),
                     ) {
-                        MainNavRoute.values().forEach { route ->
+                        navRoutes.forEach { route ->
                             composable(route.route) {
                                 route.ClavaNavigation(
                                         navController = navController,
