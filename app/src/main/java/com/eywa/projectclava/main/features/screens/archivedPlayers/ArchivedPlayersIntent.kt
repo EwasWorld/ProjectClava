@@ -1,10 +1,11 @@
 package com.eywa.projectclava.main.features.screens.archivedPlayers
 
 import com.eywa.projectclava.main.database.DatabaseIntent
+import com.eywa.projectclava.main.features.screens.ScreenIntent
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogIntent
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogType
 import com.eywa.projectclava.main.features.ui.editNameDialog.EditDialogIntent
-import com.eywa.projectclava.main.mainActivity.NavRoute
+import com.eywa.projectclava.main.mainActivity.MainNavRoute
 import com.eywa.projectclava.main.mainActivity.viewModel.CoreIntent
 import com.eywa.projectclava.main.model.Player
 
@@ -16,8 +17,8 @@ fun ConfirmDialogIntent.toArchivedPlayersIntent() =
         ArchivedPlayersIntent.ConfirmIntent(this)
 
 
-sealed class ArchivedPlayersIntent : com.eywa.projectclava.main.features.screens.ScreenIntent<ArchivedPlayersState> {
-    override val screen: NavRoute = NavRoute.ARCHIVED_PLAYERS
+sealed class ArchivedPlayersIntent : ScreenIntent<ArchivedPlayersState> {
+    override val screen = MainNavRoute.ARCHIVED_PLAYERS
 
     data class EditItemIntent(val value: EditDialogIntent) : ArchivedPlayersIntent()
     data class ConfirmIntent(val value: ConfirmDialogIntent) : ArchivedPlayersIntent()

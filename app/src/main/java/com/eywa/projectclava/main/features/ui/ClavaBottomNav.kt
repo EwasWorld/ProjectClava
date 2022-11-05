@@ -13,6 +13,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.eywa.projectclava.R
+import com.eywa.projectclava.main.mainActivity.MainNavRoute
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.theme.ClavaColor
 
@@ -44,7 +45,7 @@ fun ClavaBottomNav(
                 selectedIcon = ClavaIconInfo.PainterIcon(R.drawable.baseline_assignment_24),
                 label = "Manage",
                 contentDescription = "Manage players and courts",
-                destinations = listOf(NavRoute.ADD_PLAYER, NavRoute.ADD_COURT),
+                destinations = listOf(MainNavRoute.ADD_PLAYER, MainNavRoute.ADD_COURT),
                 currentRoute = currentRoute,
                 onClick = onClick,
         )
@@ -53,7 +54,7 @@ fun ClavaBottomNav(
                 selectedIcon = ClavaIconInfo.PainterIcon(R.drawable.baseline_groups_24),
                 label = "Match up",
                 contentDescription = "Match up players",
-                destination = NavRoute.CREATE_MATCH,
+                destination = MainNavRoute.CREATE_MATCH,
                 currentRoute = currentRoute,
                 onClick = onClick,
         )
@@ -62,7 +63,7 @@ fun ClavaBottomNav(
                 selectedIcon = ClavaIconInfo.PainterIcon(R.drawable.baseline_pending_24),
                 label = "Queue",
                 contentDescription = "Match queue",
-                destination = NavRoute.MATCH_QUEUE,
+                destination = MainNavRoute.MATCH_QUEUE,
                 currentRoute = currentRoute,
                 onClick = onClick,
         )
@@ -71,7 +72,7 @@ fun ClavaBottomNav(
                 label = "Ongoing",
                 contentDescription = "Ongoing matches",
                 badgeContent = if (hasOverrunningMatch) "" else null,
-                destination = NavRoute.ONGOING_MATCHES,
+                destination = MainNavRoute.ONGOING_MATCHES,
                 currentRoute = currentRoute,
                 onClick = onClick,
         )
@@ -79,7 +80,7 @@ fun ClavaBottomNav(
                 icon = ClavaIconInfo.PainterIcon(R.drawable.baseline_history_24),
                 label = "History",
                 contentDescription = "Match history",
-                destinations = listOf(NavRoute.MATCH_HISTORY, NavRoute.HISTORY_SUMMARY),
+                destinations = listOf(MainNavRoute.MATCH_HISTORY, MainNavRoute.HISTORY_SUMMARY),
                 currentRoute = currentRoute,
                 onClick = onClick,
         )
@@ -157,7 +158,7 @@ fun RowScope.ClavaBottomNavItem(
 @Composable
 fun A_ClavaBottomNav_Preview() {
     ClavaBottomNav(
-            currentRoute = NavRoute.CREATE_MATCH.route,
+            currentRoute = MainNavRoute.CREATE_MATCH.route,
             onClick = {},
             hasOverrunningMatch = false,
     )
@@ -167,7 +168,7 @@ fun A_ClavaBottomNav_Preview() {
 @Composable
 fun B_ClavaBottomNav_Preview() {
     ClavaBottomNav(
-            currentRoute = NavRoute.ADD_COURT.route,
+            currentRoute = MainNavRoute.ADD_COURT.route,
             onClick = {},
             hasOverrunningMatch = true,
     )

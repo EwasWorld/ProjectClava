@@ -23,6 +23,7 @@ import com.eywa.projectclava.main.theme.ClavaColor
 import com.eywa.projectclava.main.theme.DividerThickness
 import com.eywa.projectclava.main.theme.Typography
 
+// TODO Test accessibility
 @Composable
 fun ClavaScreen(
         noContentText: String,

@@ -1,11 +1,12 @@
 package com.eywa.projectclava.main.features.screens.manage.setupPlayer
 
 import com.eywa.projectclava.main.database.DatabaseIntent
+import com.eywa.projectclava.main.features.screens.ScreenIntent
 import com.eywa.projectclava.main.features.screens.manage.SetupListIntent
 import com.eywa.projectclava.main.features.screens.manage.SetupListIntent.SetupListItemIntent.*
 import com.eywa.projectclava.main.features.screens.manage.SetupListIntent.SetupListStateIntent.AddNameCleared
 import com.eywa.projectclava.main.features.screens.manage.SetupListState
-import com.eywa.projectclava.main.mainActivity.NavRoute
+import com.eywa.projectclava.main.mainActivity.MainNavRoute
 import com.eywa.projectclava.main.mainActivity.viewModel.CoreIntent
 import com.eywa.projectclava.main.model.Player
 
@@ -17,8 +18,8 @@ fun SetupListIntent.toSetupPlayerIntent() = when (this) {
     is ItemNameUpdated<*> -> SetupPlayerIntent.PlayerNameUpdated(item as Player, newName)
 }
 
-sealed class SetupPlayerIntent : com.eywa.projectclava.main.features.screens.ScreenIntent<SetupListState<Player>> {
-    override val screen: NavRoute = NavRoute.ADD_PLAYER
+sealed class SetupPlayerIntent : ScreenIntent<SetupListState<Player>> {
+    override val screen = MainNavRoute.ADD_PLAYER
 
     object AddPlayerSubmitted : SetupPlayerIntent()
     data class PlayerArchived(val player: Player) : SetupPlayerIntent()

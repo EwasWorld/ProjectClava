@@ -22,7 +22,7 @@ import com.eywa.projectclava.main.common.asTimeString
 import com.eywa.projectclava.main.datastore.DatastoreState
 import com.eywa.projectclava.main.features.ui.timePicker.TimePicker
 import com.eywa.projectclava.main.features.ui.timePicker.TimePickerState
-import com.eywa.projectclava.main.mainActivity.NavRoute
+import com.eywa.projectclava.main.mainActivity.MainNavRoute
 import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.main.model.ModelState
 import com.eywa.projectclava.main.theme.DividerThickness
@@ -140,7 +140,7 @@ fun DrawerContent(
                                 top = 5.dp,
                         )
         )
-        DrawerTextButton(text = "View archived players") { listener(DrawerIntent.Navigate(NavRoute.ARCHIVED_PLAYERS)) }
+        DrawerTextButton(text = "View archived players") { listener(DrawerIntent.Navigate(MainNavRoute.ARCHIVED_PLAYERS)) }
         Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
@@ -215,7 +215,7 @@ fun DrawerContent(
         ) {
             DrawerTextButton(text = "Mark all players as not present") {
                 listener(DrawerIntent.UpdatePlayers(databaseState.players.map { it.copy(isPresent = false) }))
-                listener(DrawerIntent.Navigate(NavRoute.ADD_PLAYER))
+                listener(DrawerIntent.Navigate(MainNavRoute.ADD_PLAYER))
             }
             DrawerTextButton(text = "Clear matches and set cut off to now") {
                 databaseState.matches.forEach {

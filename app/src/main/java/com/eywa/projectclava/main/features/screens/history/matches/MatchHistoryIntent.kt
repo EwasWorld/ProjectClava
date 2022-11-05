@@ -1,9 +1,11 @@
 package com.eywa.projectclava.main.features.screens.history.matches
 
 import com.eywa.projectclava.main.database.DatabaseIntent
+import com.eywa.projectclava.main.features.screens.ScreenIntent
 import com.eywa.projectclava.main.features.ui.addTimeDialog.AddTimeDialogIntent
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogIntent
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogType
+import com.eywa.projectclava.main.mainActivity.MainNavRoute
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.mainActivity.viewModel.CoreIntent
 import com.eywa.projectclava.main.mainActivity.viewModel.MainEffect
@@ -16,8 +18,8 @@ fun AddTimeDialogIntent.toMatchHistoryIntent(defaultTimeToAdd: Int) =
 fun ConfirmDialogIntent.toMatchHistoryIntent() = MatchHistoryIntent.ConfirmIntent(this)
 
 
-sealed class MatchHistoryIntent : com.eywa.projectclava.main.features.screens.ScreenIntent<MatchHistoryState> {
-    override val screen: NavRoute = NavRoute.MATCH_HISTORY
+sealed class MatchHistoryIntent : ScreenIntent<MatchHistoryState> {
+    override val screen = MainNavRoute.MATCH_HISTORY
 
     data class MatchClicked(val match: Match) : MatchHistoryIntent()
     data class MatchDeleted(val match: Match) : MatchHistoryIntent()

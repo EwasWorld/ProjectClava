@@ -15,7 +15,10 @@ import com.eywa.projectclava.main.datastore.ClavaDatastore
 import com.eywa.projectclava.main.datastore.DataStoreIntent
 import com.eywa.projectclava.main.datastore.dataStore
 import com.eywa.projectclava.main.features.drawer.DrawerIntent
+import com.eywa.projectclava.main.features.screens.ScreenIntent
+import com.eywa.projectclava.main.features.screens.ScreenState
 import com.eywa.projectclava.main.features.screens.help.HelpState
+import com.eywa.projectclava.main.mainActivity.MainNavRoute
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.model.ModelState
 import com.eywa.projectclava.main.model.asCourt
@@ -32,7 +35,7 @@ fun <T> SharedFlow<T>.latest() = replayCache.first()
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     val currentTime = MutableSharedFlow<Calendar>(1)
-    private var screenState by mutableStateOf(mapOf<NavRoute, com.eywa.projectclava.main.features.screens.ScreenState>())
+    private var screenState by mutableStateOf(mapOf<NavRoute, ScreenState>())
 
     private val _effects: MutableSharedFlow<MainEffect?> =
             MutableSharedFlow(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -49,14 +52,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /*
      * Main state
      */
-    val databaseState = courtRepo.getAll().map { it.map { dbMatch -> dbMatch.asCourt() } }
-            .combine(playerRepo.getAll().map { it.map { dbMatch -> dbMatch.asPlayer() } }) { courts, matches ->
-                courts to matches
-            }
-            .combine(matchRepo.getAll().map { it.map { dbMatch -> dbMatch.asMatch() } }) { (courts, players), matches ->
-                ModelState(courts, matches, players)
-            }
-            .shareIn(viewModelScope, SharingStarted.Eagerly, 1)
+    val databaseState: SharedFlow<ModelState>
+
+    init {
+        val courtsFlow = courtRepo.getAll().map { it.map { dbMatch -> dbMatch.asCourt() } }
+        val playersFlow = playerRepo.getAll().map { it.map { dbMatch -> dbMatch.asPlayer() } }
+        val matchesFlow = matchRepo.getAll().map { it.map { dbMatch -> dbMatch.asMatch() } }
+
+        databaseState = courtsFlow
+                .combine(playersFlow) { courts, matches -> courts to matches }
+                .combine(matchesFlow) { (courts, players), matches -> ModelState(courts, matches, players) }
+                .shareIn(viewModelScope, SharingStarted.Eagerly, 1)
+    }
 
     /*
      * Datastore
@@ -82,7 +89,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun getScreenState(screen: NavRoute) = screenState[screen]
             ?: screen.createInitialState().also { screen.updateScreenState(it) }
 
-    private fun NavRoute.updateScreenState(newState: com.eywa.projectclava.main.features.screens.ScreenState) {
+    private fun NavRoute.updateScreenState(newState: ScreenState) {
         screenState = screenState.plus(this to newState)
     }
 
@@ -92,9 +99,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
              * CoreIntents
              */
             is MainEffect -> {
-                if (intent is MainEffect.Navigate && intent.destination == NavRoute.HELP_SCREEN) {
-                    val currentState = getScreenState(NavRoute.HELP_SCREEN) as HelpState
-                    NavRoute.HELP_SCREEN.updateScreenState(currentState.copy(screen = intent.currentRoute))
+                if (intent is MainEffect.Navigate && intent.destination == MainNavRoute.HELP_SCREEN) {
+                    val currentState = getScreenState(MainNavRoute.HELP_SCREEN) as HelpState
+                    MainNavRoute.HELP_SCREEN.updateScreenState(currentState.copy(screen = intent.currentRoute))
                 }
 
                 viewModelScope.launch(context = Dispatchers.Default) { _effects.emit(intent) }
@@ -115,9 +122,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
              * Screens
              */
             is DrawerIntent -> intent.handle { handleIntent(it) }
-            is com.eywa.projectclava.main.features.screens.ScreenIntent<*> -> {
+            is ScreenIntent<*> -> {
                 @Suppress("UNCHECKED_CAST")
-                (intent as com.eywa.projectclava.main.features.screens.ScreenIntent<com.eywa.projectclava.main.features.screens.ScreenState>).handle(
+                (intent as ScreenIntent<ScreenState>).handle(
                         currentState = getScreenState(intent.screen),
                         handle = { handleIntent(it) },
                         newStateListener = { intent.screen.updateScreenState(it) },

@@ -4,6 +4,7 @@ import com.eywa.projectclava.main.database.DatabaseIntent
 import com.eywa.projectclava.main.features.screens.ScreenIntent
 import com.eywa.projectclava.main.features.ui.addTimeDialog.AddTimeDialogIntent
 import com.eywa.projectclava.main.features.ui.timePicker.TimePickerState
+import com.eywa.projectclava.main.mainActivity.MainNavRoute
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.mainActivity.viewModel.CoreIntent
 import com.eywa.projectclava.main.mainActivity.viewModel.MainEffect
@@ -17,7 +18,7 @@ fun AddTimeDialogIntent.toOngoingMatchesIntent(defaultTimeToAddSeconds: Int) =
 
 
 sealed class OngoingMatchesIntent : ScreenIntent<OngoingMatchesState> {
-    override val screen: NavRoute = NavRoute.ONGOING_MATCHES
+    override val screen = MainNavRoute.ONGOING_MATCHES
 
     data class MatchClicked(val match: Match) : OngoingMatchesIntent()
     object CompleteMatch : OngoingMatchesIntent()

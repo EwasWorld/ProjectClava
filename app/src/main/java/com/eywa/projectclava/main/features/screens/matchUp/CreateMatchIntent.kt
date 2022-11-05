@@ -1,14 +1,16 @@
 package com.eywa.projectclava.main.features.screens.matchUp
 
 import com.eywa.projectclava.main.database.DatabaseIntent
+import com.eywa.projectclava.main.features.screens.ScreenIntent
+import com.eywa.projectclava.main.mainActivity.MainNavRoute
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.mainActivity.viewModel.CoreIntent
 import com.eywa.projectclava.main.mainActivity.viewModel.MainEffect
 import com.eywa.projectclava.main.model.Player
 
 
-sealed class CreateMatchIntent : com.eywa.projectclava.main.features.screens.ScreenIntent<CreateMatchState> {
-    override val screen = NavRoute.CREATE_MATCH
+sealed class CreateMatchIntent : ScreenIntent<CreateMatchState> {
+    override val screen = MainNavRoute.CREATE_MATCH
 
     object CreateMatch : CreateMatchIntent()
     data class Navigate(val value: NavRoute) : CreateMatchIntent()

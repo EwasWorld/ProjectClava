@@ -6,7 +6,7 @@ import com.eywa.projectclava.main.features.screens.manage.SetupListIntent
 import com.eywa.projectclava.main.features.screens.manage.SetupListIntent.SetupListItemIntent.*
 import com.eywa.projectclava.main.features.screens.manage.SetupListIntent.SetupListStateIntent.AddNameCleared
 import com.eywa.projectclava.main.features.screens.manage.SetupListState
-import com.eywa.projectclava.main.mainActivity.NavRoute
+import com.eywa.projectclava.main.mainActivity.MainNavRoute
 import com.eywa.projectclava.main.mainActivity.viewModel.CoreIntent
 import com.eywa.projectclava.main.model.Court
 
@@ -21,7 +21,7 @@ fun SetupListIntent.toSetupCourtIntent() = when (this) {
 
 
 sealed class SetupCourtIntent : ScreenIntent<SetupListState<Court>> {
-    override val screen: NavRoute = NavRoute.ADD_COURT
+    override val screen = MainNavRoute.ADD_COURT
 
     object AddCourtSubmitted : SetupCourtIntent()
     data class CourtDeleted(val court: Court) : SetupCourtIntent()

@@ -1,5 +1,6 @@
 package com.eywa.projectclava.main.common
 
+import com.eywa.projectclava.main.mainActivity.MainNavRoute
 import com.eywa.projectclava.main.mainActivity.NavRoute
 
 /**
@@ -12,33 +13,33 @@ enum class MissingContentNextStep(
 ) {
     ADD_PLAYERS(
             nextStepsText = "First we need to add some players",
-            buttonRoute = NavRoute.ADD_PLAYER,
+            buttonRoute = MainNavRoute.ADD_PLAYER,
     ),
     ENABLE_PLAYERS(
             nextStepsText = "We need to mark some players as present",
-            buttonRoute = NavRoute.ADD_PLAYER,
+            buttonRoute = MainNavRoute.ADD_PLAYER,
     ),
     SETUP_A_MATCH(
             nextStepsText = "We need to set up a match",
-            buttonRoute = NavRoute.CREATE_MATCH,
+            buttonRoute = MainNavRoute.CREATE_MATCH,
             isMatchStep = true,
     ),
     ADD_COURTS(
             nextStepsText = "We need to add some courts",
-            buttonRoute = NavRoute.ADD_COURT,
+            buttonRoute = MainNavRoute.ADD_COURT,
     ),
     ENABLE_COURTS(
             nextStepsText = "We need to mark some courts as available",
-            buttonRoute = NavRoute.ADD_COURT,
+            buttonRoute = MainNavRoute.ADD_COURT,
     ),
     START_A_MATCH(
             nextStepsText = "We need to start a match",
-            buttonRoute = NavRoute.MATCH_QUEUE,
+            buttonRoute = MainNavRoute.MATCH_QUEUE,
             isMatchStep = true,
     ),
     COMPLETE_A_MATCH(
             nextStepsText = "We need to mark a match as completed",
-            buttonRoute = NavRoute.ONGOING_MATCHES,
+            buttonRoute = MainNavRoute.ONGOING_MATCHES,
             isMatchStep = true,
     )
     ;

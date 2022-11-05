@@ -1,12 +1,14 @@
 package com.eywa.projectclava.main.features.screens.help
 
+import com.eywa.projectclava.main.features.screens.ScreenIntent
+import com.eywa.projectclava.main.mainActivity.MainNavRoute
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.mainActivity.viewModel.CoreIntent
 import com.eywa.projectclava.main.mainActivity.viewModel.MainEffect
 
 
-sealed class HelpIntent : com.eywa.projectclava.main.features.screens.ScreenIntent<HelpState> {
-    override val screen: NavRoute = NavRoute.HELP_SCREEN
+sealed class HelpIntent : ScreenIntent<HelpState> {
+    override val screen = MainNavRoute.HELP_SCREEN
 
     data class Navigate(val destination: NavRoute) : HelpIntent()
     data class GoToHelpScreen(val destination: NavRoute?) : HelpIntent()

@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        check(NavRoute.values().map { it.route }.distinct().size == NavRoute.values().size) {
+        check(MainNavRoute.values().map { it.route }.distinct().size == MainNavRoute.values().size) {
             "Duplicate NavRoute found"
         }
 
@@ -165,10 +165,10 @@ class MainActivity : ComponentActivity() {
                 ) { padding ->
                     NavHost(
                             navController = navController,
-                            startDestination = NavRoute.ADD_PLAYER.route,
+                            startDestination = MainNavRoute.ADD_PLAYER.route,
                             modifier = Modifier.padding(bottom = padding.calculateBottomPadding()),
                     ) {
-                        NavRoute.values().forEach { route ->
+                        MainNavRoute.values().forEach { route ->
                             composable(route.route) {
                                 route.ClavaNavigation(
                                         navController = navController,
@@ -197,12 +197,12 @@ class MainActivity : ComponentActivity() {
                                 Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Open menu")
                             }
 
-                            val currentRoute = NavRoute.get(navController.currentDestination?.route)
-                            if (currentRoute != NavRoute.HELP_SCREEN) {
+                            val currentRoute = MainNavRoute.get(navController.currentDestination?.route)
+                            if (currentRoute != MainNavRoute.HELP_SCREEN) {
                                 LeftEdgeButton(
                                         onClick = {
                                             viewModel.handleIntent(
-                                                    MainEffect.Navigate(NavRoute.HELP_SCREEN, currentRoute)
+                                                    MainEffect.Navigate(MainNavRoute.HELP_SCREEN, currentRoute)
                                             )
                                         },
                                         alpha = 0.4f,

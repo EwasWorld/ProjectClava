@@ -5,6 +5,7 @@ import com.eywa.projectclava.main.features.screens.ScreenIntent
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogIntent
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogType
 import com.eywa.projectclava.main.features.ui.timePicker.TimePickerState
+import com.eywa.projectclava.main.mainActivity.MainNavRoute
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.mainActivity.viewModel.CoreIntent
 import com.eywa.projectclava.main.mainActivity.viewModel.MainEffect
@@ -14,7 +15,7 @@ import com.eywa.projectclava.main.model.Match
 fun ConfirmDialogIntent.toMatchQueueIntent() = MatchQueueIntent.ConfirmIntent(this)
 
 sealed class MatchQueueIntent : ScreenIntent<MatchQueueState> {
-    override val screen: NavRoute = NavRoute.MATCH_QUEUE
+    override val screen = MainNavRoute.MATCH_QUEUE
 
     object StartMatchSubmitted : MatchQueueIntent()
     data class OpenStartMatchDialog(

@@ -17,6 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eywa.projectclava.main.features.ui.ClavaDialog
+import com.eywa.projectclava.main.mainActivity.MainNavRoute
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.theme.ClavaColor
 import com.eywa.projectclava.main.theme.Typography
@@ -172,7 +173,7 @@ private fun HelpNavigationDialog(
         Column(
                 modifier = Modifier.verticalScroll(rememberScrollState())
         ) {
-            listOf(null).plus(NavRoute.values().filter { it.getHelpInfo() != null }).forEach {
+            listOf(null).plus(MainNavRoute.values().filter { it.getHelpInfo() != null }).forEach {
                 Text(
                         text = (it?.getHelpInfo() ?: DEFAULT_HELP_INFO).title,
                         style = Typography.body1.asClickableStyle(),
@@ -219,7 +220,7 @@ fun HelpNavigationDialog_Preview() {
 @Composable
 fun AddPlayer_HelpScreen_Preview() {
     HelpScreen(
-            state = HelpState(screen = NavRoute.ADD_PLAYER),
+            state = HelpState(screen = MainNavRoute.ADD_PLAYER),
             listener = {},
     )
 }

@@ -10,19 +10,20 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
 import com.eywa.projectclava.R
 import com.eywa.projectclava.main.features.ui.ClavaBottomNav
+import com.eywa.projectclava.main.mainActivity.MainNavRoute
 import com.eywa.projectclava.main.mainActivity.NavRoute
 
 fun NavRoute.getHelpInfo() = when (this) {
-    NavRoute.ADD_PLAYER -> HelpStrings.ADD_PLAYER
-    NavRoute.ADD_COURT -> HelpStrings.ADD_COURT
-    NavRoute.CREATE_MATCH -> HelpStrings.CREATE_MATCH
-    NavRoute.MATCH_QUEUE -> HelpStrings.MATCH_QUEUE
-    NavRoute.ONGOING_MATCHES -> HelpStrings.ONGOING_MATCHES
-    NavRoute.MATCH_HISTORY -> HelpStrings.MATCH_HISTORY
-    NavRoute.HISTORY_SUMMARY -> HelpStrings.HISTORY_SUMMARY
-    NavRoute.ARCHIVED_PLAYERS -> null
-    NavRoute.TEST_PAGE -> null
-    NavRoute.HELP_SCREEN -> null
+    MainNavRoute.ADD_PLAYER -> HelpStrings.ADD_PLAYER
+    MainNavRoute.ADD_COURT -> HelpStrings.ADD_COURT
+    MainNavRoute.CREATE_MATCH -> HelpStrings.CREATE_MATCH
+    MainNavRoute.MATCH_QUEUE -> HelpStrings.MATCH_QUEUE
+    MainNavRoute.ONGOING_MATCHES -> HelpStrings.ONGOING_MATCHES
+    MainNavRoute.MATCH_HISTORY -> HelpStrings.MATCH_HISTORY
+    MainNavRoute.HISTORY_SUMMARY -> HelpStrings.HISTORY_SUMMARY
+    MainNavRoute.ARCHIVED_PLAYERS -> null
+    MainNavRoute.HELP_SCREEN -> null
+    else -> throw NotImplementedError()
 }
 
 private fun boldUnderlined(start: Int, end: Int, style: SpanStyle = SpanStyle()) = AnnotatedString.Range(
@@ -288,11 +289,10 @@ fun Parameterised_HelpScreen_Preview(
 }
 
 private class HelpScreenPreviewParamProvider : CollectionPreviewParameterProvider<NavRoute?>(
-        setOf(null).plus(NavRoute.values()).minus(
+        setOf(null).plus(MainNavRoute.values()).minus(
                 setOf(
-                        NavRoute.TEST_PAGE,
-                        NavRoute.ARCHIVED_PLAYERS,
-                        NavRoute.HELP_SCREEN,
+                        MainNavRoute.ARCHIVED_PLAYERS,
+                        MainNavRoute.HELP_SCREEN,
                 )
         )
 )
