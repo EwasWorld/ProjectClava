@@ -2,7 +2,6 @@ package com.eywa.projectclava.main.features.screens.history.matches
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -12,9 +11,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.R
 import com.eywa.projectclava.main.common.GeneratableMatchState
-import com.eywa.projectclava.main.common.MissingContentNextStep
 import com.eywa.projectclava.main.common.asDateString
 import com.eywa.projectclava.main.common.generateMatches
+import com.eywa.projectclava.main.common.stateSemanticsText
 import com.eywa.projectclava.main.features.screens.history.HistoryTabSwitcherItem
 import com.eywa.projectclava.main.features.screens.history.matches.MatchHistoryIntent.MatchClicked
 import com.eywa.projectclava.main.features.screens.history.matches.MatchHistoryIntent.Navigate
@@ -50,9 +49,9 @@ fun MatchHistoryScreen(
 
     val finishedMatches = databaseState.matches.filter { it.isFinished }.sortedByDescending { it.state }
     ClavaScreen(
+            showNoContentPlaceholder = finishedMatches.isEmpty(),
             noContentText = "No matches have been completed",
-            missingContentNextStep = databaseState.getMissingContent()
-                    .takeIf { states -> states.any { it == MissingContentNextStep.COMPLETE_A_MATCH } },
+            missingContentNextStep = databaseState.getMissingContent(),
             navigateListener = { listener(Navigate(it)) },
             footerContent = {
                 PreviousMatchesScreenFooter(
@@ -95,14 +94,16 @@ fun MatchHistoryScreen(
                                     .padding(horizontal = 5.dp)
                     )
                 }
-                SelectableListItem(isSelected = isSelected) {
+                SelectableListItem(
+                        isSelected = isSelected,
+                        contentDescription = match.playerNameString() + " " +
+                                match.stateSemanticsText() + " " +
+                                match.getTime().asDateString(),
+                        onClick = { listener(MatchClicked(match)) },
+                ) {
                     Row(
                             modifier = Modifier
                                     .fillMaxWidth()
-                                    .selectable(
-                                            selected = isSelected,
-                                            onClick = { listener(MatchClicked(match)) }
-                                    )
                                     .padding(10.dp)
                     ) {
                         Text(
@@ -111,7 +112,7 @@ fun MatchHistoryScreen(
                                 modifier = Modifier.weight(1f)
                         )
                         Spacer(modifier = Modifier.width(10.dp))
-                        MatchStateIndicator(match = match)
+                        MatchTimeRemainingText(match = match)
                     }
                 }
             }

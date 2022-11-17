@@ -1,6 +1,5 @@
 package com.eywa.projectclava.main.features.screens.queue
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -47,20 +46,6 @@ fun MatchQueueScreen(
     val playerMatchStates = databaseState.matches.getPlayerStatus()
     val sortedMatches = databaseState.matches.filter { it.state is MatchState.NotStarted }.sortedBy { it.state }
 
-    val missingContentNextStep = databaseState.getMissingContent()
-    val missingCourts = missingContentNextStep.filter {
-        it == MissingContentNextStep.ADD_COURTS || it == MissingContentNextStep.ENABLE_COURTS
-    }
-    val missingContentMain = setOf(
-            MissingContentNextStep.ADD_PLAYERS, MissingContentNextStep.ENABLE_PLAYERS,
-            MissingContentNextStep.ADD_COURTS, MissingContentNextStep.ENABLE_COURTS,
-            MissingContentNextStep.SETUP_A_MATCH
-    ).let { allowed ->
-        missingContentNextStep
-                .takeIf { states -> states.any { it == MissingContentNextStep.SETUP_A_MATCH } }
-                ?.filter { allowed.contains(it) }
-    }
-
     StartMatchDialog(
             availableCourts = availableCourts,
             state = state,
@@ -73,8 +58,9 @@ fun MatchQueueScreen(
     )
 
     ClavaScreen(
-            noContentText = if (missingContentMain != null) "No matches planned" else "No courts to put the matches on!",
-            missingContentNextStep = missingContentMain ?: missingCourts,
+            showNoContentPlaceholder = sortedMatches.isEmpty() || availableCourts.isNullOrEmpty(),
+            noContentText = if (sortedMatches.isEmpty()) "No matches queued" else "No courts to put the matches on!",
+            missingContentNextStep = databaseState.getMissingContent(),
             navigateListener = { listener(Navigate(it)) },
             headerContent = {
                 AvailableCourtsHeader(
@@ -126,13 +112,14 @@ fun MatchQueueScreen(
                                 matchingPlayersInEarlierUpcoming?.let { foundMatch }
                             },
                     getTimeRemaining = getTimeRemaining,
+                    onClick = { listener(MatchClicked(match)) },
+                    contentDescription = "", // TODO_CURRENT
             ) {
                 LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(5.dp),
                         contentPadding = PaddingValues(10.dp),
                         modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable(onClick = { listener(MatchClicked(match)) })
                 ) {
                     if (match.players.none()) {
                         item {
@@ -162,6 +149,7 @@ fun MatchQueueScreen(
                                             ?.let { match }
                                 },
                                 getTimeRemaining = getTimeRemaining,
+                                contentDescription = "",
                         ) {
                             Text(
                                     text = player.name,

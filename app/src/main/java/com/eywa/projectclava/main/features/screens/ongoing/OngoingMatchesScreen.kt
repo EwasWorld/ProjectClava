@@ -2,7 +2,6 @@ package com.eywa.projectclava.main.features.screens.ongoing
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -17,7 +16,6 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.R
-import com.eywa.projectclava.main.common.MissingContentNextStep
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.features.screens.ongoing.OngoingMatchesIntent.*
@@ -43,6 +41,7 @@ fun OngoingMatchesScreen(
     val selectedMatch = state.selectedMatchId?.let { selected ->
         databaseState.matches.find { it.id == selected }
     }
+    val filteredMatches = databaseState.matches.filter { it.isCurrent }
 
     CurrentMatchesScreenDialogs(
             availableCourts = availableCourts,
@@ -52,16 +51,9 @@ fun OngoingMatchesScreen(
     )
 
     ClavaScreen(
+            showNoContentPlaceholder = filteredMatches.isEmpty(),
             noContentText = "No matches being played",
-            missingContentNextStep = setOf(
-                    MissingContentNextStep.ADD_PLAYERS, MissingContentNextStep.ENABLE_PLAYERS,
-                    MissingContentNextStep.ADD_COURTS, MissingContentNextStep.ENABLE_COURTS,
-                    MissingContentNextStep.SETUP_A_MATCH, MissingContentNextStep.START_A_MATCH
-            ).let { allowed ->
-                databaseState.getMissingContent()
-                        .takeIf { states -> states.any { it == MissingContentNextStep.START_A_MATCH } }
-                        ?.filter { allowed.contains(it) }
-            },
+            missingContentNextStep = databaseState.getMissingContent(),
             navigateListener = { listener(Navigate(it)) },
             headerContent = {
                 AvailableCourtsHeader(
@@ -79,25 +71,19 @@ fun OngoingMatchesScreen(
                 )
             },
     ) {
-        items(
-                databaseState.matches
-                        .filter { it.isCurrent }
-                        .sortedBy { it.state }
-        ) { match ->
+        items(filteredMatches.sortedBy { it.state }) { match ->
             val isSelected = state.selectedMatchId == match.id
 
             SelectableListItem(
                     getTimeRemaining = getTimeRemaining,
                     match = match,
                     isSelected = isSelected,
+                    contentDescription = "", // TODO_CURRENT
+                    onClick = { listener(MatchClicked(match)) },
             ) {
                 Column(
                         modifier = Modifier
                                 .fillMaxWidth()
-                                .selectable(
-                                        selected = isSelected,
-                                        onClick = { listener(MatchClicked(match)) }
-                                )
                                 .padding(10.dp)
                 ) {
                     Row {
@@ -109,7 +95,7 @@ fun OngoingMatchesScreen(
                                 modifier = Modifier.weight(1f)
                         )
                         Spacer(modifier = Modifier.width(10.dp))
-                        MatchStateIndicator(match = match, getTimeRemaining = getTimeRemaining)
+                        MatchTimeRemainingText(match = match, getTimeRemaining = getTimeRemaining)
                     }
                     Text(
                             text = match.playerNameString(),

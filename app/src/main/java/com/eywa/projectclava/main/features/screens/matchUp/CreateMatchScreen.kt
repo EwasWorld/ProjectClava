@@ -1,6 +1,5 @@
 package com.eywa.projectclava.main.features.screens.matchUp
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -18,14 +17,15 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.main.common.GeneratableMatchState
-import com.eywa.projectclava.main.common.MissingContentNextStep
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.common.generatePlayers
+import com.eywa.projectclava.main.common.stateSemanticsText
 import com.eywa.projectclava.main.features.ui.*
 import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.theme.Typography
 import java.util.*
 
+// TODO BUG: Select a player, then go to manage, change their name, return and they still show their old name in the footer
 // TODO Add button to randomly match up all players
 /**
  * @param clubNightStartTime When club night began.
@@ -59,10 +59,9 @@ fun CreateMatchScreen(
     val availablePlayers = databaseState.players.filter { it.enabled }
 
     ClavaScreen(
+            showNoContentPlaceholder = availablePlayers.isEmpty(),
             noContentText = "No players to match up",
-            missingContentNextStep = setOf(
-                    MissingContentNextStep.ADD_PLAYERS, MissingContentNextStep.ENABLE_PLAYERS
-            ).let { allowed -> databaseState.getMissingContent().filter { allowed.contains(it) } },
+            missingContentNextStep = databaseState.getMissingContent(),
             navigateListener = { listener(CreateMatchIntent.Navigate(it)) },
             headerContent = {
                 AvailableCourtsHeader(
@@ -124,12 +123,12 @@ fun CreateMatchScreen(
                     match = match,
                     isSelected = selectedPlayerNames.contains(player.name),
                     getTimeRemaining = getTimeRemaining,
+                    contentDescription = player.name + " " + match.stateSemanticsText { match?.getTimeRemaining() },
+                    onClick = { listener(CreateMatchIntent.PlayerClicked(player)) },
             ) {
                 Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                                .clickable { listener(CreateMatchIntent.PlayerClicked(player)) }
-                                .padding(10.dp)
+                        modifier = Modifier.padding(10.dp)
                 ) {
                     Text(
                             text = player.name,
@@ -147,7 +146,7 @@ fun CreateMatchScreen(
                     }
 
                     Spacer(modifier = Modifier.weight(1f))
-                    MatchStateIndicator(matches?.maxByOrNull { it.state }, getTimeRemaining)
+                    MatchTimeRemainingText(matches?.maxByOrNull { it.state }, getTimeRemaining)
                 }
             }
         }
@@ -166,7 +165,7 @@ private fun CreateMatchScreenFooter(
                     SelectedItemAction(
                             icon = ClavaIconInfo.VectorIcon(
                                     imageVector = Icons.Default.Close,
-                                    contentDescription = "Remove all",
+                                    contentDescription = "Clear selection",
                             ),
                             enabled = selectedPlayers.any(),
                             onClick = { listener(CreateMatchIntent.ClearSelectedPlayers) },
@@ -225,14 +224,15 @@ private fun CreateMatchScreenFooter(
                     SelectableListItem(
                             enabled = player.enabled,
                             match = match,
-                            getTimeRemaining = { match?.getTimeRemaining() }
+                            getTimeRemaining = { match?.getTimeRemaining() },
+                            contentDescription = player.name + " " + match.stateSemanticsText { match?.getTimeRemaining() },
+                            onClickActionLabel = "Deselect",
+                            onClick = { listener(CreateMatchIntent.PlayerClicked(player)) },
                     ) {
                         Text(
                                 text = player.name + if (playedBefore[player.name] == true) "*" else "",
                                 style = Typography.h4,
-                                modifier = Modifier
-                                        .padding(vertical = 5.dp, horizontal = 10.dp)
-                                        .clickable { listener(CreateMatchIntent.PlayerClicked(player)) }
+                                modifier = Modifier.padding(vertical = 5.dp, horizontal = 10.dp)
                         )
                     }
                 }

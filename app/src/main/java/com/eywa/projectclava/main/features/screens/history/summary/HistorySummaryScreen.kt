@@ -34,6 +34,7 @@ fun HistorySummaryScreen(
             .sortedByDescending { it.value.first().getTime() }
 
     ClavaScreen(
+            showNoContentPlaceholder = matchesGroupedByDate.isEmpty(),
             noContentText = "No matches have been completed",
             missingContentNextStep = databaseState.getMissingContent()
                     .takeIf { states -> states.any { it == MissingContentNextStep.COMPLETE_A_MATCH } },
@@ -48,6 +49,7 @@ fun HistorySummaryScreen(
             listArrangement = Arrangement.spacedBy(25.dp),
             listModifier = Modifier.padding(horizontal = 5.dp)
     ) {
+        // TODO_CURRENT Semantics
         items(matchesGroupedByDate) { (dateString, matches) ->
             val isSingleMatch = matches.count() == 1
             val firstMatch = matches.minOfOrNull { it.getTime() }!!.asTimeString()

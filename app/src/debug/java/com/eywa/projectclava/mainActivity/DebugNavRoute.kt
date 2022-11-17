@@ -31,6 +31,7 @@ enum class DebugNavRoute(override val route: String) : NavRoute {
             val filtered = databaseState.matches.filter { it.isCurrent }
 
             ClavaScreen(
+                    showNoContentPlaceholder = false,
                     noContentText = "No content",
                     navigateListener = { },
                     missingContentNextStep = null,

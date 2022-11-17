@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -13,14 +12,16 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.R
-import com.eywa.projectclava.main.common.MissingContentNextStep
+import com.eywa.projectclava.main.features.ui.ClavaIconInfo.PainterIcon
+import com.eywa.projectclava.main.features.ui.ClavaIconInfo.VectorIcon
 import com.eywa.projectclava.main.features.ui.ClavaScreen
 import com.eywa.projectclava.main.features.ui.SelectableListItem
+import com.eywa.projectclava.main.features.ui.SelectedItemAction
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialog
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogIntent
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogType
@@ -56,9 +57,7 @@ fun ArchivedPlayersScreen(
     // TODO Add a search?
     ClavaScreen(
             noContentText = "No archived players",
-            missingContentNextStep = if (archivedPlayers.isEmpty()) listOf(MissingContentNextStep.ADD_PLAYERS) else null,
-            showMissingContentNextStep = false,
-            navigateListener = {},
+            showNoContentPlaceholder = archivedPlayers.isEmpty(),
             headerContent = {
                 Text(
                         text = "Archived players",
@@ -73,7 +72,28 @@ fun ArchivedPlayersScreen(
             }
     ) {
         items(archivedPlayers.sortedBy { it.name }) { player ->
-            SelectableListItem {
+            val buttons = listOf(
+                    SelectedItemAction(
+                            VectorIcon(Icons.Default.Edit, "Edit ${player.name}")
+                    ) { listener(EditDialogIntent.EditItemStarted(player).toArchivedPlayersIntent()) },
+                    SelectedItemAction(
+                            PainterIcon(R.drawable.baseline_unarchive_24, "Unarchive ${player.name}")
+                    ) { listener(ArchivedPlayersIntent.PlayerUnarchived(player)) },
+                    SelectedItemAction(
+                            VectorIcon(Icons.Default.Close, "Delete ${player.name}")
+                    ) { listener(ConfirmDialogIntent.Open(player).toArchivedPlayersIntent()) },
+            )
+
+            SelectableListItem(
+                    contentDescription = player.name,
+                    onClick = null,
+                    actions = buttons.map {
+                        CustomAccessibilityAction(
+                                label = it.icon.contentDescription!!,
+                                action = { it.onClick(); true },
+                        )
+                    }
+            ) {
                 Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(start = 15.dp)
@@ -83,29 +103,10 @@ fun ArchivedPlayersScreen(
                             style = Typography.h4,
                             modifier = Modifier.weight(1f)
                     )
-                    IconButton(
-                            onClick = { listener(EditDialogIntent.EditItemStarted(player).toArchivedPlayersIntent()) }
-                    ) {
-                        Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = "Edit ${player.name}"
-                        )
-                    }
-                    IconButton(
-                            onClick = { listener(ArchivedPlayersIntent.PlayerUnarchived(player)) }
-                    ) {
-                        Icon(
-                                painter = painterResource(R.drawable.baseline_unarchive_24),
-                                contentDescription = "Unarchive ${player.name}"
-                        )
-                    }
-                    IconButton(
-                            onClick = { listener(ConfirmDialogIntent.Open(player).toArchivedPlayersIntent()) }
-                    ) {
-                        Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Delete ${player.name}"
-                        )
+                    buttons.forEach {
+                        IconButton(onClick = it.onClick) {
+                            it.icon.ClavaIcon()
+                        }
                     }
                 }
             }

@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
@@ -35,7 +36,7 @@ fun <T : NamedItem> NamedItemTextField(
     val isEmpty = proposedItemName.isBlank()
     val errorMessage = when {
         !fieldIsDirty -> null
-        isDuplicate -> "A $typeContentDescription with that name already exists"
+        isDuplicate -> "A $typeContentDescription with the name $proposedItemName already exists"
         isEmpty -> "Cannot be empty"
         else -> null
     }
@@ -61,7 +62,10 @@ fun <T : NamedItem> NamedItemTextField(
                 label = label.takeIf { itemBeingEdited == null },
                 placeholder = { Text(textPlaceholder) },
                 trailingIcon = {
-                    IconButton(onClick = onClearPressedListener) {
+                    IconButton(
+                            onClick = onClearPressedListener,
+                            modifier = Modifier.clearAndSetSemantics { },
+                    ) {
                         Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Clear"
@@ -74,12 +78,28 @@ fun <T : NamedItem> NamedItemTextField(
                         capitalization = KeyboardCapitalization.Words,
                 ),
                 keyboardActions = KeyboardActions(onDone = { onDone() }),
-                modifier = textFieldModifier.onKeyEvent {
-                    if (it.nativeKeyEvent.keyCode != KeyEvent.KEYCODE_ENTER) return@onKeyEvent false
+                modifier = textFieldModifier
+                        .onKeyEvent {
+                            if (it.nativeKeyEvent.keyCode != KeyEvent.KEYCODE_ENTER) return@onKeyEvent false
 
-                    onDone()
-                    true
-                }
+                            onDone()
+                            true
+                        }
+                        .semantics {
+                            errorMessage?.let {
+                                error(errorMessage)
+                            }
+                            customActions = listOf(
+                                    CustomAccessibilityAction(
+                                            label = "Add player $proposedItemName",
+                                            action = { onDone(); true },
+                                    ),
+                                    CustomAccessibilityAction(
+                                            label = "Clear",
+                                            action = { onClearPressedListener(); true },
+                                    ),
+                            )
+                        }
         )
         errorMessage?.let {
             Text(

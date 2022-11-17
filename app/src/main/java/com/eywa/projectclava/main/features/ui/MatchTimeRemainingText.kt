@@ -12,7 +12,7 @@ import com.eywa.projectclava.main.model.TimeRemaining
 import com.eywa.projectclava.main.theme.Typography
 
 @Composable
-fun MatchStateIndicator(match: Match?, getTimeRemaining: Match.() -> TimeRemaining? = { null }) {
+fun MatchTimeRemainingText(match: Match?, getTimeRemaining: Match.() -> TimeRemaining? = { null }) {
     Text(
             text = when (match?.state) {
                 null,

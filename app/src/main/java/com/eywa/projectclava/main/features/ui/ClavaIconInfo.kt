@@ -51,4 +51,13 @@ sealed class ClavaIconInfo {
                 modifier = modifier.then(this.modifier)
         )
     }
+
+    fun copyIcon(
+            contentDescription: String? = this.contentDescription,
+            tint: Color? = this.tint,
+            modifier: Modifier = this.modifier,
+    ) = when (this) {
+        is PainterIcon -> copy(contentDescription = contentDescription, tint = tint, modifier = modifier)
+        is VectorIcon -> copy(contentDescription = contentDescription, tint = tint, modifier = modifier)
+    }
 }

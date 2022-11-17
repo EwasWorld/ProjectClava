@@ -2,8 +2,8 @@ package com.eywa.projectclava.main.features.ui.topTabSwitcher
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material.Surface
@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -49,9 +50,10 @@ fun <T : TabSwitcherItem> TabSwitcher(
                     modifier = Modifier.fillMaxWidth()
             ) {
                 items.forEachIndexed { index, item ->
+                    val isSelected = selectedItem == item
                     val textColour: Color
                     val backgroundColour: Color
-                    if (selectedItem == item) {
+                    if (isSelected) {
                         backgroundColour = ClavaColor.TabSwitcherSelected
                         textColour = ClavaColor.OnTabSwitcherSelected
                     }
@@ -68,7 +70,7 @@ fun <T : TabSwitcherItem> TabSwitcher(
                             ),
                             textAlign = TextAlign.Center,
                             modifier = Modifier
-                                    .clickable { navigateListener(item.destination) }
+                                    .selectable(isSelected, role = Role.Tab) { navigateListener(item.destination) }
                                     .weight(1f)
                                     .background(backgroundColour)
                                     .fillMaxHeight()

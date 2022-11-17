@@ -17,7 +17,7 @@ import com.eywa.projectclava.main.theme.Typography
 
 data class SelectedItemAction(
         val icon: ClavaIconInfo,
-        val enabled: Boolean,
+        val enabled: Boolean = true,
         val onClick: () -> Unit,
 )
 

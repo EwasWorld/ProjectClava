@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.shrinkOut
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
@@ -27,25 +26,23 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.eywa.projectclava.main.common.MissingContentNextStep
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.common.generatePlayers
+import com.eywa.projectclava.main.common.stateSemanticsText
 import com.eywa.projectclava.main.features.screens.manage.SetupListIntent.SetupListItemIntent.*
 import com.eywa.projectclava.main.features.screens.manage.SetupListIntent.SetupListStateIntent.*
 import com.eywa.projectclava.main.features.screens.manage.helperClasses.SetupListItem
 import com.eywa.projectclava.main.features.screens.manage.helperClasses.SetupListSettings
 import com.eywa.projectclava.main.features.screens.manage.helperClasses.SetupListTabSwitcherItem
 import com.eywa.projectclava.main.features.screens.manage.ui.SetupCourtsScreen
-import com.eywa.projectclava.main.features.ui.ClavaScreen
-import com.eywa.projectclava.main.features.ui.NamedItemTextField
-import com.eywa.projectclava.main.features.ui.SelectableListItem
+import com.eywa.projectclava.main.features.ui.*
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialog
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogIntent
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogType
@@ -78,6 +75,13 @@ fun <T : SetupListItem> SetupListScreen(
             .takeIf { !it.isNullOrBlank() }
             ?.let { searchTxt -> items.filter { it.name.contains(searchTxt, ignoreCase = true) } }
             ?.takeIf { it.isNotEmpty() }
+            ?: items
+
+    val noContentMessage = when (state.searchText) {
+        null -> "No ${setupListSettings.typeContentDescription}s yet," +
+                "\n\nType a name into the box below\nthen press enter!"
+        else -> "No matches found for '${state.searchText}'"
+    }
 
     // TODO More generic way to handle multiple dialogs and prevent them all showing at once
     // TODO Move some of the setupListSettings to an EditNameDialog settings?
@@ -95,10 +99,8 @@ fun <T : SetupListItem> SetupListScreen(
     )
 
     ClavaScreen(
-            noContentText = "No ${setupListSettings.typeContentDescription}s yet," +
-                    "\n\nType a name into the box below\nthen press enter!",
-            missingContentNextStep = if (items.none()) listOf(MissingContentNextStep.ADD_PLAYERS) else null,
-            showMissingContentNextStep = false,
+            showNoContentPlaceholder = itemsToShow.none(),
+            noContentText = noContentMessage,
             navigateListener = { listener(Navigate(it)) },
             fabs = { modifier ->
                 SearchFab(
@@ -136,84 +138,81 @@ fun <T : SetupListItem> SetupListScreen(
                 )
             }
     ) {
-        if (state.searchText?.isBlank() == false && itemsToShow == null) {
-            // No search results
-            item {
-                Text(
-                        text = "No matches found for '${state.searchText}'",
-                        style = Typography.h4,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                )
+        items(setupListSettings.sortItems(itemsToShow).toList()) { item ->
+            @Suppress("UNCHECKED_CAST")
+            val match = getMatch(item)
+            val contentDescription = item.name + " " + when {
+                item.enabled -> match.stateSemanticsText(item is Player) { getTimeRemaining() }
+                else -> setupListSettings.disabledStateDescription
             }
-        }
-        else {
-            items(setupListSettings.sortItems(itemsToShow ?: items).toList()) { genericItem ->
-                @Suppress("UNCHECKED_CAST")
-                val item = genericItem as T
-                val match = getMatch(item)
-                SelectableListItem(
-                        enabled = item.enabled,
-                        match = match,
-                        getTimeRemaining = getTimeRemaining,
-                ) {
-                    Column(
-                            modifier = Modifier.clickable {
-                                listener(ItemClicked(item))
-                                focusManager.clearFocus()
-                            }
+
+            val buttons = listOf(
+                    SelectedItemAction(
+                            ClavaIconInfo.VectorIcon(Icons.Default.Edit, "Edit")
                     ) {
-                        Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(start = 15.dp)
-                        ) {
-                            val decoration = if (item.enabled) TextDecoration.None else TextDecoration.LineThrough
-                            Text(
-                                    text = item.name,
-                                    style = Typography.h4.copy(textDecoration = decoration),
-                                    modifier = Modifier.weight(1f)
-                            )
-                            IconButton(
-                                    onClick = {
-                                        listener(EditDialogIntent.EditItemStarted(item).toSetupListIntent())
-                                        focusManager.clearFocus()
-                                    }
-                            ) {
-                                Icon(
-                                        imageVector = Icons.Default.Edit,
-                                        contentDescription = "Edit ${item.name}"
+                        listener(EditDialogIntent.EditItemStarted(item).toSetupListIntent())
+                        focusManager.clearFocus()
+                    },
+                    SelectedItemAction(
+                            setupListSettings.deleteIconInfo,
+                            isDeleteItemEnabled(item),
+                    ) {
+                        listener(
+                                if (setupListSettings.confirmBeforeDelete) {
+                                    ConfirmDialogIntent.Open(item).toSetupListIntent()
+                                }
+                                else {
+                                    ItemDeleted(item)
+                                }
+                        )
+                        focusManager.clearFocus()
+                    },
+            )
+
+            SelectableListItem(
+                    enabled = item.enabled,
+                    match = match,
+                    getTimeRemaining = getTimeRemaining,
+                    contentDescription = contentDescription,
+                    onClick = {
+                        listener(ItemClicked(item))
+                        focusManager.clearFocus()
+                    },
+                    onClickActionLabel = "Mark " + setupListSettings.getStateDescription(!item.enabled),
+                    actions = buttons
+                            .filter { it.enabled }
+                            .map {
+                                CustomAccessibilityAction(
+                                        label = it.icon.contentDescription!!,
+                                        action = { it.onClick(); true },
                                 )
-                            }
-                            IconButton(
-                                    enabled = isDeleteItemEnabled(item),
-                                    onClick = {
-                                        listener(
-                                                if (setupListSettings.confirmBeforeDelete) {
-                                                    ConfirmDialogIntent.Open(item).toSetupListIntent()
-                                                }
-                                                else {
-                                                    ItemDeleted(item)
-                                                }
-                                        )
-                                        focusManager.clearFocus()
-                                    }
-                            ) {
-                                Icon(
-                                        painter = setupListSettings.deleteIconInfo.asPainter(),
-                                        contentDescription = setupListSettings.deleteIconInfo.contentDescription!! +
-                                                " " + item.name
-                                )
+                            },
+            ) {
+                Column {
+                    Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(start = 15.dp)
+                    ) {
+                        val decoration = if (item.enabled) TextDecoration.None else TextDecoration.LineThrough
+                        Text(
+                                text = item.name,
+                                style = Typography.h4.copy(textDecoration = decoration),
+                                modifier = Modifier.weight(1f)
+                        )
+                        buttons.forEach {
+                            IconButton(onClick = it.onClick) {
+                                it.icon.ClavaIcon()
                             }
                         }
-                        if (hasExtraContent(item)) {
-                            Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                            .padding(horizontal = 15.dp)
-                                            .padding(bottom = 10.dp)
-                            ) {
-                                extraContent(item)
-                            }
+                    }
+                    if (hasExtraContent(item)) {
+                        Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                        .padding(horizontal = 15.dp)
+                                        .padding(bottom = 10.dp)
+                        ) {
+                            extraContent(item)
                         }
                     }
                 }

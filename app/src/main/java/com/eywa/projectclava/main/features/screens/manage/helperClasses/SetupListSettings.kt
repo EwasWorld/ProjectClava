@@ -16,8 +16,9 @@ enum class SetupListSettings(
         private val textPlaceholderAlt: String?,
         val deleteIconInfo: ClavaIconInfo = ClavaIconInfo.VectorIcon(Icons.Default.Close, "Delete"),
         val selectedTab: SetupListTabSwitcherItem,
-        val sortItems: (Iterable<SetupListItem>) -> List<SetupListItem> = { items -> items.sortedBy { it.name } },
         val confirmBeforeDelete: Boolean = true,
+        val enabledStateDescription: String,
+        val disabledStateDescription: String,
 ) {
     PLAYERS(
             typeContentDescription = "player",
@@ -26,19 +27,29 @@ enum class SetupListSettings(
             textPlaceholder = "John Doe",
             textPlaceholderAlt = null,
             confirmBeforeDelete = false,
+            enabledStateDescription = "present",
+            disabledStateDescription = "absent",
     ),
     COURTS(
             typeContentDescription = "court",
             selectedTab = SetupListTabSwitcherItem.COURTS,
             textPlaceholder = "Court 1",
             textPlaceholderAlt = "1",
-            sortItems = {
-                @Suppress("UNCHECKED_CAST")
-                (it as Iterable<Court>).sortByName()
-            }
-    )
+            enabledStateDescription = "usable",
+            disabledStateDescription = "unusable",
+    ) {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : SetupListItem> sortItems(items: Iterable<T>) =
+                (items as Iterable<Court>).sortByName() as List<T>
+    }
     ;
 
     fun getTextPlaceholder(useAlt: Boolean) =
             if (useAlt && textPlaceholderAlt != null) textPlaceholderAlt else textPlaceholder
+
+    fun getStateDescription(enabled: Boolean) =
+            if (enabled) enabledStateDescription else disabledStateDescription
+
+    open fun <T : SetupListItem> sortItems(items: Iterable<T>) =
+            items.sortedBy { it.name }
 }

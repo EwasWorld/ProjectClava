@@ -1,5 +1,6 @@
 package com.eywa.projectclava.main.features.ui
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -24,13 +25,16 @@ import com.eywa.projectclava.main.theme.DividerThickness
 import com.eywa.projectclava.main.theme.Typography
 
 // TODO Test accessibility
+/**
+ * @param navigateListener only required if [missingContentNextStep] is given
+ */
+@SuppressLint("ModifierParameter") // It's not a modifier on the whole ClavaScreen so don't want to call it modifier
 @Composable
 fun ClavaScreen(
+        showNoContentPlaceholder: Boolean,
         noContentText: String,
-        missingContentNextStep: Iterable<MissingContentNextStep>?,
-        modifier: Modifier = Modifier,
-        showMissingContentNextStep: Boolean = true,
-        navigateListener: (NavRoute) -> Unit,
+        missingContentNextStep: Iterable<MissingContentNextStep>? = null,
+        navigateListener: ((NavRoute) -> Unit)? = null,
         headerContent: @Composable (() -> Unit)? = null,
         footerContent: @Composable (() -> Unit)? = null,
         footerIsVisible: Boolean = true,
@@ -39,47 +43,9 @@ fun ClavaScreen(
         listModifier: Modifier = Modifier,
         listContent: LazyListScope.() -> Unit,
 ) {
-    // Always show at the same height, regardless of the header/footer size
-    val firstMissingContent = missingContentNextStep.getFirstStep()
-    if (firstMissingContent != null) {
-        Box(
-                contentAlignment = Alignment.TopCenter,
-                modifier = Modifier
-                        .fillMaxSize()
-        ) {
-            Column(
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 20.dp)
-            ) {
-                Text(
-                        text = noContentText,
-                        style = Typography.h4,
-                        textAlign = TextAlign.Center,
-                )
-                if (showMissingContentNextStep) {
-                    Spacer(modifier = Modifier.height(20.dp))
-                    Text(
-                            text = firstMissingContent.nextStepsText,
-                            style = Typography.h4,
-                            textAlign = TextAlign.Center,
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Button(onClick = { navigateListener(firstMissingContent.buttonRoute) }) {
-                        Text(
-                                text = "Let's do it!",
-                        )
-                    }
-                }
-            }
-        }
-    }
-
     Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize()
     ) {
         headerContent?.let {
             Surface(
@@ -97,7 +63,14 @@ fun ClavaScreen(
                         .fillMaxWidth()
                         .weight(1f)
         ) {
-            if (firstMissingContent == null) {
+            if (showNoContentPlaceholder) {
+                NoContentPlaceholder(
+                        noContentText = noContentText,
+                        missingContentNextStep = missingContentNextStep,
+                        navigateListener = navigateListener,
+                )
+            }
+            else {
                 LazyColumn(
                         verticalArrangement = listArrangement,
                         contentPadding = PaddingValues(vertical = 20.dp),
@@ -130,11 +103,48 @@ fun ClavaScreen(
     }
 }
 
+@Composable
+private fun NoContentPlaceholder(
+        noContentText: String,
+        missingContentNextStep: Iterable<MissingContentNextStep>?,
+        navigateListener: ((NavRoute) -> Unit)? = null,
+) {
+    val firstMissingContent = missingContentNextStep.getFirstStep()
+    Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp)
+    ) {
+        Text(
+                text = noContentText,
+                style = Typography.h4,
+                textAlign = TextAlign.Center,
+        )
+        if (firstMissingContent != null) {
+            Spacer(modifier = Modifier.height(20.dp))
+            Text(
+                    text = firstMissingContent.nextStepsText,
+                    style = Typography.h4,
+                    textAlign = TextAlign.Center,
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Button(onClick = { navigateListener!!(firstMissingContent.buttonRoute) }) {
+                Text(
+                        text = "Let's do it!",
+                )
+            }
+        }
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable
 fun Empty_ClavaScreen_Preview() {
     ClavaScreen(
+            showNoContentPlaceholder = true,
             noContentText = "No queued matches",
             missingContentNextStep = listOf(MissingContentNextStep.ADD_PLAYERS),
             navigateListener = {},
