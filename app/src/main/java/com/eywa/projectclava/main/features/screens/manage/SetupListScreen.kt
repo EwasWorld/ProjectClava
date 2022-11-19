@@ -41,7 +41,7 @@ import com.eywa.projectclava.main.features.screens.manage.SetupListIntent.SetupL
 import com.eywa.projectclava.main.features.screens.manage.helperClasses.SetupListItem
 import com.eywa.projectclava.main.features.screens.manage.helperClasses.SetupListSettings
 import com.eywa.projectclava.main.features.screens.manage.helperClasses.SetupListTabSwitcherItem
-import com.eywa.projectclava.main.features.screens.manage.ui.SetupCourtsScreen
+import com.eywa.projectclava.main.features.screens.manage.setupCourt.SetupCourtsScreen
 import com.eywa.projectclava.main.features.ui.*
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialog
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogIntent

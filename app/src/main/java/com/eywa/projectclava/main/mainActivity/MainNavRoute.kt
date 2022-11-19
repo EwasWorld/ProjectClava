@@ -11,8 +11,8 @@ import com.eywa.projectclava.main.features.screens.history.matches.MatchHistoryS
 import com.eywa.projectclava.main.features.screens.history.matches.MatchHistoryState
 import com.eywa.projectclava.main.features.screens.history.summary.HistorySummaryScreen
 import com.eywa.projectclava.main.features.screens.manage.SetupListState
+import com.eywa.projectclava.main.features.screens.manage.setupCourt.SetupCourtsScreen
 import com.eywa.projectclava.main.features.screens.manage.setupPlayer.SetupPlayersScreen
-import com.eywa.projectclava.main.features.screens.manage.ui.SetupCourtsScreen
 import com.eywa.projectclava.main.features.screens.matchUp.CreateMatchScreen
 import com.eywa.projectclava.main.features.screens.matchUp.CreateMatchState
 import com.eywa.projectclava.main.features.screens.ongoing.OngoingMatchesScreen

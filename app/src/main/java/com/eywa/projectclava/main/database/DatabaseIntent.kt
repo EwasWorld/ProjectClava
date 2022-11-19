@@ -142,10 +142,7 @@ private interface CourtIntent : DatabaseIntent {
         val courtRepo = db.courtRepo()
 
         when (this) {
-            is AddCourt -> {
-                val prefix = if (prependCourt && !name.startsWith("Court ", ignoreCase = true)) "Court " else ""
-                courtRepo.insertAll(DatabaseCourt(0, prefix + name))
-            }
+            is AddCourt -> courtRepo.insertAll(DatabaseCourt(0, Court.formatName(name, prependCourt)))
             is DeleteCourt -> courtRepo.delete(court.asDatabaseCourt())
             is UpdateCourt -> courtRepo.update(court.asDatabaseCourt())
 

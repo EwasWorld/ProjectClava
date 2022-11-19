@@ -1,4 +1,4 @@
-package com.eywa.projectclava.main.features.screens.manage.ui
+package com.eywa.projectclava.main.features.screens.manage.setupCourt
 
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.Icon
@@ -14,8 +14,6 @@ import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.features.screens.manage.SetupListScreen
 import com.eywa.projectclava.main.features.screens.manage.SetupListState
 import com.eywa.projectclava.main.features.screens.manage.helperClasses.SetupListSettings
-import com.eywa.projectclava.main.features.screens.manage.setupCourt.SetupCourtIntent
-import com.eywa.projectclava.main.features.screens.manage.setupCourt.toSetupCourtIntent
 import com.eywa.projectclava.main.model.*
 import java.util.*
 
@@ -38,8 +36,8 @@ fun SetupCourtsScreen(
             nameIsDuplicate = { newName, nameOfItemBeingEdited ->
                 if (newName == nameOfItemBeingEdited) return@SetupListScreen true
 
-                val checkName = if (prependCourt) "Court $newName" else newName
-                databaseState.courts.any { it.name == checkName.trim() }
+                val checkName = Court.formatName(newName, prependCourt)
+                databaseState.courts.any { it.name == checkName }
             },
             getMatch = { databaseState.matches.getLatestMatchForCourt(it) },
             getTimeRemaining = getTimeRemaining,

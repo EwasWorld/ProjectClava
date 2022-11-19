@@ -20,4 +20,11 @@ data class Court(
         get() = canBeUsed
 
     fun asDatabaseCourt() = DatabaseCourt(id, name, canBeUsed)
+
+    companion object {
+        fun formatName(name: String, prependCourt: Boolean): String {
+            val usePrefix = prependCourt && !name.startsWith("court", ignoreCase = true)
+            return (if (usePrefix) "Court " else "") + name.trim()
+        }
+    }
 }
