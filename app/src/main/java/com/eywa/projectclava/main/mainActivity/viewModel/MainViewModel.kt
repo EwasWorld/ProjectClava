@@ -21,7 +21,6 @@ import com.eywa.projectclava.main.model.asMatch
 import com.eywa.projectclava.main.model.asPlayer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -40,9 +39,8 @@ class MainViewModel @Inject constructor(
     val currentTime = MutableSharedFlow<Calendar>(1)
     private var screenState by mutableStateOf(mapOf<NavRoute, ScreenState>())
 
-    private val _effects: MutableSharedFlow<MainEffect?> =
-            MutableSharedFlow(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    val effects: Flow<MainEffect?> = _effects
+    private val _effects: MutableStateFlow<MainEffect?> = MutableStateFlow(null)
+    val effects: StateFlow<MainEffect?> = _effects
 
     /*
      * Database state
@@ -92,13 +90,16 @@ class MainViewModel @Inject constructor(
             /*
              * CoreIntents
              */
+            is EffectHandledIntent -> {
+                _effects.update { currentEffect -> currentEffect.takeIf { it != intent.effect } }
+            }
             is MainEffect -> {
                 if (intent is MainEffect.Navigate && intent.destination == MainNavRoute.HELP_SCREEN) {
                     val currentState = getScreenState(MainNavRoute.HELP_SCREEN) as HelpState
                     MainNavRoute.HELP_SCREEN.updateScreenState(currentState.copy(screen = intent.currentRoute))
                 }
 
-                viewModelScope.launch(context = Dispatchers.Default) { _effects.emit(intent) }
+                viewModelScope.launch(context = Dispatchers.Default) { _effects.update { intent } }
             }
             is DatabaseIntent -> viewModelScope.launch {
                 intent.handle(

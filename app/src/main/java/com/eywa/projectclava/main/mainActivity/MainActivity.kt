@@ -30,6 +30,7 @@ import com.eywa.projectclava.main.features.drawer.DrawerContent
 import com.eywa.projectclava.main.features.drawer.DrawerIntent
 import com.eywa.projectclava.main.features.ui.ClavaBottomNav
 import com.eywa.projectclava.main.features.ui.ClavaDialog
+import com.eywa.projectclava.main.mainActivity.viewModel.EffectHandledIntent
 import com.eywa.projectclava.main.mainActivity.viewModel.MainEffect
 import com.eywa.projectclava.main.mainActivity.viewModel.MainViewModel
 import com.eywa.projectclava.main.theme.ClavaColor
@@ -68,6 +69,7 @@ class MainActivity : ComponentActivity() {
             ProjectClavaTheme {
                 val currentTime by viewModel.currentTime.collectAsState(initial = Calendar.getInstance())
 
+                val effectState by viewModel.effects.collectAsState()
                 val databaseState by viewModel.databaseState.collectAsState(initial = null)
                 val preferences by viewModel.preferences.collectAsState(initial = null)
 
@@ -112,19 +114,19 @@ class MainActivity : ComponentActivity() {
                             showUpdateClubNightStartTimeDialog = true
                         }
                     }
+                }
 
-                    scope.launch {
-                        viewModel.effects.collect { effect ->
-                            when (effect) {
-                                is MainEffect.Navigate -> {
-                                    navController.navigate(effect.destination.route)
-                                    changeDrawerState(false)
-                                }
-                                MainEffect.OpenDrawer -> changeDrawerState(true)
-                                MainEffect.CloseDrawer -> changeDrawerState(false)
-                                null -> {}
+                LaunchedEffect(effectState) {
+                    effectState?.let {
+                        when (it) {
+                            is MainEffect.Navigate -> {
+                                navController.navigate(it.destination.route)
+                                changeDrawerState(false)
                             }
+                            MainEffect.OpenDrawer -> changeDrawerState(true)
+                            MainEffect.CloseDrawer -> changeDrawerState(false)
                         }
+                        viewModel.handleIntent(EffectHandledIntent(it))
                     }
                 }
 
