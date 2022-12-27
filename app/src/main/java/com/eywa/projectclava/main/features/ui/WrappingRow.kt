@@ -24,7 +24,7 @@ fun WrappingRow(
             content = content
     ) { measurables, constraints ->
         // Measure each child
-        val placeables = measurables.map { measurable -> measurable.measure(constraints) }
+        val placeables = measurables.map { measurable -> measurable.measure(constraints.copy(minWidth = 0)) }
 
         // Calculate the height and width
         val (width, height) = place(placeables, spacingPx, constraints.maxWidth) { _, _, _ -> }
