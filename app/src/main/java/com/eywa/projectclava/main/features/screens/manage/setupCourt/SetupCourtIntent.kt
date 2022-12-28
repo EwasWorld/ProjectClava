@@ -14,6 +14,7 @@ import com.eywa.projectclava.main.model.Court
 fun SetupListIntent.toSetupCourtIntent() = when (this) {
     is SetupListIntent.SetupListStateIntent -> SetupCourtIntent.ScreenIntent(this)
     AddItemSubmitted -> SetupCourtIntent.AddCourtSubmitted
+    is UnarchiveItemSubmitted<*> -> throw IllegalStateException("Courts cannot be archived")
     is ItemClicked<*> -> SetupCourtIntent.CourtClicked(item as Court)
     is ItemDeleted<*> -> SetupCourtIntent.CourtDeleted(item as Court)
     is ItemNameUpdated<*> -> SetupCourtIntent.CourtNameUpdated(item as Court, newName)

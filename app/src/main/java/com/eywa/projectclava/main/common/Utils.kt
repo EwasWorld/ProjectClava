@@ -1,6 +1,7 @@
 package com.eywa.projectclava.main.common
 
 import android.os.Build
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
@@ -75,6 +76,8 @@ fun String.parseInt() =
         catch (e: NumberFormatException) {
             0
         }
+
+fun Modifier.ifThen(predicate: Boolean, modifier: Modifier) = if (predicate) this.then(modifier) else this
 
 private sealed class TextOrNumber : Comparable<TextOrNumber> {
     data class Text(val value: String) : TextOrNumber() {

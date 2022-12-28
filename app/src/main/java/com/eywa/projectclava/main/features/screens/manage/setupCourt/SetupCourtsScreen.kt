@@ -39,6 +39,7 @@ fun SetupCourtsScreen(
                 val checkName = Court.formatName(newName, prependCourt)
                 databaseState.courts.any { it.name == checkName }
             },
+            nameIsArchived = { _, _ -> null },
             getMatch = { databaseState.matches.getLatestMatchForCourt(it) },
             getTimeRemaining = getTimeRemaining,
             hasExtraContent = { databaseState.matches.getLatestMatchForCourt(it) != null },

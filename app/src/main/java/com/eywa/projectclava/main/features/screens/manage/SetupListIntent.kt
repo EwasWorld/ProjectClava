@@ -20,6 +20,7 @@ sealed class SetupListIntent {
      */
     sealed class SetupListItemIntent<T : SetupListItem> : SetupListIntent() {
         object AddItemSubmitted : SetupListItemIntent<SetupListItem>()
+        data class UnarchiveItemSubmitted<T : SetupListItem>(val item: T) : SetupListItemIntent<T>()
         data class ItemDeleted<T : SetupListItem>(val item: T) : SetupListItemIntent<T>()
         data class ItemClicked<T : SetupListItem>(val item: T) : SetupListItemIntent<T>()
         data class ItemNameUpdated<T : SetupListItem>(val item: T, val newName: String) : SetupListItemIntent<T>()

@@ -28,6 +28,10 @@ fun SetupPlayersScreen(
             nameIsDuplicate = { newName, nameOfItemBeingEdited ->
                 newName != nameOfItemBeingEdited && databaseState.players.any { it.name == newName.trim() }
             },
+            nameIsArchived = { newName, nameOfItemBeingEdited ->
+                if (newName == nameOfItemBeingEdited) return@SetupListScreen null
+                databaseState.players.find { it.name == newName.trim() && it.isArchived }
+            },
             getTimeRemaining = getTimeRemaining,
             listener = { listener(it.toSetupPlayerIntent()) },
     )

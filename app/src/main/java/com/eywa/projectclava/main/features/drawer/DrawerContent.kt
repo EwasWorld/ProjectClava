@@ -33,6 +33,7 @@ import java.util.*
 
 private val drawerTextStyle = Typography.h4
 
+// TODO Add a help page
 @Composable
 fun DrawerContent(
         currentTime: () -> Calendar,

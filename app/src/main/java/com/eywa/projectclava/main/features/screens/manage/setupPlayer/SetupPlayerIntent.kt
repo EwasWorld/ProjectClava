@@ -13,6 +13,7 @@ import com.eywa.projectclava.main.model.Player
 fun SetupListIntent.toSetupPlayerIntent() = when (this) {
     is SetupListIntent.SetupListStateIntent -> SetupPlayerIntent.ScreenIntent(this)
     AddItemSubmitted -> SetupPlayerIntent.AddPlayerSubmitted
+    is UnarchiveItemSubmitted<*> -> SetupPlayerIntent.UnarchivePlayerSubmitted(item as Player)
     is ItemClicked<*> -> SetupPlayerIntent.PlayerClicked(item as Player)
     is ItemDeleted<*> -> SetupPlayerIntent.PlayerArchived(item as Player)
     is ItemNameUpdated<*> -> SetupPlayerIntent.PlayerNameUpdated(item as Player, newName)
@@ -22,6 +23,7 @@ sealed class SetupPlayerIntent : ScreenIntent<SetupListState<Player>> {
     override val screen = MainNavRoute.ADD_PLAYER
 
     object AddPlayerSubmitted : SetupPlayerIntent()
+    data class UnarchivePlayerSubmitted(val player: Player) : SetupPlayerIntent()
     data class PlayerArchived(val player: Player) : SetupPlayerIntent()
     data class PlayerClicked(val player: Player) : SetupPlayerIntent()
     data class PlayerNameUpdated(val player: Player, val newName: String) : SetupPlayerIntent()
@@ -37,6 +39,9 @@ sealed class SetupPlayerIntent : ScreenIntent<SetupListState<Player>> {
             AddPlayerSubmitted -> {
                 handle(DatabaseIntent.AddPlayer(currentState.addItemName.trim()))
                 ScreenIntent(AddNameCleared).handle(currentState, handle, newStateListener)
+            }
+            is UnarchivePlayerSubmitted -> {
+                handle(DatabaseIntent.UpdatePlayer(player.copy(isArchived = false, isPresent = true)))
             }
             is PlayerClicked -> {
                 handle(DatabaseIntent.UpdatePlayer(player.copy(isPresent = !player.isPresent)))

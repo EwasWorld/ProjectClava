@@ -28,11 +28,13 @@ fun <T : NamedItem> EditNameDialog(
                 typeContentDescription = typeContentDescription,
                 textPlaceholder = textPlaceholder,
                 nameIsDuplicate = nameIsDuplicate,
+                nameIsArchived = { _, _ -> null },
                 proposedItemName = state.editItemName,
                 onValueChangedListener = { listener(EditItemNameChanged(it)) },
                 onClearPressedListener = { listener(EditNameCleared) },
                 fieldIsDirty = state.editNameIsDirty,
                 onDoneListener = okListener,
+                onUnarchiveListener = {},
                 itemBeingEdited = state.editDialogOpenFor,
         )
     }
