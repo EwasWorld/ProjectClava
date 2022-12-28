@@ -51,6 +51,10 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var navRoutes: Array<out NavRoute>
 
+    override fun onBackPressed() {
+        viewModel.handleIntent(MainEffect.BackPressed)
+    }
+
     @OptIn(ExperimentalMaterialApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -125,6 +129,8 @@ class MainActivity : ComponentActivity() {
                             }
                             MainEffect.OpenDrawer -> changeDrawerState(true)
                             MainEffect.CloseDrawer -> changeDrawerState(false)
+                            MainEffect.BackPressed ->
+                                if (drawerState.isOpen) changeDrawerState(false) else super.onBackPressed()
                         }
                         viewModel.handleIntent(EffectHandledIntent(it))
                     }
