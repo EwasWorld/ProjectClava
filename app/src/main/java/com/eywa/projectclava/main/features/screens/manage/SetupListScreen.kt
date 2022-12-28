@@ -116,7 +116,7 @@ fun <T : SetupListItem> SetupListScreen(
             },
             footerIsVisible = !state.isSearchExpanded || !isSoftKeyboardOpen,
             footerContent = {
-                NamedItemTextField<T>(
+                NamedItemTextField(
                         typeContentDescription = setupListSettings.typeContentDescription,
                         textPlaceholder = setupListSettings.getTextPlaceholder(state.useTextPlaceholderAlt),
                         nameIsArchived = nameIsArchived,
