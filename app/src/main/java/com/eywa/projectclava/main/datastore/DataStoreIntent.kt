@@ -14,5 +14,6 @@ sealed class DataStoreIntent : CoreIntent {
     data class UpdateDefaultMatchTime(val value: Int) : DataStoreIntent()
     data class UpdateDefaultTimeToAdd(val value: Int) : DataStoreIntent()
     object TogglePrependCourt : DataStoreIntent()
+    object ResetClubNightStartTime : DataStoreIntent()
     object ClearDatastore : DataStoreIntent()
 }

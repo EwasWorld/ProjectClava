@@ -58,6 +58,7 @@ class ClavaDatastore(context: Context) {
                     is DataStoreIntent.TogglePrependCourt ->
                         it[DatastoreKeys.PREPEND_COURT] = !currentState.prependCourt
                     DataStoreIntent.ClearDatastore -> it.clear()
+                    DataStoreIntent.ResetClubNightStartTime -> it.remove(DatastoreKeys.CLUB_NIGHT_START_TIME)
                     else -> throw NotImplementedError()
                 }
             }

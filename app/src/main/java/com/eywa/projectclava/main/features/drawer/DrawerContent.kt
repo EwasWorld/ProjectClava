@@ -127,6 +127,13 @@ fun DrawerContent(
                     style = drawerTextStyle.asClickableStyle(),
                     modifier = Modifier.clickable { datePicker.show() }
             )
+            Text(
+                    text = "Reset",
+                    style = drawerTextStyle.copy(fontSize = drawerTextStyle.fontSize.times(0.8)).asClickableStyle(),
+                    modifier = Modifier
+                            .clickable { listener(DrawerIntent.ResetClubNightStartTime) }
+                            .padding(start = 10.dp)
+            )
         }
         // TODO Make this collapsable?
         Text(
