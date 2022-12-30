@@ -25,7 +25,6 @@ import com.eywa.projectclava.main.model.*
 import com.eywa.projectclava.main.theme.Typography
 import java.util.*
 
-// TODO BUG: Select a player, then go to manage, change their name, return and they still show their old name in the footer
 // TODO Add button to randomly match up all players
 /**
  * @param clubNightStartTime When club night began.
@@ -43,7 +42,8 @@ fun CreateMatchScreen(
             // Ignore matches from before club night started
             .filter { !it.isFinished || it.getTime().after(clubNightStartTime) }
             .getPlayerMatches()
-    val selectedPlayerNames = state.selectedPlayers.map { it.name }
+    val selectedPlayers = state.selectedPlayers.mapNotNull { id -> databaseState.players.find { it.id == id } }
+    val selectedPlayerNames = selectedPlayers.map { it.name }
     // Everyone the selected players have previously played
     val previouslyPlayed = playerMatches
             .filterKeys { player -> selectedPlayerNames.contains(player) }
@@ -72,7 +72,7 @@ fun CreateMatchScreen(
             footerContent = {
                 CreateMatchScreenFooter(
                         getTimeRemaining = getTimeRemaining,
-                        selectedPlayers = state.selectedPlayers,
+                        selectedPlayers = selectedPlayers,
                         playerMatches = playerMatches,
                         listener = listener,
                 )
@@ -255,7 +255,7 @@ fun CreateMatchScreen_Preview() {
     val currentTime = Calendar.getInstance(Locale.getDefault())
     CreateMatchScreen(
             state = CreateMatchState(
-                    selectedPlayers = generatePlayers(2),
+                    selectedPlayers = generatePlayers(2).map { it.id },
             ),
             databaseState = ModelState(
                     players = generatePlayers(15),

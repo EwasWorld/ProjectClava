@@ -18,7 +18,7 @@ sealed interface DatabaseIntent : CoreIntent {
     data class DeleteMatch(val match: Match) : MatchIntent
     data class DeleteMatchById(val matchId: Int) : MatchIntent
     object DeleteAllMatches : MatchIntent
-    data class AddMatch(val players: Iterable<Player>) : MatchIntent
+    data class AddMatch(val playerIds: Iterable<Int>) : MatchIntent
 
     /*
      * Update match
@@ -87,11 +87,15 @@ private interface MatchIntent : DatabaseIntent {
             DeleteAllMatches -> matchRepo.deleteAll()
             is DeleteMatch -> matchRepo.delete(match.asDatabaseMatch())
             is AddMatch -> {
-                check(players.any()) { "No players in match" }
-                val databaseMatch =
-                        Match(0, players, MatchState.NotStarted(currentTime)).asDatabaseMatch()
-                val matchId = matchRepo.insert(databaseMatch)
-                matchRepo.insert(*players.map { DatabaseMatchPlayer(matchId.toInt(), it.id) }.toTypedArray())
+                check(playerIds.any()) { "No players in match" }
+                val players = playerIds.mapNotNull { id -> currentState.players.find { it.id == id } }
+                val databaseMatch = Match(
+                        id = 0,
+                        players = players,
+                        state = MatchState.NotStarted(currentTime),
+                ).asDatabaseMatch()
+                val matchId = matchRepo.insert(databaseMatch).toInt()
+                matchRepo.insert(*players.map { DatabaseMatchPlayer(matchId, it.id) }.toTypedArray())
             }
             is DeleteMatchById -> matchRepo.delete(matchFromId(matchId).asDatabaseMatch())
 

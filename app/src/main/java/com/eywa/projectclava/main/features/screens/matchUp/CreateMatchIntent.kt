@@ -32,11 +32,11 @@ sealed class CreateMatchIntent : ScreenIntent<CreateMatchState> {
             is PlayerClicked -> newStateListener(
                     currentState.copy(
                             selectedPlayers =
-                            if (currentState.selectedPlayers.contains(value)) {
-                                currentState.selectedPlayers.minus(value)
+                            if (currentState.selectedPlayers.contains(value.id)) {
+                                currentState.selectedPlayers.minus(value.id)
                             }
                             else {
-                                currentState.selectedPlayers.plus(value)
+                                currentState.selectedPlayers.plus(value.id)
                             }
                     )
             )
