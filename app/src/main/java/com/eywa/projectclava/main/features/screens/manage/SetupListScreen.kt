@@ -74,7 +74,7 @@ fun <T : SetupListItem> SetupListScreen(
 
     val itemsToShow = state.searchText
             .takeIf { !it.isNullOrBlank() }
-            ?.let { searchTxt -> items.filter { it.name.contains(searchTxt, ignoreCase = true) } }
+            ?.let { searchTxt -> items.filter { it.name.contains(searchTxt.trim(), ignoreCase = true) } }
             ?.takeIf { it.isNotEmpty() }
             ?: items
 
@@ -261,7 +261,9 @@ private fun SearchFab(
             ) {
                 BasicTextField(
                         value = searchText,
-                        onValueChange = onValueChangedListener,
+                        // Don't want to use a whitelist as names can contain things like
+                        //      an apostrophe, hyphen, or other special characters
+                        onValueChange = { newStr -> onValueChangedListener(newStr.filter { it != '\n' }) },
                         interactionSource = interactionSource,
                         textStyle = Typography.body1.copy(color = ClavaColor.FabIcon),
                         singleLine = true,

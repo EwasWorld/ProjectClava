@@ -6,6 +6,8 @@ import com.eywa.projectclava.main.database.match.DatabaseMatchPlayer
 import com.eywa.projectclava.main.database.player.DatabasePlayer
 import com.eywa.projectclava.main.mainActivity.viewModel.CoreIntent
 import com.eywa.projectclava.main.model.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.*
 
 
@@ -63,8 +65,8 @@ private interface GlobalIntent : DatabaseIntent {
             currentState: ModelState,
             db: ClavaDatabase,
             prependCourt: Boolean
-    ) {
-        when (this) {
+    ) = withContext(Dispatchers.IO) {
+        when (this@GlobalIntent) {
             DeleteAllData -> db.clearAllTables()
             else -> throw NotImplementedError()
         }
@@ -77,13 +79,13 @@ private interface MatchIntent : DatabaseIntent {
             currentState: ModelState,
             db: ClavaDatabase,
             prependCourt: Boolean,
-    ) {
+    ) = withContext(Dispatchers.IO) {
         val matchRepo = db.matchRepo()
 
         fun matchFromId(id: Int) = currentState.matches.find { it.id == id }!!
         suspend fun update(match: Match) = matchRepo.update(match.asDatabaseMatch())
 
-        when (this) {
+        when (this@MatchIntent) {
             DeleteAllMatches -> matchRepo.deleteAll()
             is DeleteMatch -> matchRepo.delete(match.asDatabaseMatch())
             is AddMatch -> {
@@ -121,10 +123,10 @@ private interface PlayerIntent : DatabaseIntent {
             currentState: ModelState,
             db: ClavaDatabase,
             prependCourt: Boolean,
-    ) {
+    ) = withContext(Dispatchers.IO) {
         val playerRepo = db.playerRepo()
 
-        when (this) {
+        when (this@PlayerIntent) {
             is AddPlayer -> playerRepo.insertAll(DatabasePlayer(0, name))
             is DeletePlayer -> playerRepo.delete(player.asDatabasePlayer())
             is UpdatePlayer -> playerRepo.update(player.asDatabasePlayer())
@@ -142,10 +144,10 @@ private interface CourtIntent : DatabaseIntent {
             currentState: ModelState,
             db: ClavaDatabase,
             prependCourt: Boolean,
-    ) {
+    ) = withContext(Dispatchers.IO) {
         val courtRepo = db.courtRepo()
 
-        when (this) {
+        when (this@CourtIntent) {
             is AddCourt -> courtRepo.insertAll(DatabaseCourt(0, Court.formatName(name, prependCourt)))
             is DeleteCourt -> courtRepo.delete(court.asDatabaseCourt())
             is UpdateCourt -> courtRepo.update(court.asDatabaseCourt())
