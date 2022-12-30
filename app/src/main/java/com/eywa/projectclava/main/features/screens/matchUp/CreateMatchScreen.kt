@@ -39,15 +39,14 @@ fun CreateMatchScreen(
         getTimeRemaining: Match.() -> TimeRemaining?,
         listener: (CreateMatchIntent) -> Unit,
 ) {
-    val playerMatches = databaseState.matches.getPlayerMatches()
+    val playerMatches = databaseState.matches
+            // Ignore matches from before club night started
+            .filter { !it.isFinished || it.getTime().after(clubNightStartTime) }
+            .getPlayerMatches()
     val selectedPlayerNames = state.selectedPlayers.map { it.name }
     // Everyone the selected players have previously played
     val previouslyPlayed = playerMatches
-            .filter { (player, _) -> selectedPlayerNames.contains(player) }
-            // Ignore matches from before club night started
-            .mapValues { entry ->
-                entry.value.filter { !it.isFinished || it.getTime().after(clubNightStartTime) }
-            }
+            .filterKeys { player -> selectedPlayerNames.contains(player) }
             .values
             .flatten()
             .flatMap { it.players }
@@ -134,15 +133,8 @@ fun CreateMatchScreen(
                             text = player.name,
                             style = Typography.body1,
                     )
-                    if (
-                        !selectedPlayerNames.contains(player.name)
-                        && previouslyPlayed.contains(player.name)
-                    ) {
-                        Icon(
-                                imageVector = Icons.Outlined.FavoriteBorder,
-                                contentDescription = "Played tonight",
-                                modifier = Modifier.padding(horizontal = 5.dp)
-                        )
+                    if (!selectedPlayerNames.contains(player.name) && previouslyPlayed.contains(player.name)) {
+                        PlayedBeforeIcon(Modifier.padding(horizontal = 5.dp))
                     }
 
                     Spacer(modifier = Modifier.weight(1f))
@@ -152,6 +144,14 @@ fun CreateMatchScreen(
         }
     }
 }
+
+@Composable
+private fun PlayedBeforeIcon(modifier: Modifier = Modifier) =
+        Icon(
+                imageVector = Icons.Outlined.FavoriteBorder,
+                contentDescription = "Played tonight",
+                modifier = modifier
+        )
 
 @Composable
 private fun CreateMatchScreenFooter(
@@ -229,11 +229,19 @@ private fun CreateMatchScreenFooter(
                             onClickActionLabel = "Deselect",
                             onClick = { listener(CreateMatchIntent.PlayerClicked(player)) },
                     ) {
-                        Text(
-                                text = player.name + if (playedBefore[player.name] == true) "*" else "",
-                                style = Typography.h4,
+                        Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 modifier = Modifier.padding(vertical = 5.dp, horizontal = 10.dp)
-                        )
+                        ) {
+                            Text(
+                                    text = player.name,
+                                    style = Typography.h4,
+                            )
+                            if (playedBefore[player.name] == true) {
+                                PlayedBeforeIcon()
+                            }
+                        }
                     }
                 }
             }
