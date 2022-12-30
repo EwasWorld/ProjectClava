@@ -58,7 +58,7 @@ fun MatchQueueScreen(
     )
 
     ClavaScreen(
-            showNoContentPlaceholder = sortedMatches.isEmpty() || availableCourts.isNullOrEmpty(),
+            showNoContentPlaceholder = sortedMatches.isEmpty() || databaseState.courts.none { it.canBeUsed },
             noContentText = if (sortedMatches.isEmpty()) "No matches queued" else "No courts to put the matches on!",
             missingContentNextStep = databaseState.getMissingContent(),
             navigateListener = { listener(Navigate(it)) },
@@ -191,9 +191,9 @@ private fun UpcomingMatchesScreenFooter(
 
             color = latestMatch?.takeIf { !it.isNotStarted }?.asColor(getTimeRemaining)
             extraText = when (latestMatch?.state) {
-                null,
+                null -> null
                 is MatchState.NotStarted,
-                is MatchState.Completed -> null
+                is MatchState.Completed -> "No courts available".takeIf { !hasAvailableCourts }
                 is MatchState.Paused -> "${latestPlayer?.name}'s match is paused"
                 is MatchState.OnCourt -> {
                     "${latestPlayer?.name} is on ${latestMatch.court!!.name}" +
