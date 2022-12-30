@@ -38,7 +38,7 @@ fun HelpScreen(
 ) {
     val horizontalPadding = 20.dp
     val textPadding = 10.dp
-    val helpInfo = state.screen?.getHelpInfo() ?: DEFAULT_HELP_INFO
+    val helpInfo = state.screen?.getHelpInfo() ?: NAVIGATION_HELP_INFO
 
     HelpNavigationDialog(
             isShown = state.isHelpNavigationDialogShown,
@@ -175,7 +175,7 @@ private fun HelpNavigationDialog(
         ) {
             listOf(null).plus(MainNavRoute.values().filter { it.getHelpInfo() != null }).forEach {
                 Text(
-                        text = (it?.getHelpInfo() ?: DEFAULT_HELP_INFO).title,
+                        text = (it?.getHelpInfo() ?: NAVIGATION_HELP_INFO).title,
                         style = Typography.body1.asClickableStyle(),
                         modifier = Modifier
                                 .clickable { goToHelpScreen(it) }

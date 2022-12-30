@@ -32,8 +32,8 @@ private fun boldUnderlined(start: Int, end: Int, style: SpanStyle = SpanStyle())
         end,
 )
 
-val DEFAULT_HELP_INFO = HelpData(
-        title = "Bottom Navigation Icons",
+val NAVIGATION_HELP_INFO = HelpData(
+        title = "Navigation Icons",
         body = "Press an icon to get to where you want to go!",
         helpContent = HelpContent(
                 content = { ClavaBottomNav(currentRoute = null, hasOverrunningMatch = true, onClick = it) },
