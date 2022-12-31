@@ -7,7 +7,7 @@ data class ModelState(
         val matches: Iterable<Match> = listOf(),
         val players: Iterable<Player> = listOf(),
 ) {
-    fun getMissingContent(): Set<MissingContentNextStep> {
+    fun getMissingContent(maxStep: MissingContentNextStep? = null): Set<MissingContentNextStep> {
         val state = mutableSetOf<MissingContentNextStep>()
 
         if (players.none() || players.all { it.isArchived }) state.add(MissingContentNextStep.ADD_PLAYERS)
@@ -17,12 +17,15 @@ data class ModelState(
         else if (courts.none { it.enabled }) state.add(MissingContentNextStep.ENABLE_COURTS)
 
         if (matches.none()) {
-            state.addAll(MissingContentNextStep.values().filter { it.isMatchStep })
+            state.addAll(
+                    MissingContentNextStep.values()
+                            .filter { it.isMatchStep && (maxStep == null || it.ordinal <= maxStep.ordinal) }
+            )
             return state
         }
         if (matches.none { it.isFinished }) state.add(MissingContentNextStep.COMPLETE_A_MATCH)
         if (matches.none { it.isCurrent }) state.add(MissingContentNextStep.START_A_MATCH)
         if (matches.none { it.isNotStarted }) state.add(MissingContentNextStep.SETUP_A_MATCH)
-        return state
+        return state.filter { maxStep == null || it.ordinal <= maxStep.ordinal }.toSet()
     }
 }

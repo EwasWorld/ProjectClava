@@ -60,7 +60,7 @@ fun MatchQueueScreen(
     ClavaScreen(
             showNoContentPlaceholder = sortedMatches.isEmpty() || databaseState.courts.none { it.canBeUsed },
             noContentText = if (sortedMatches.isEmpty()) "No matches queued" else "No courts to put the matches on!",
-            missingContentNextStep = databaseState.getMissingContent(),
+            missingContentNextStep = databaseState.getMissingContent(MissingContentNextStep.SETUP_A_MATCH),
             navigateListener = { listener(Navigate(it)) },
             headerContent = {
                 AvailableCourtsHeader(

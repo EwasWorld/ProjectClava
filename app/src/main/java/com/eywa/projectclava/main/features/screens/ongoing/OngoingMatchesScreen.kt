@@ -16,6 +16,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.R
+import com.eywa.projectclava.main.common.MissingContentNextStep
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.features.screens.ongoing.OngoingMatchesIntent.*
@@ -53,7 +54,7 @@ fun OngoingMatchesScreen(
     ClavaScreen(
             showNoContentPlaceholder = filteredMatches.isEmpty(),
             noContentText = "No matches being played",
-            missingContentNextStep = databaseState.getMissingContent(),
+            missingContentNextStep = databaseState.getMissingContent(MissingContentNextStep.START_A_MATCH),
             navigateListener = { listener(Navigate(it)) },
             headerContent = {
                 AvailableCourtsHeader(
