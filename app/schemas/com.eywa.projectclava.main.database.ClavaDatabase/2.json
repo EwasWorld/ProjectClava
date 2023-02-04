@@ -1,0 +1,178 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "246a002045236309c28b3d1c694b1e09",
+    "entities": [
+      {
+        "tableName": "courts",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `canBeUsed` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "canBeUsed",
+            "columnName": "canBeUsed",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "matches",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `stateType` TEXT NOT NULL, `stateDate` INTEGER NOT NULL, `stateSecondsLeft` INTEGER, `courtId` INTEGER, FOREIGN KEY(`courtId`) REFERENCES `courts`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stateType",
+            "columnName": "stateType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stateDate",
+            "columnName": "stateDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stateSecondsLeft",
+            "columnName": "stateSecondsLeft",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "courtId",
+            "columnName": "courtId",
+            "affinity": "INTEGER",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_matches_courtId",
+            "unique": false,
+            "columnNames": [
+              "courtId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_matches_courtId` ON `${TABLE_NAME}` (`courtId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "courts",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "courtId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "match_players",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`matchId` INTEGER NOT NULL, `playerId` INTEGER NOT NULL, PRIMARY KEY(`matchId`, `playerId`))",
+        "fields": [
+          {
+            "fieldPath": "matchId",
+            "columnName": "matchId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "playerId",
+            "columnName": "playerId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "matchId",
+            "playerId"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "players",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `isPresent` INTEGER NOT NULL, `isArchived` INTEGER NOT NULL DEFAULT 0)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isPresent",
+            "columnName": "isPresent",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isArchived",
+            "columnName": "isArchived",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '246a002045236309c28b3d1c694b1e09')"
+    ]
+  }
+}
