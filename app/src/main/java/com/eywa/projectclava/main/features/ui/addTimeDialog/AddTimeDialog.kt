@@ -15,11 +15,6 @@ fun AddTimeDialog(
         state: AddTimeDialogState,
         listener: (AddTimeDialogIntent) -> Unit,
 ) {
-    check(
-            (!state.addTimeDialogIsOpen && state.timeToAdd == null)
-                    || (state.addTimeDialogIsOpen && state.timeToAdd != null)
-    ) { "Invalid AddTimeDialogState" }
-
     ClavaDialog(
             isShown = state.addTimeDialogIsOpen,
             title = "Add time",
