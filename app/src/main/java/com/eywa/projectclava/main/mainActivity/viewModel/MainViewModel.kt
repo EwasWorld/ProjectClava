@@ -1,10 +1,13 @@
 package com.eywa.projectclava.main.mainActivity.viewModel
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eywa.projectclava.main.common.ClavaMediaPlayer
+import com.eywa.projectclava.main.common.ClavaNotifications
 import com.eywa.projectclava.main.database.ClavaDatabase
 import com.eywa.projectclava.main.database.DatabaseIntent
 import com.eywa.projectclava.main.datastore.ClavaDatastore
@@ -15,10 +18,7 @@ import com.eywa.projectclava.main.features.screens.ScreenState
 import com.eywa.projectclava.main.features.screens.help.HelpState
 import com.eywa.projectclava.main.mainActivity.MainNavRoute
 import com.eywa.projectclava.main.mainActivity.NavRoute
-import com.eywa.projectclava.main.model.ModelState
-import com.eywa.projectclava.main.model.asCourt
-import com.eywa.projectclava.main.model.asMatch
-import com.eywa.projectclava.main.model.asPlayer
+import com.eywa.projectclava.main.model.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -33,14 +33,18 @@ fun <T> SharedFlow<T>.latest() = replayCache.first()
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-        private val db: ClavaDatabase,
-        private val clavaDatastore: ClavaDatastore,
+    private val db: ClavaDatabase,
+    private val clavaDatastore: ClavaDatastore,
+    private val clavaMediaPlayer: ClavaMediaPlayer,
+    private val clavaNotifications: ClavaNotifications,
 ) : ViewModel() {
     val currentTime = MutableSharedFlow<Calendar>(1)
     private var screenState by mutableStateOf(mapOf<NavRoute, ScreenState>())
 
     private val _effects: MutableStateFlow<MainEffect?> = MutableStateFlow(null)
     val effects: StateFlow<MainEffect?> = _effects
+
+    private var isBackgrounded = false
 
     /*
      * Database state
@@ -66,10 +70,43 @@ class MainViewModel @Inject constructor(
             .shareIn(viewModelScope, SharingStarted.Eagerly, 1)
 
     init {
+        clavaNotifications.createNotificationChannel()
+
         viewModelScope.launch(context = Dispatchers.Default) {
             while (true) {
                 currentTime.emit(Calendar.getInstance(Locale.getDefault()))
                 delay(1000)
+            }
+        }
+
+        viewModelScope.launch(context = Dispatchers.Default) {
+            while (true) {
+                try {
+                    val time = currentTime.latest()
+                    val modelState = databaseState.latest()
+
+                    modelState.matches
+                        .filter {
+                            val state = (it.state as? MatchState.OnCourt) ?: return@filter false
+                            !state.soundPlayed && state.getTimeLeft(time).isEndingSoon(10)
+                        }
+                        .takeIf { it.isNotEmpty() }
+                        ?.let {
+                            DatabaseIntent.SoundHappened(it).handle(time, modelState, db, true)
+                            if (isBackgrounded) {
+                                clavaNotifications.createNotification(
+                                    it.first().id,
+                                    it.first().court!!.id,
+                                )
+                            } else {
+                                clavaMediaPlayer.playMatchFinishedSound()
+                            }
+                        }
+                } catch (_: NoSuchElementException) {
+                    // Thrown by latest()
+                }
+
+                delay(3000)
             }
         }
     }
@@ -120,13 +157,23 @@ class MainViewModel @Inject constructor(
             is ScreenIntent<*> -> {
                 @Suppress("UNCHECKED_CAST")
                 (intent as ScreenIntent<ScreenState>).handle(
-                        currentState = getScreenState(intent.screen),
-                        handle = { handleIntent(it) },
-                        newStateListener = { intent.screen.updateScreenState(it) },
+                    currentState = getScreenState(intent.screen),
+                    handle = { handleIntent(it) },
+                    newStateListener = { intent.screen.updateScreenState(it) },
                 )
             }
             else -> throw NotImplementedError()
         }
+    }
+
+    fun onPause() {
+        Log.i("echDebug", "Pause")
+        isBackgrounded = true
+    }
+
+    fun onResume() {
+        Log.i("echDebug", "Resume")
+        isBackgrounded = false
     }
 }
 

@@ -33,9 +33,10 @@ import com.eywa.projectclava.main.theme.Typography
 
 @Composable
 fun ArchivedPlayersScreen(
-        databaseState: ModelState,
-        state: ArchivedPlayersState,
-        listener: (ArchivedPlayersIntent) -> Unit,
+    databaseState: ModelState,
+    overrunThreshold: Int,
+    state: ArchivedPlayersState,
+    listener: (ArchivedPlayersIntent) -> Unit,
 ) {
     val archivedPlayers = databaseState.players.filter { it.isArchived }
 
@@ -66,8 +67,8 @@ fun ArchivedPlayersScreen(
                         overflow = TextOverflow.Ellipsis,
                         style = Typography.h4,
                         modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(10.dp)
+                            .fillMaxWidth()
+                            .padding(10.dp)
                 )
             }
     ) {
@@ -85,14 +86,15 @@ fun ArchivedPlayersScreen(
             )
 
             SelectableListItem(
-                    contentDescription = player.name,
-                    onClick = null,
-                    actions = buttons.map {
-                        CustomAccessibilityAction(
-                                label = it.icon.contentDescription!!,
-                                action = { it.onClick(); true },
-                        )
-                    }
+                overrunThreshold = overrunThreshold,
+                contentDescription = player.name,
+                onClick = null,
+                actions = buttons.map {
+                    CustomAccessibilityAction(
+                        label = it.icon.contentDescription!!,
+                        action = { it.onClick(); true },
+                    )
+                }
             ) {
                 Row(
                         verticalAlignment = Alignment.CenterVertically,

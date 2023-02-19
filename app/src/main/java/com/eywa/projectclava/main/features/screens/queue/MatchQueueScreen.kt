@@ -36,11 +36,12 @@ import java.util.*
 
 @Composable
 fun MatchQueueScreen(
-        state: MatchQueueState,
-        databaseState: ModelState,
-        getTimeRemaining: Match.() -> TimeRemaining?,
-        defaultTimeSeconds: Int,
-        listener: (MatchQueueIntent) -> Unit,
+    state: MatchQueueState,
+    databaseState: ModelState,
+    getTimeRemaining: Match.() -> TimeRemaining?,
+    defaultTimeSeconds: Int,
+    overrunThreshold: Int,
+    listener: (MatchQueueIntent) -> Unit,
 ) {
     val availableCourts = databaseState.courts.getAvailable(databaseState.matches)
     val playerMatchStates = databaseState.matches.getPlayerStatus()
@@ -71,16 +72,17 @@ fun MatchQueueScreen(
             },
             footerContent = {
                 UpcomingMatchesScreenFooter(
-                        getTimeRemaining = getTimeRemaining,
-                        openStartMatchDialogListener = {
-                            listener(
-                                    OpenStartMatchDialog(
-                                            initialSelectedCourt = availableCourts?.minByOrNull { it.name },
-                                            defaultTimeToAddSeconds = defaultTimeSeconds,
-                                    )
+                    overrunThreshold = overrunThreshold,
+                    getTimeRemaining = getTimeRemaining,
+                    openStartMatchDialogListener = {
+                        listener(
+                            OpenStartMatchDialog(
+                                initialSelectedCourt = availableCourts?.minByOrNull { it.name },
+                                defaultTimeToAddSeconds = defaultTimeSeconds,
                             )
-                        },
-                        deleteMatchListener = {
+                        )
+                    },
+                    deleteMatchListener = {
                             val match = databaseState.matches.find { it.id == state.selectedMatchId }!!
                             listener(ConfirmDialogIntent.Open(match).toMatchQueueIntent())
                         },
@@ -101,16 +103,17 @@ fun MatchQueueScreen(
                     .takeIf { it.isNotEmpty() }
 
             SelectableListItem(
-                    isSelected = state.selectedMatchId == match.id,
-                    enabled = match.players.all { it.isPresent },
-                    match = match.players
-                            .mapNotNull { playerMatchStates[it.name] }
-                            .maxByOrNull { it.state }
-                            ?.let { foundMatch ->
-                                if (foundMatch.state !is MatchState.NotStarted) return@let foundMatch
-                                // If anyone is in an earlier upcoming mach, use the NotStarted colour
-                                matchingPlayersInEarlierUpcoming?.let { foundMatch }
-                            },
+                overrunThreshold = overrunThreshold,
+                isSelected = state.selectedMatchId == match.id,
+                enabled = match.players.all { it.isPresent },
+                match = match.players
+                    .mapNotNull { playerMatchStates[it.name] }
+                    .maxByOrNull { it.state }
+                    ?.let { foundMatch ->
+                        if (foundMatch.state !is MatchState.NotStarted) return@let foundMatch
+                        // If anyone is in an earlier upcoming mach, use the NotStarted colour
+                        matchingPlayersInEarlierUpcoming?.let { foundMatch }
+                    },
                     getTimeRemaining = getTimeRemaining,
                     onClick = { listener(MatchClicked(match)) },
                     contentDescription = "", // TODO_CURRENT
@@ -141,15 +144,16 @@ fun MatchQueueScreen(
                                     }
                     ) { (player, playerMatch) ->
                         SelectableListItem(
-                                enabled = player.enabled,
-                                match = playerMatch?.let { match ->
-                                    if (!match.isNotStarted) return@let match
-                                    matchingPlayersInEarlierUpcoming
-                                            ?.takeIf { it.find { p -> p.name == player.name } != null }
-                                            ?.let { match }
-                                },
-                                getTimeRemaining = getTimeRemaining,
-                                contentDescription = "",
+                            overrunThreshold = overrunThreshold,
+                            enabled = player.enabled,
+                            match = playerMatch?.let { match ->
+                                if (!match.isNotStarted) return@let match
+                                matchingPlayersInEarlierUpcoming
+                                    ?.takeIf { it.find { p -> p.name == player.name } != null }
+                                    ?.let { match }
+                            },
+                            getTimeRemaining = getTimeRemaining,
+                            contentDescription = "",
                         ) {
                             Text(
                                     text = player.name,
@@ -166,12 +170,13 @@ fun MatchQueueScreen(
 
 @Composable
 private fun UpcomingMatchesScreenFooter(
-        getTimeRemaining: Match.() -> TimeRemaining?,
-        openStartMatchDialogListener: () -> Unit,
-        deleteMatchListener: () -> Unit,
-        selectedMatch: Match?,
-        playerMatchStates: Map<String, Match?>,
-        hasAvailableCourts: Boolean,
+    overrunThreshold: Int,
+    getTimeRemaining: Match.() -> TimeRemaining?,
+    openStartMatchDialogListener: () -> Unit,
+    deleteMatchListener: () -> Unit,
+    selectedMatch: Match?,
+    playerMatchStates: Map<String, Match?>,
+    hasAvailableCourts: Boolean,
 ) {
     // TODO Add a button to swap one player in this match with someone in another match?
     val extraText: String?
@@ -184,12 +189,14 @@ private fun UpcomingMatchesScreenFooter(
         else {
             // The latest-finishing match and the player in selectedMatch who is also in latestMatch
             val (latestPlayer, latestMatch) = selectedMatch?.players
-                    ?.associateWith { playerMatchStates[it.name] }
-                    ?.filter { it.value?.isFinished == false }
-                    ?.maxByOrNull { it.value!!.state }
-                    ?: mapOf(null to null).asIterable().first()
+                ?.associateWith { playerMatchStates[it.name] }
+                ?.filter { it.value?.isFinished == false }
+                ?.maxByOrNull { it.value!!.state }
+                ?: mapOf(null to null).asIterable().first()
 
-            color = latestMatch?.takeIf { !it.isNotStarted }?.asColor(getTimeRemaining)
+            color = latestMatch
+                ?.takeIf { !it.isNotStarted }
+                ?.asColor(overrunThreshold, getTimeRemaining)
             extraText = when (latestMatch?.state) {
                 null -> null
                 is MatchState.NotStarted,
@@ -252,8 +259,8 @@ private fun StartMatchDialog(
                 timePickerState = state.startMatchTimePickerState ?: TimePickerState(0),
                 timeChangedListener = { listener(UpdateTimePicker(it)) },
                 modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.CenterHorizontally)
+                    .fillMaxWidth()
+                    .align(Alignment.CenterHorizontally)
         )
         Divider(thickness = DividerThickness)
         SelectCourtRadioButtons(
@@ -273,16 +280,17 @@ fun MatchQueueScreen_Preview(
     val matches = generateMatches(5, currentTime) + generateMatches(4, currentTime, GeneratableMatchState.NOT_STARTED)
 
     MatchQueueScreen(
-            databaseState = ModelState(
-                    courts = generateCourts(4),
-                    matches = matches,
-            ),
-            getTimeRemaining = { state.getTimeLeft(currentTime) },
-            state = MatchQueueState(
-                    selectedMatchId = params.selectedIndex?.let {
-                        matches.filter { match -> match.state is MatchState.NotStarted }[it]
-                    }?.id,
-            ),
+        overrunThreshold = 10,
+        databaseState = ModelState(
+            courts = generateCourts(4),
+            matches = matches,
+        ),
+        getTimeRemaining = { state.getTimeLeft(currentTime) },
+        state = MatchQueueState(
+            selectedMatchId = params.selectedIndex?.let {
+                matches.filter { match -> match.state is MatchState.NotStarted }[it]
+            }?.id,
+        ),
             listener = {},
             defaultTimeSeconds = 15 * 60,
     )

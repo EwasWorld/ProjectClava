@@ -14,17 +14,18 @@ import com.eywa.projectclava.main.database.player.PlayerRepo
 import java.util.*
 
 @Database(
-        entities = [
-            DatabaseCourt::class,
-            DatabaseMatch::class,
-            DatabaseMatchPlayer::class,
-            DatabasePlayer::class,
-        ],
-        version = 3,
-        exportSchema = true, // Needs a schema location in the build.gradle too to export!
-        autoMigrations = [
-            AutoMigration(from = 1, to = 2),
-        ]
+    entities = [
+        DatabaseCourt::class,
+        DatabaseMatch::class,
+        DatabaseMatchPlayer::class,
+        DatabasePlayer::class,
+    ],
+    version = 4,
+    exportSchema = true, // Needs a schema location in the build.gradle too to export!
+    autoMigrations = [
+        AutoMigration(from = 1, to = 2),
+        AutoMigration(from = 3, to = 4),
+    ]
 )
 @TypeConverters(ClavaDatabase.Converters::class)
 abstract class ClavaDatabase : RoomDatabase() {

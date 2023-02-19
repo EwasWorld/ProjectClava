@@ -39,11 +39,12 @@ enum class MainNavRoute(override val route: String) : NavRoute {
         ) {
             @Suppress("UNCHECKED_CAST")
             SetupPlayersScreen(
-                    state = viewModel.getScreenState(this) as SetupListState<Player>,
-                    databaseState = databaseState,
-                    isSoftKeyboardOpen = isSoftKeyboardOpen,
-                    getTimeRemaining = getTimeRemaining,
-                    listener = { viewModel.handleIntent(it) },
+                state = viewModel.getScreenState(this) as SetupListState<Player>,
+                databaseState = databaseState,
+                isSoftKeyboardOpen = isSoftKeyboardOpen,
+                getTimeRemaining = getTimeRemaining,
+                overrunThreshold = preferencesState.overrunIndicatorThreshold,
+                listener = { viewModel.handleIntent(it) },
             )
         }
     },
@@ -62,9 +63,10 @@ enum class MainNavRoute(override val route: String) : NavRoute {
                 isSoftKeyboardOpen: Boolean,
         ) {
             ArchivedPlayersScreen(
-                    databaseState = databaseState,
-                    state = viewModel.getScreenState(this) as ArchivedPlayersState,
-                    listener = { viewModel.handleIntent(it) },
+                databaseState = databaseState,
+                state = viewModel.getScreenState(this) as ArchivedPlayersState,
+                overrunThreshold = preferencesState.overrunIndicatorThreshold,
+                listener = { viewModel.handleIntent(it) },
             )
         }
     },
@@ -84,12 +86,13 @@ enum class MainNavRoute(override val route: String) : NavRoute {
         ) {
             @Suppress("UNCHECKED_CAST")
             SetupCourtsScreen(
-                    state = viewModel.getScreenState(this) as SetupListState<Court>,
-                    databaseState = databaseState,
-                    isSoftKeyboardOpen = isSoftKeyboardOpen,
-                    getTimeRemaining = getTimeRemaining,
-                    prependCourt = preferencesState.prependCourt,
-                    listener = { viewModel.handleIntent(it) },
+                state = viewModel.getScreenState(this) as SetupListState<Court>,
+                databaseState = databaseState,
+                isSoftKeyboardOpen = isSoftKeyboardOpen,
+                getTimeRemaining = getTimeRemaining,
+                prependCourt = preferencesState.prependCourt,
+                overrunThreshold = preferencesState.overrunIndicatorThreshold,
+                listener = { viewModel.handleIntent(it) },
             )
         }
     },
@@ -108,11 +111,12 @@ enum class MainNavRoute(override val route: String) : NavRoute {
                 isSoftKeyboardOpen: Boolean,
         ) {
             CreateMatchScreen(
-                    state = viewModel.getScreenState(this) as CreateMatchState,
-                    clubNightStartTime = preferencesState.clubNightStartTime,
-                    databaseState = databaseState,
-                    getTimeRemaining = getTimeRemaining,
-                    listener = { viewModel.handleIntent(it) },
+                state = viewModel.getScreenState(this) as CreateMatchState,
+                clubNightStartTime = preferencesState.clubNightStartTime,
+                overrunThreshold = preferencesState.overrunIndicatorThreshold,
+                databaseState = databaseState,
+                getTimeRemaining = getTimeRemaining,
+                listener = { viewModel.handleIntent(it) },
             )
         }
     },
@@ -131,11 +135,12 @@ enum class MainNavRoute(override val route: String) : NavRoute {
                 isSoftKeyboardOpen: Boolean,
         ) {
             MatchQueueScreen(
-                    databaseState = databaseState,
-                    state = viewModel.getScreenState(this) as MatchQueueState,
-                    getTimeRemaining = getTimeRemaining,
-                    defaultTimeSeconds = preferencesState.defaultMatchTime,
-                    listener = { viewModel.handleIntent(it) },
+                databaseState = databaseState,
+                state = viewModel.getScreenState(this) as MatchQueueState,
+                getTimeRemaining = getTimeRemaining,
+                defaultTimeSeconds = preferencesState.defaultMatchTime,
+                overrunThreshold = preferencesState.overrunIndicatorThreshold,
+                listener = { viewModel.handleIntent(it) },
             )
         }
     },
@@ -154,11 +159,12 @@ enum class MainNavRoute(override val route: String) : NavRoute {
                 isSoftKeyboardOpen: Boolean,
         ) {
             OngoingMatchesScreen(
-                    databaseState = databaseState,
-                    state = viewModel.getScreenState(this) as OngoingMatchesState,
-                    getTimeRemaining = getTimeRemaining,
-                    defaultTimeToAddSeconds = preferencesState.defaultTimeToAdd,
-                    listener = { viewModel.handleIntent(it) },
+                databaseState = databaseState,
+                state = viewModel.getScreenState(this) as OngoingMatchesState,
+                getTimeRemaining = getTimeRemaining,
+                defaultTimeToAddSeconds = preferencesState.defaultTimeToAdd,
+                overrunThreshold = preferencesState.overrunIndicatorThreshold,
+                listener = { viewModel.handleIntent(it) },
             )
         }
     },
@@ -177,10 +183,11 @@ enum class MainNavRoute(override val route: String) : NavRoute {
                 isSoftKeyboardOpen: Boolean,
         ) {
             MatchHistoryScreen(
-                    state = viewModel.getScreenState(this) as MatchHistoryState,
-                    databaseState = databaseState,
-                    defaultTimeToAdd = preferencesState.defaultTimeToAdd,
-                    listener = { viewModel.handleIntent(it) },
+                state = viewModel.getScreenState(this) as MatchHistoryState,
+                databaseState = databaseState,
+                defaultTimeToAdd = preferencesState.defaultTimeToAdd,
+                overrunThreshold = preferencesState.overrunIndicatorThreshold,
+                listener = { viewModel.handleIntent(it) },
             )
         }
     },

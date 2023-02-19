@@ -223,8 +223,8 @@ class MainActivity : ComponentActivity() {
                                 ) {
                                     Icon(
                                             painter = painterResource(R.drawable.baseline_question_mark_24),
-                                            contentDescription = "Help",
-                                            modifier = Modifier.padding(3.dp)
+                                        contentDescription = "Help",
+                                        modifier = Modifier.padding(3.dp)
                                     )
                                 }
                             }
@@ -233,6 +233,16 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        viewModel.onPause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.onResume()
     }
 }
 
@@ -247,8 +257,8 @@ fun LeftEdgeButton(
     Box(
             contentAlignment = Alignment.CenterStart,
             modifier = Modifier
-                    .clickable { onClick() }
-                    .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                .clickable { onClick() }
+                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
     ) {
         Surface(
                 shape = RoundedCornerShape(0, rounding, rounding, 0),

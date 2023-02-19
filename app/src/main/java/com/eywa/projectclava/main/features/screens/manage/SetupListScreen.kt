@@ -57,16 +57,17 @@ import java.util.*
 
 @Composable
 fun <T : SetupListItem> SetupListScreen(
-        setupListSettings: SetupListSettings,
-        state: SetupListState<T>,
-        isSoftKeyboardOpen: Boolean,
-        items: Iterable<T>,
-        getMatch: (T) -> Match?,
-        getTimeRemaining: Match.() -> TimeRemaining?,
-        nameIsArchived: (newName: String, nameOfItemBeingEdited: String?) -> T?,
-        nameIsDuplicate: (newName: String, nameOfItemBeingEdited: String?) -> Boolean,
-        hasExtraContent: (T) -> Boolean = { false },
-        isDeleteItemEnabled: (T) -> Boolean = { true },
+    overrunThreshold: Int,
+    setupListSettings: SetupListSettings,
+    state: SetupListState<T>,
+    isSoftKeyboardOpen: Boolean,
+    items: Iterable<T>,
+    getMatch: (T) -> Match?,
+    getTimeRemaining: Match.() -> TimeRemaining?,
+    nameIsArchived: (newName: String, nameOfItemBeingEdited: String?) -> T?,
+    nameIsDuplicate: (newName: String, nameOfItemBeingEdited: String?) -> Boolean,
+    hasExtraContent: (T) -> Boolean = { false },
+    isDeleteItemEnabled: (T) -> Boolean = { true },
         extraContent: @Composable RowScope.(T) -> Unit = {},
         listener: (SetupListIntent) -> Unit,
 ) {
@@ -129,8 +130,8 @@ fun <T : SetupListItem> SetupListScreen(
                         onUnarchiveListener = { listener(UnarchiveItemSubmitted(it)) },
                         textFieldModifier = Modifier.fillMaxWidth(),
                         modifier = Modifier
-                                .padding(horizontal = 20.dp, vertical = 10.dp)
-                                .padding(bottom = 5.dp)
+                            .padding(horizontal = 20.dp, vertical = 10.dp)
+                            .padding(bottom = 5.dp)
                 )
             },
             headerContent = {
@@ -173,16 +174,17 @@ fun <T : SetupListItem> SetupListScreen(
             )
 
             SelectableListItem(
-                    enabled = item.enabled,
-                    match = match,
-                    getTimeRemaining = getTimeRemaining,
-                    contentDescription = contentDescription,
-                    onClick = {
-                        listener(ItemClicked(item))
-                        focusManager.clearFocus()
-                    },
-                    onClickActionLabel = "Mark " + setupListSettings.getStateDescription(!item.enabled),
-                    actions = buttons
+                overrunThreshold = overrunThreshold,
+                enabled = item.enabled,
+                match = match,
+                getTimeRemaining = getTimeRemaining,
+                contentDescription = contentDescription,
+                onClick = {
+                    listener(ItemClicked(item))
+                    focusManager.clearFocus()
+                },
+                onClickActionLabel = "Mark " + setupListSettings.getStateDescription(!item.enabled),
+                actions = buttons
                             .filter { it.enabled }
                             .map {
                                 CustomAccessibilityAction(
@@ -212,8 +214,8 @@ fun <T : SetupListItem> SetupListScreen(
                         Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
-                                        .padding(horizontal = 15.dp)
-                                        .padding(bottom = 10.dp)
+                                    .padding(horizontal = 15.dp)
+                                    .padding(bottom = 10.dp)
                         ) {
                             extraContent(item)
                         }
@@ -271,9 +273,9 @@ private fun SearchFab(
                         keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
                         modifier = Modifier
-                                .weight(1f)
-                                .padding(start = 10.dp)
-                                .focusRequester(focusRequester)
+                            .weight(1f)
+                            .padding(start = 10.dp)
+                            .focusRequester(focusRequester)
                 ) { innerTextField ->
                     TextFieldDefaults.TextFieldDecorationBox(
                             value = searchText,
@@ -341,15 +343,18 @@ fun SetupListScreen_Preview() {
 
     Box(modifier = Modifier.fillMaxSize()) {
         SetupListScreen(
-                setupListSettings = SetupListSettings.PLAYERS,
-                state = SetupListState(),
-                nameIsDuplicate = { name, _ -> players.any { it.name == name } },
-                nameIsArchived = { _, _ -> null },
-                items = players.sortedBy { it.name },
-                getMatch = { player: Player -> matches[players.sortedBy { it.name }.indexOf(player) % matches.size] },
-                getTimeRemaining = { state.getTimeLeft(currentTime) },
-                listener = {},
-                isSoftKeyboardOpen = false,
+            overrunThreshold = 10,
+            setupListSettings = SetupListSettings.PLAYERS,
+            state = SetupListState(),
+            nameIsDuplicate = { name, _ -> players.any { it.name == name } },
+            nameIsArchived = { _, _ -> null },
+            items = players.sortedBy { it.name },
+            getMatch = { player: Player ->
+                matches[players.sortedBy { it.name }.indexOf(player) % matches.size]
+            },
+            getTimeRemaining = { state.getTimeLeft(currentTime) },
+            listener = {},
+            isSoftKeyboardOpen = false,
         )
     }
 }
@@ -359,15 +364,16 @@ fun SetupListScreen_Preview() {
 fun ExtraInfo_SetupListScreen_Preview() {
     val currentTime = Calendar.getInstance(Locale.getDefault())
     SetupCourtsScreen(
-            databaseState = ModelState(
-                    courts = generateCourts(10),
-                    matches = generateMatches(5, currentTime),
-            ),
-            state = SetupListState(),
-            prependCourt = false,
-            getTimeRemaining = { state.getTimeLeft(currentTime) },
-            listener = {},
-            isSoftKeyboardOpen = false,
+        overrunThreshold = 10,
+        databaseState = ModelState(
+            courts = generateCourts(10),
+            matches = generateMatches(5, currentTime),
+        ),
+        state = SetupListState(),
+        prependCourt = false,
+        getTimeRemaining = { state.getTimeLeft(currentTime) },
+        listener = {},
+        isSoftKeyboardOpen = false,
     )
 }
 
@@ -377,16 +383,17 @@ fun Dialog_SetupListScreen_Preview() {
     val players = generatePlayers(20)
     Box(modifier = Modifier.fillMaxSize()) {
         SetupListScreen(
-                setupListSettings = SetupListSettings.PLAYERS,
-                state = SetupListState(
-                        editDialogOpenFor = players[2],
-                ),
-                nameIsDuplicate = { name, _ -> players.any { it.name == name } },
-                nameIsArchived = { _, _ -> null },
-                items = players,
-                getMatch = { null },
-                getTimeRemaining = { null },
-                listener = {},
+            overrunThreshold = 10,
+            setupListSettings = SetupListSettings.PLAYERS,
+            state = SetupListState(
+                editDialogOpenFor = players[2],
+            ),
+            nameIsDuplicate = { name, _ -> players.any { it.name == name } },
+            nameIsArchived = { _, _ -> null },
+            items = players,
+            getMatch = { null },
+            getTimeRemaining = { null },
+            listener = {},
                 isSoftKeyboardOpen = false,
         )
     }
@@ -398,16 +405,17 @@ fun Error_SetupListScreen_Preview() {
     val players = generatePlayers(5)
     Box(modifier = Modifier.fillMaxSize()) {
         SetupListScreen(
-                setupListSettings = SetupListSettings.PLAYERS,
-                state = SetupListState(
-                        addItemName = players.first().name,
-                ),
-                nameIsDuplicate = { name, _ -> players.any { it.name == name } },
-                nameIsArchived = { _, _ -> null },
-                items = players,
-                getMatch = { null },
-                getTimeRemaining = { null },
-                listener = {},
+            overrunThreshold = 10,
+            setupListSettings = SetupListSettings.PLAYERS,
+            state = SetupListState(
+                addItemName = players.first().name,
+            ),
+            nameIsDuplicate = { name, _ -> players.any { it.name == name } },
+            nameIsArchived = { _, _ -> null },
+            items = players,
+            getMatch = { null },
+            getTimeRemaining = { null },
+            listener = {},
                 isSoftKeyboardOpen = false,
         )
     }

@@ -20,24 +20,26 @@ import java.util.*
 
 @Composable
 fun SetupCourtsScreen(
-        state: SetupListState<Court>,
-        databaseState: ModelState,
-        isSoftKeyboardOpen: Boolean,
-        prependCourt: Boolean = true,
-        getTimeRemaining: Match.() -> TimeRemaining?,
-        listener: (SetupCourtIntent) -> Unit,
+    state: SetupListState<Court>,
+    databaseState: ModelState,
+    isSoftKeyboardOpen: Boolean,
+    prependCourt: Boolean = true,
+    overrunThreshold: Int,
+    getTimeRemaining: Match.() -> TimeRemaining?,
+    listener: (SetupCourtIntent) -> Unit,
 ) {
     SetupListScreen(
-            setupListSettings = SetupListSettings.COURTS,
-            // TODO_HACKY Not sure if I like this useTextPlaceholderAlt switcharoo...
-            state = state.copy(useTextPlaceholderAlt = prependCourt),
-            items = databaseState.courts,
-            isSoftKeyboardOpen = isSoftKeyboardOpen,
-            nameIsDuplicate = { newName, nameOfItemBeingEdited ->
-                if (newName == nameOfItemBeingEdited) return@SetupListScreen true
+        overrunThreshold = overrunThreshold,
+        setupListSettings = SetupListSettings.COURTS,
+        // TODO_HACKY Not sure if I like this useTextPlaceholderAlt switcharoo...
+        state = state.copy(useTextPlaceholderAlt = prependCourt),
+        items = databaseState.courts,
+        isSoftKeyboardOpen = isSoftKeyboardOpen,
+        nameIsDuplicate = { newName, nameOfItemBeingEdited ->
+            if (newName == nameOfItemBeingEdited) return@SetupListScreen true
 
-                val checkName = Court.formatName(newName, prependCourt)
-                databaseState.courts.any { it.name == checkName }
+            val checkName = Court.formatName(newName, prependCourt)
+            databaseState.courts.any { it.name == checkName }
             },
             nameIsArchived = { _, _ -> null },
             getMatch = { databaseState.matches.getLatestMatchForCourt(it) },
@@ -78,13 +80,14 @@ fun RowScope.ExtraContent(match: Match, getTimeRemaining: Match.() -> TimeRemain
 fun SetupCourtsScreen_Preview() {
     val currentTime = Calendar.getInstance(Locale.getDefault())
     SetupCourtsScreen(
-            state = SetupListState(),
-            databaseState = ModelState(
-                    courts = generateCourts(10),
-                    matches = generateMatches(5, currentTime),
-            ),
-            getTimeRemaining = { state.getTimeLeft(currentTime) },
-            listener = {},
-            isSoftKeyboardOpen = false,
+        overrunThreshold = 10,
+        state = SetupListState(),
+        databaseState = ModelState(
+            courts = generateCourts(10),
+            matches = generateMatches(5, currentTime),
+        ),
+        getTimeRemaining = { state.getTimeLeft(currentTime) },
+        listener = {},
+        isSoftKeyboardOpen = false,
     )
 }

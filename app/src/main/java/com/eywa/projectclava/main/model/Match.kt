@@ -58,8 +58,9 @@ fun DatabaseMatchFull.asMatch() = Match(
                     matchPausedAt = match.stateDate
             )
             MatchState.OnCourt::class.simpleName -> MatchState.OnCourt(
-                    matchEndTime = match.stateDate,
-                    court = court!!.asCourt(),
+                matchEndTime = match.stateDate,
+                court = court!!.asCourt(),
+                soundPlayed = match.soundPlayed,
             )
             MatchState.NotStarted::class.simpleName -> MatchState.NotStarted(match.stateDate)
             MatchState.Completed::class.simpleName -> MatchState.Completed(match.stateDate)
@@ -121,15 +122,19 @@ data class Match(
         get() = if (state is MatchState.OnCourt) state.court else null
 
     fun asDatabaseMatch() = DatabaseMatch(
-            id = id,
-            stateType = state::class.simpleName!!,
-            stateDate = getTime(),
-            stateSecondsLeft = state
-                    .takeIf { it is MatchState.Paused }
-                    ?.let { (it as MatchState.Paused).remainingTimeSeconds },
-            courtId = state
-                    .takeIf { it is MatchState.OnCourt }
-                    ?.let { (it as MatchState.OnCourt).court.id },
+        id = id,
+        stateType = state::class.simpleName!!,
+        stateDate = getTime(),
+        stateSecondsLeft = state
+            .takeIf { it is MatchState.Paused }
+            ?.let { (it as MatchState.Paused).remainingTimeSeconds },
+        courtId = state
+            .takeIf { it is MatchState.OnCourt }
+            ?.let { (it as MatchState.OnCourt).court.id },
+        soundPlayed = state
+            .takeIf { it is MatchState.OnCourt }
+            ?.let { (it as MatchState.OnCourt).soundPlayed }
+            ?: false,
     )
 
     fun startMatch(currentTime: Calendar, court: Court, duration: Int? = null): Match {
@@ -142,10 +147,14 @@ data class Match(
 
         return copy(
                 state = MatchState.OnCourt(
-                        matchEndTime = (currentTime.clone() as Calendar).apply {
-                            add(Calendar.SECOND, duration ?: (state as MatchState.Paused).remainingTimeSeconds.toInt())
-                        },
-                        court = court,
+                    matchEndTime = (currentTime.clone() as Calendar).apply {
+                        add(
+                            Calendar.SECOND,
+                            duration ?: (state as MatchState.Paused).remainingTimeSeconds.toInt()
+                        )
+                    },
+                    court = court,
+                    soundPlayed = false,
                 )
         )
     }
@@ -179,8 +188,14 @@ data class Match(
 
         return copy(
                 state = MatchState.OnCourt(
-                        matchEndTime = (currentTime.clone() as Calendar).apply { add(Calendar.SECOND, resumeTime) },
-                        court = court,
+                    matchEndTime = (currentTime.clone() as Calendar).apply {
+                        add(
+                            Calendar.SECOND,
+                            resumeTime
+                        )
+                    },
+                    court = court,
+                    soundPlayed = false,
                 )
         )
     }
@@ -266,8 +281,9 @@ sealed class MatchState : Comparable<MatchState> {
     }
 
     data class OnCourt(
-            val matchEndTime: Calendar,
-            val court: Court,
+        val matchEndTime: Calendar,
+        val court: Court,
+        val soundPlayed: Boolean = false,
     ) : MatchState() {
         override fun getTimeLeft(currentTime: Calendar?): TimeRemaining {
             return TimeRemaining(

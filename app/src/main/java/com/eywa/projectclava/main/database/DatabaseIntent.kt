@@ -21,6 +21,7 @@ sealed interface DatabaseIntent : CoreIntent {
     data class DeleteMatchById(val matchId: Int) : MatchIntent
     object DeleteAllMatches : MatchIntent
     data class AddMatch(val playerIds: Iterable<Int>) : MatchIntent
+    data class SoundHappened(val matches: List<Match>) : MatchIntent
 
     /*
      * Update match
@@ -110,7 +111,14 @@ private interface MatchIntent : DatabaseIntent {
             is PauseMatch -> update(matchFromId(matchId).pauseMatch(currentTime))
             is ResumeMatch -> update(matchFromId(matchId).resumeMatch(currentTime, court, resumeTimeSeconds))
             is ChangeMatchCourt -> update(matchFromId(matchId).changeCourt(court))
-            is StartMatch -> update(matchFromId(matchId).startMatch(currentTime, court, timeSeconds))
+            is StartMatch -> update(
+                matchFromId(matchId).startMatch(
+                    currentTime,
+                    court,
+                    timeSeconds
+                )
+            )
+            is SoundHappened -> matchRepo.updateSoundHappened(matches.map { it.asDatabaseMatch() })
 
             else -> throw NotImplementedError()
         }

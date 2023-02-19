@@ -40,6 +40,12 @@ data class DatabaseMatch(
          */
         @ColumnInfo(index = true)
         val courtId: Int?,
+
+        /**
+         * Used only by [MatchState.OnCourt]
+         */
+        @ColumnInfo(defaultValue = "0")
+        val soundPlayed: Boolean = false,
 ) {
 
     companion object {

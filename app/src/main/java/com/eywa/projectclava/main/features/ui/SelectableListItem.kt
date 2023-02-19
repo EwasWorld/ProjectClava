@@ -19,18 +19,19 @@ import com.eywa.projectclava.main.theme.ClavaColor
  */
 @Composable
 fun SelectableListItem(
-        getTimeRemaining: Match.() -> TimeRemaining? = { null },
-        enabled: Boolean = true,
-        match: Match? = null,
-        isSelected: Boolean = false,
-        contentDescription: String,
-        onClickActionLabel: String? = null,
-        onClick: (() -> Unit)? = null,
-        actions: List<CustomAccessibilityAction>? = null,
-        content: @Composable () -> Unit
+    overrunThreshold: Int,
+    getTimeRemaining: Match.() -> TimeRemaining? = { null },
+    enabled: Boolean = true,
+    match: Match? = null,
+    isSelected: Boolean = false,
+    contentDescription: String,
+    onClickActionLabel: String? = null,
+    onClick: (() -> Unit)? = null,
+    actions: List<CustomAccessibilityAction>? = null,
+    content: @Composable () -> Unit
 ) {
     val colour = when {
-        enabled -> match?.asColor(getTimeRemaining) ?: ClavaColor.ItemBackground
+        enabled -> match?.asColor(overrunThreshold, getTimeRemaining) ?: ClavaColor.ItemBackground
         else -> ClavaColor.DisabledItemBackground
     }
     val selectableModifier = onClick?.let {
@@ -46,18 +47,19 @@ fun SelectableListItem(
             ),
             content = content,
             modifier = Modifier
-                    .clearAndSetSemantics {
-                        this.contentDescription = (if (isSelected) "selected " else "") + contentDescription
-                        actions?.let {
-                            customActions = actions
-                        }
-                        if (onClick != null) {
-                            this.onClick(
-                                    label = onClickActionLabel ?: if (isSelected) "deselect" else "select",
-                                    action = { onClick(); true },
-                            )
-                        }
+                .clearAndSetSemantics {
+                    this.contentDescription =
+                        (if (isSelected) "selected " else "") + contentDescription
+                    actions?.let {
+                        customActions = actions
                     }
-                    .then(selectableModifier)
+                    if (onClick != null) {
+                        this.onClick(
+                            label = onClickActionLabel ?: if (isSelected) "deselect" else "select",
+                            action = { onClick(); true },
+                        )
+                    }
+                }
+                .then(selectableModifier)
     )
 }

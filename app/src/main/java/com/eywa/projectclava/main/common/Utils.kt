@@ -18,13 +18,13 @@ private const val timeFormat = "HH:mm"
 fun Calendar.asDateString(): String = SimpleDateFormat(dateFormat, Locale.getDefault()).format(this.time)
 fun Calendar.asTimeString(): String = SimpleDateFormat(timeFormat, Locale.getDefault()).format(this.time)
 
-fun Match.asColor(getTimeRemaining: Match.() -> TimeRemaining?): Color? {
+fun Match.asColor(overrunThreshold: Int, getTimeRemaining: Match.() -> TimeRemaining?): Color? {
     if (isPaused) return ClavaColor.MatchPaused
     if (isNotStarted) return ClavaColor.MatchQueued
     if (!isOnCourt) return null
 
     val timeLeft = getTimeRemaining()!!
-    if (timeLeft.isNegative) return ClavaColor.MatchOverrun
+    if (timeLeft.isEndingSoon(overrunThreshold)) return ClavaColor.MatchOverrun
     return if (timeLeft.isEndingSoon()) ClavaColor.MatchFinishingSoon else ClavaColor.MatchInProgress
 }
 

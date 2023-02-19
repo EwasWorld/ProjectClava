@@ -32,11 +32,12 @@ import java.util.*
 
 @Composable
 fun OngoingMatchesScreen(
-        state: OngoingMatchesState,
-        databaseState: ModelState,
-        getTimeRemaining: Match.() -> TimeRemaining?,
-        defaultTimeToAddSeconds: Int,
-        listener: (OngoingMatchesIntent) -> Unit,
+    state: OngoingMatchesState,
+    databaseState: ModelState,
+    getTimeRemaining: Match.() -> TimeRemaining?,
+    defaultTimeToAddSeconds: Int,
+    overrunThreshold: Int,
+    listener: (OngoingMatchesIntent) -> Unit,
 ) {
     val availableCourts = databaseState.courts.getAvailable(databaseState.matches)
     val selectedMatch = state.selectedMatchId?.let { selected ->
@@ -76,16 +77,17 @@ fun OngoingMatchesScreen(
             val isSelected = state.selectedMatchId == match.id
 
             SelectableListItem(
-                    getTimeRemaining = getTimeRemaining,
-                    match = match,
-                    isSelected = isSelected,
-                    contentDescription = "", // TODO_CURRENT
-                    onClick = { listener(MatchClicked(match)) },
+                overrunThreshold = overrunThreshold,
+                getTimeRemaining = getTimeRemaining,
+                match = match,
+                isSelected = isSelected,
+                contentDescription = "", // TODO_CURRENT
+                onClick = { listener(MatchClicked(match)) },
             ) {
                 Column(
                         modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(10.dp)
+                            .fillMaxWidth()
+                            .padding(10.dp)
                 ) {
                     Row {
                         Text(
@@ -221,8 +223,8 @@ private fun CurrentMatchesScreenDialogs(
                 timePickerState = state.resumeTime ?: TimePickerState(0),
                 timeChangedListener = { listener(ResumeTimeChanged(it)) },
                 modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.CenterHorizontally)
+                    .fillMaxWidth()
+                    .align(Alignment.CenterHorizontally)
         )
         Divider(thickness = DividerThickness)
         SelectCourtRadioButtons(
@@ -241,16 +243,17 @@ fun OngoingMatchesScreen_Preview(
     val currentTime = Calendar.getInstance(Locale.getDefault())
     val matches = generateMatches(params.matchCount, currentTime)
     OngoingMatchesScreen(
-            databaseState = ModelState(
-                    courts = generateCourts(params.matchCount + params.availableCourtsCount),
-                    matches = matches,
-            ),
-            getTimeRemaining = { state.getTimeLeft(currentTime) },
-            defaultTimeToAddSeconds = 2 * 60,
-            state = OngoingMatchesState(
-                    selectedMatchId = params.selectedIndex?.let { index ->
-                        matches.filter { it.isCurrent }.sortedBy { it.state }[index]
-                    }?.id,
+        overrunThreshold = 10,
+        databaseState = ModelState(
+            courts = generateCourts(params.matchCount + params.availableCourtsCount),
+            matches = matches,
+        ),
+        getTimeRemaining = { state.getTimeLeft(currentTime) },
+        defaultTimeToAddSeconds = 2 * 60,
+        state = OngoingMatchesState(
+            selectedMatchId = params.selectedIndex?.let { index ->
+                matches.filter { it.isCurrent }.sortedBy { it.state }[index]
+            }?.id,
             ),
             listener = {},
     )

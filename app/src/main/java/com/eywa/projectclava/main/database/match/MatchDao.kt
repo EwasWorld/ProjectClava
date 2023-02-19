@@ -20,4 +20,7 @@ interface MatchDao {
 
     @Update
     suspend fun update(vararg matches: DatabaseMatch)
+
+    @Query("UPDATE ${DatabaseMatch.TABLE_NAME} SET soundPlayed = 1 WHERE id IN (:matchIds)")
+    suspend fun updateSoundHappened(matchIds: List<Int>)
 }

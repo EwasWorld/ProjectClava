@@ -32,10 +32,11 @@ import java.util.*
 
 @Composable
 fun MatchHistoryScreen(
-        state: MatchHistoryState,
-        databaseState: ModelState,
-        defaultTimeToAdd: Int,
-        listener: (MatchHistoryIntent) -> Unit,
+    state: MatchHistoryState,
+    databaseState: ModelState,
+    defaultTimeToAdd: Int,
+    overrunThreshold: Int,
+    listener: (MatchHistoryIntent) -> Unit,
 ) {
     AddTimeDialog(
             state = state,
@@ -87,24 +88,25 @@ fun MatchHistoryScreen(
                             text = match.getTime().asDateString(),
                             style = Typography.h3,
                             modifier = Modifier
-                                    .padding(
-                                            bottom = 10.dp,
-                                            top = if (index == 0) 0.dp else 10.dp
-                                    )
-                                    .padding(horizontal = 5.dp)
+                                .padding(
+                                    bottom = 10.dp,
+                                    top = if (index == 0) 0.dp else 10.dp
+                                )
+                                .padding(horizontal = 5.dp)
                     )
                 }
                 SelectableListItem(
-                        isSelected = isSelected,
-                        contentDescription = match.playerNameString() + " " +
-                                match.stateSemanticsText() + " " +
-                                match.getTime().asDateString(),
-                        onClick = { listener(MatchClicked(match)) },
+                    overrunThreshold = overrunThreshold,
+                    isSelected = isSelected,
+                    contentDescription = match.playerNameString() + " " +
+                            match.stateSemanticsText() + " " +
+                            match.getTime().asDateString(),
+                    onClick = { listener(MatchClicked(match)) },
                 ) {
                     Row(
                             modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(10.dp)
+                                .fillMaxWidth()
+                                .padding(10.dp)
                     ) {
                         Text(
                                 text = match.playerNameString(),
@@ -154,11 +156,12 @@ private fun PreviousMatchesScreenFooter(
 fun MatchHistoryScreen_Preview() {
     val currentTime = Calendar.getInstance(Locale.getDefault())
     MatchHistoryScreen(
-            databaseState = ModelState(
-                    matches = generateMatches(4, currentTime, GeneratableMatchState.COMPLETE),
-            ),
-            defaultTimeToAdd = 2 * 60,
-            state = MatchHistoryState(),
-            listener = {},
+        overrunThreshold = 10,
+        databaseState = ModelState(
+            matches = generateMatches(4, currentTime, GeneratableMatchState.COMPLETE),
+        ),
+        defaultTimeToAdd = 2 * 60,
+        state = MatchHistoryState(),
+        listener = {},
     )
 }

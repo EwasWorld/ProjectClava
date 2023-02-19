@@ -32,11 +32,12 @@ import java.util.*
  */
 @Composable
 fun CreateMatchScreen(
-        state: CreateMatchState,
-        databaseState: ModelState,
-        clubNightStartTime: Calendar,
-        getTimeRemaining: Match.() -> TimeRemaining?,
-        listener: (CreateMatchIntent) -> Unit,
+    overrunThreshold: Int,
+    state: CreateMatchState,
+    databaseState: ModelState,
+    clubNightStartTime: Calendar,
+    getTimeRemaining: Match.() -> TimeRemaining?,
+    listener: (CreateMatchIntent) -> Unit,
 ) {
     val playerMatches = databaseState.matches
             // Ignore matches from before club night started
@@ -71,10 +72,11 @@ fun CreateMatchScreen(
             },
             footerContent = {
                 CreateMatchScreenFooter(
-                        getTimeRemaining = getTimeRemaining,
-                        selectedPlayers = selectedPlayers,
-                        playerMatches = playerMatches,
-                        listener = listener,
+                    overrunThreshold = overrunThreshold,
+                    getTimeRemaining = getTimeRemaining,
+                    selectedPlayers = selectedPlayers,
+                    playerMatches = playerMatches,
+                    listener = listener,
                 )
             },
     ) {
@@ -119,11 +121,12 @@ fun CreateMatchScreen(
             val match = matches?.getPlayerColouringMatch()
 
             SelectableListItem(
-                    match = match,
-                    isSelected = selectedPlayerNames.contains(player.name),
-                    getTimeRemaining = getTimeRemaining,
-                    contentDescription = player.name + " " + match.stateSemanticsText { match?.getTimeRemaining() },
-                    onClick = { listener(CreateMatchIntent.PlayerClicked(player)) },
+                overrunThreshold = overrunThreshold,
+                match = match,
+                isSelected = selectedPlayerNames.contains(player.name),
+                getTimeRemaining = getTimeRemaining,
+                contentDescription = player.name + " " + match.stateSemanticsText { match?.getTimeRemaining() },
+                onClick = { listener(CreateMatchIntent.PlayerClicked(player)) },
             ) {
                 Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -155,10 +158,11 @@ private fun PlayedBeforeIcon(modifier: Modifier = Modifier) =
 
 @Composable
 private fun CreateMatchScreenFooter(
-        getTimeRemaining: Match.() -> TimeRemaining?,
-        selectedPlayers: Iterable<Player>,
-        playerMatches: Map<String, List<Match>?>,
-        listener: (CreateMatchIntent) -> Unit,
+    overrunThreshold: Int,
+    getTimeRemaining: Match.() -> TimeRemaining?,
+    selectedPlayers: Iterable<Player>,
+    playerMatches: Map<String, List<Match>?>,
+    listener: (CreateMatchIntent) -> Unit,
 ) {
     SelectedItemActions(
             buttons = listOf(
@@ -185,8 +189,8 @@ private fun CreateMatchScreenFooter(
                     text = "No players selected",
                     style = Typography.h4,
                     modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = 10.dp, vertical = 15.dp)
+                        .weight(1f)
+                        .padding(horizontal = 10.dp, vertical = 15.dp)
             )
         }
         else {
@@ -222,12 +226,13 @@ private fun CreateMatchScreenFooter(
                     val match = matches?.getPlayerColouringMatch()
 
                     SelectableListItem(
-                            enabled = player.enabled,
-                            match = match,
-                            getTimeRemaining = { match?.getTimeRemaining() },
-                            contentDescription = player.name + " " + match.stateSemanticsText { match?.getTimeRemaining() },
-                            onClickActionLabel = "Deselect",
-                            onClick = { listener(CreateMatchIntent.PlayerClicked(player)) },
+                        overrunThreshold = overrunThreshold,
+                        enabled = player.enabled,
+                        match = match,
+                        getTimeRemaining = { match?.getTimeRemaining() },
+                        contentDescription = player.name + " " + match.stateSemanticsText { match?.getTimeRemaining() },
+                        onClickActionLabel = "Deselect",
+                        onClick = { listener(CreateMatchIntent.PlayerClicked(player)) },
                     ) {
                         Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -254,16 +259,17 @@ private fun CreateMatchScreenFooter(
 fun CreateMatchScreen_Preview() {
     val currentTime = Calendar.getInstance(Locale.getDefault())
     CreateMatchScreen(
-            state = CreateMatchState(
-                    selectedPlayers = generatePlayers(2).map { it.id },
-            ),
-            databaseState = ModelState(
-                    players = generatePlayers(15),
-                    matches = generateMatches(5, Calendar.getInstance(Locale.getDefault())),
-            ),
-            clubNightStartTime = currentTime,
-            getTimeRemaining = { state.getTimeLeft(currentTime) },
-            listener = {},
+        overrunThreshold = 10,
+        state = CreateMatchState(
+            selectedPlayers = generatePlayers(2).map { it.id },
+        ),
+        databaseState = ModelState(
+            players = generatePlayers(15),
+            matches = generateMatches(5, Calendar.getInstance(Locale.getDefault())),
+        ),
+        clubNightStartTime = currentTime,
+        getTimeRemaining = { state.getTimeLeft(currentTime) },
+        listener = {},
     )
 }
 
@@ -276,15 +282,16 @@ fun Individual_CreateMatchScreen_Preview(
     val players = generatePlayers(2)
     val match = generateMatches(1, Calendar.getInstance(Locale.getDefault()), params.matchType)
     CreateMatchScreen(
-            state = CreateMatchState(
-            ),
-            databaseState = ModelState(
-                    players = players,
-                    matches = match,
-            ),
-            clubNightStartTime = currentTime,
-            getTimeRemaining = { state.getTimeLeft(currentTime) },
-            listener = {},
+        overrunThreshold = 10,
+        state = CreateMatchState(
+        ),
+        databaseState = ModelState(
+            players = players,
+            matches = match,
+        ),
+        clubNightStartTime = currentTime,
+        getTimeRemaining = { state.getTimeLeft(currentTime) },
+        listener = {},
     )
 }
 
