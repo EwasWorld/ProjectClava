@@ -20,6 +20,7 @@ sealed class DrawerIntent : MainIntent {
     data class UpdateDefaultTimeToAdd(val value: Int) : DrawerIntent()
     object ResetClubNightStartTime : DrawerIntent()
     object TogglePrependCourt : DrawerIntent()
+    object ToggleMuteSounds : DrawerIntent()
     data class UpdatePlayers(val value: Iterable<Player>) : DrawerIntent()
     data class Navigate(val value: NavRoute) : DrawerIntent()
     data class UpdateMatch(val value: Match) : DrawerIntent()
@@ -42,6 +43,7 @@ sealed class DrawerIntent : MainIntent {
                         is UpdateDefaultTimeToAdd -> DataStoreIntent.UpdateDefaultTimeToAdd(value)
                         is UpdateOverrunIndicatorThreshold -> DataStoreIntent.UpdateOverrunIndicatorThreshold(value)
                         is TogglePrependCourt -> DataStoreIntent.TogglePrependCourt
+                        is ToggleMuteSounds -> DataStoreIntent.ToggleMuteSounds
                         is ResetClubNightStartTime -> DataStoreIntent.ResetClubNightStartTime
                         DeleteAllMatches -> DatabaseIntent.DeleteAllMatches
                         is DeleteMatch -> DatabaseIntent.DeleteMatch(value)

@@ -17,4 +17,5 @@ data class DatastoreState(
         },
         val isDefaultClubNightStartTime: Boolean = true,
         val prependCourt: Boolean = true,
+        val muteSounds: Boolean = false,
 )

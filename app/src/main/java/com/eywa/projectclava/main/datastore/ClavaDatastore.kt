@@ -32,6 +32,9 @@ class ClavaDatastore(context: Context) {
         preferences[DatastoreKeys.PREPEND_COURT]?.let {
             state = state.copy(prependCourt = it)
         }
+        preferences[DatastoreKeys.MUTE_SOUNDS]?.let {
+            state = state.copy(muteSounds = it)
+        }
         state
     }
 
@@ -57,6 +60,8 @@ class ClavaDatastore(context: Context) {
                         it[DatastoreKeys.OVERRUN_INDICATOR_THRESHOLD] = action.value
                     is DataStoreIntent.TogglePrependCourt ->
                         it[DatastoreKeys.PREPEND_COURT] = !currentState.prependCourt
+                    is DataStoreIntent.ToggleMuteSounds ->
+                        it[DatastoreKeys.MUTE_SOUNDS] = !currentState.muteSounds
                     DataStoreIntent.ClearDatastore -> it.clear()
                     DataStoreIntent.ResetClubNightStartTime -> it.remove(DatastoreKeys.CLUB_NIGHT_START_TIME)
                     else -> throw NotImplementedError()
@@ -71,5 +76,6 @@ class ClavaDatastore(context: Context) {
         val DEFAULT_TIME_TO_ADD = intPreferencesKey("default_time_to_add")
         val CLUB_NIGHT_START_TIME = longPreferencesKey("club_night_start_time")
         val PREPEND_COURT = booleanPreferencesKey("prepend_court")
+        val MUTE_SOUNDS = booleanPreferencesKey("mute_sounds")
     }
 }

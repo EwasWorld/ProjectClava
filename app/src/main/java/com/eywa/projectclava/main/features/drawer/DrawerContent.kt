@@ -168,6 +168,23 @@ fun DrawerContent(
                     onCheckedChange = { listener(DrawerIntent.TogglePrependCourt) }
             )
         }
+        Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                        .clickable { listener(DrawerIntent.ToggleMuteSounds) }
+                        .fillMaxWidth()
+                        .padding(horizontal = 25.dp, vertical = 5.dp)
+        ) {
+        Text(
+                text = "Play match ended sounds",
+                style = drawerTextStyle,
+                modifier = Modifier.weight(1f)
+        )
+        Switch(
+                checked = !preferencesState.muteSounds,
+                onCheckedChange = { listener(DrawerIntent.ToggleMuteSounds) }
+        )
+    }
 
         DrawerDivider()
         Column(

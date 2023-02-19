@@ -98,7 +98,8 @@ class MainViewModel @Inject constructor(
                                     it.first().id,
                                     it.first().court!!.id,
                                 )
-                            } else {
+                            }
+                            else if (!preferences.latest().muteSounds) {
                                 clavaMediaPlayer.playMatchFinishedSound()
                             }
                         }
