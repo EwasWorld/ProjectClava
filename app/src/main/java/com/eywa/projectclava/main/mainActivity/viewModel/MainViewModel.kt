@@ -96,7 +96,7 @@ class MainViewModel @Inject constructor(
                             if (isBackgrounded) {
                                 clavaNotifications.createNotification(
                                     it.first().id,
-                                    it.first().court!!.id,
+                                    it.first().court!!.name,
                                 )
                             }
                             else if (!preferences.latest().muteSounds) {

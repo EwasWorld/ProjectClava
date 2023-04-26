@@ -33,7 +33,7 @@ class ClavaNotifications(val context: Context) {
         }
     }
 
-    fun createNotification(matchId: Int = 0, court: Int = 0) {
+    fun createNotification(matchId: Int = 0, court: String) {
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
