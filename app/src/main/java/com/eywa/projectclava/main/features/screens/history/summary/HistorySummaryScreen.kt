@@ -1,6 +1,13 @@
 package com.eywa.projectclava.main.features.screens.history.summary
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -10,7 +17,11 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.eywa.projectclava.main.common.*
+import com.eywa.projectclava.main.common.GeneratableMatchState
+import com.eywa.projectclava.main.common.MissingContentNextStep
+import com.eywa.projectclava.main.common.asDateString
+import com.eywa.projectclava.main.common.asTimeString
+import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.features.screens.history.HistoryTabSwitcherItem
 import com.eywa.projectclava.main.features.ui.ClavaScreen
 import com.eywa.projectclava.main.features.ui.WrappingRow
@@ -19,7 +30,7 @@ import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.ModelState
 import com.eywa.projectclava.main.theme.Typography
-import java.util.*
+import java.util.Calendar
 
 @Composable
 fun HistorySummaryScreen(
@@ -32,6 +43,9 @@ fun HistorySummaryScreen(
             .groupBy { it.getTime().asDateString() }
             .entries
             .sortedByDescending { it.value.first().getTime() }
+    val current = databaseState.matches
+            .filter { it.isCurrent && it.getTime().asDateString() == matchesGroupedByDate.first().key }
+            .flatMap { m -> m.players.map { it.name } }
 
     ClavaScreen(
             showNoContentPlaceholder = matchesGroupedByDate.isEmpty(),
@@ -89,6 +103,7 @@ fun HistorySummaryScreen(
                     }
 
                     players.forEachIndexed { index, (name, matchCount) ->
+                        val currentlyPlaying = if (current.contains(name)) "*" else ""
                         Row(
                                 verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -98,7 +113,7 @@ fun HistorySummaryScreen(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                    text = matchCount.toString(),
+                                    text = "$matchCount$currentlyPlaying",
                                     style = Typography.body1.copy(fontSize = 12.sp),
                                     modifier = Modifier
                                             .alpha(0.7f)

@@ -251,6 +251,10 @@ private object HelpStrings {
                                     "Select a game by pressing it (4), it will then appear in the footer (5). From here you can add time (6), or delete the game (7).",
                                     listOf(boldUnderlined(0, 13))
                             ),
+                            AnnotatedString(
+                                    "Filter the matches to those played by a certain player by pressing the search icon. This will filter the matches to only those played by that player and will exclude matches played against players who aren't present (a player is not present if they show up as grey on the 'Manage Players' screen). Note: no matches will show up if the player you're searching for is not present.",
+                                    listOf(boldUnderlined(0, 6))
+                            ),
                     ),
             ),
     )
@@ -267,7 +271,7 @@ private object HelpStrings {
                                     listOf(boldUnderlined(0, 8))
                             ),
                             AnnotatedString(
-                                    "Entries are sorted by date (3) with the most recent first. Each day shows list of players (4) who played at least one game. The number next to the player is the number of games they played that day.",
+                                    "Entries are sorted by date (3) with the most recent first. Each day shows list of players (4) who played at least one game. The number next to the player is the number of games they played that day. This does not include any games the player is currently playing, which is represented by an asterisk (*)",
                             ),
                     ),
             ),
