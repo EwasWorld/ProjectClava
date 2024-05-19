@@ -5,13 +5,26 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.Surface
+import androidx.compose.material.Text
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
@@ -36,23 +49,39 @@ import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.common.generatePlayers
 import com.eywa.projectclava.main.common.stateSemanticsText
-import com.eywa.projectclava.main.features.screens.manage.SetupListIntent.SetupListItemIntent.*
-import com.eywa.projectclava.main.features.screens.manage.SetupListIntent.SetupListStateIntent.*
+import com.eywa.projectclava.main.features.screens.manage.SetupListIntent.SetupListItemIntent.AddItemSubmitted
+import com.eywa.projectclava.main.features.screens.manage.SetupListIntent.SetupListItemIntent.ItemClicked
+import com.eywa.projectclava.main.features.screens.manage.SetupListIntent.SetupListItemIntent.ItemDeleted
+import com.eywa.projectclava.main.features.screens.manage.SetupListIntent.SetupListItemIntent.UnarchiveItemSubmitted
+import com.eywa.projectclava.main.features.screens.manage.SetupListIntent.SetupListStateIntent.AddNameChanged
+import com.eywa.projectclava.main.features.screens.manage.SetupListIntent.SetupListStateIntent.AddNameCleared
+import com.eywa.projectclava.main.features.screens.manage.SetupListIntent.SetupListStateIntent.Navigate
+import com.eywa.projectclava.main.features.screens.manage.SetupListIntent.SetupListStateIntent.SearchTextChanged
+import com.eywa.projectclava.main.features.screens.manage.SetupListIntent.SetupListStateIntent.ToggleSearch
 import com.eywa.projectclava.main.features.screens.manage.helperClasses.SetupListItem
 import com.eywa.projectclava.main.features.screens.manage.helperClasses.SetupListSettings
 import com.eywa.projectclava.main.features.screens.manage.helperClasses.SetupListTabSwitcherItem
 import com.eywa.projectclava.main.features.screens.manage.setupCourt.SetupCourtsScreen
-import com.eywa.projectclava.main.features.ui.*
+import com.eywa.projectclava.main.features.ui.ClavaIconInfo
+import com.eywa.projectclava.main.features.ui.ClavaScreen
+import com.eywa.projectclava.main.features.ui.NamedItemTextField
+import com.eywa.projectclava.main.features.ui.SelectableListItem
+import com.eywa.projectclava.main.features.ui.SelectedItemAction
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialog
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogIntent
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogType
 import com.eywa.projectclava.main.features.ui.editNameDialog.EditDialogIntent
 import com.eywa.projectclava.main.features.ui.editNameDialog.EditNameDialog
 import com.eywa.projectclava.main.features.ui.topTabSwitcher.TabSwitcher
-import com.eywa.projectclava.main.model.*
+import com.eywa.projectclava.main.model.Match
+import com.eywa.projectclava.main.model.MatchState
+import com.eywa.projectclava.main.model.ModelState
+import com.eywa.projectclava.main.model.Player
+import com.eywa.projectclava.main.model.TimeRemaining
 import com.eywa.projectclava.main.theme.ClavaColor
 import com.eywa.projectclava.main.theme.Typography
-import java.util.*
+import java.util.Calendar
+import java.util.Locale
 
 
 @Composable
@@ -76,7 +105,6 @@ fun <T : SetupListItem> SetupListScreen(
     val itemsToShow = state.searchText
             .takeIf { !it.isNullOrBlank() }
             ?.let { searchTxt -> items.filter { it.name.contains(searchTxt.trim(), ignoreCase = true) } }
-            ?.takeIf { it.isNotEmpty() }
             ?: items
 
     val noContentMessage = when (state.searchText) {
@@ -143,7 +171,6 @@ fun <T : SetupListItem> SetupListScreen(
             }
     ) {
         items(setupListSettings.sortItems(itemsToShow).toList()) { item ->
-            @Suppress("UNCHECKED_CAST")
             val match = getMatch(item)
             val contentDescription = item.name + " " + when {
                 item.enabled -> match.stateSemanticsText(item is Player) { getTimeRemaining() }
@@ -228,7 +255,7 @@ fun <T : SetupListItem> SetupListScreen(
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterialApi::class)
 @Composable
-private fun SearchFab(
+fun SearchFab(
         isExpanded: Boolean,
         typeContentDescription: String,
         textPlaceholder: String,

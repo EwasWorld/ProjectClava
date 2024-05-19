@@ -33,6 +33,9 @@ sealed class MatchHistoryIntent : ScreenIntent<MatchHistoryState> {
 
     data class Navigate(val destination: NavRoute) : MatchHistoryIntent()
 
+    object ToggleSearch : MatchHistoryIntent()
+    data class SearchTextChanged(val value: String) : MatchHistoryIntent()
+
     override fun handle(
             currentState: MatchHistoryState,
             handle: (CoreIntent) -> Unit,
@@ -55,6 +58,11 @@ sealed class MatchHistoryIntent : ScreenIntent<MatchHistoryState> {
                         }
                     }
             )
+            is SearchTextChanged -> newStateListener(currentState.copy(searchText = value))
+            ToggleSearch -> {
+                val newSearchText = if (currentState.searchText == null) "" else null
+                newStateListener(currentState.copy(searchText = newSearchText))
+            }
         }
     }
 }

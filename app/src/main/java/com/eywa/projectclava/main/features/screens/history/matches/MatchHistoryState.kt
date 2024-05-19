@@ -12,7 +12,10 @@ data class MatchHistoryState(
         override val addTimeDialogIsOpen: Boolean = false,
         override val timeToAdd: TimePickerState? = null,
         val deleteMatchDialogState: ConfirmDialogState<Match>? = null,
+        val searchText: String? = null,
 ) : ScreenState, AddTimeDialogState {
+    val isSearchExpanded = searchText != null
+
     override fun addTimeCopy(
             addTimeDialogIsOpen: Boolean,
             timeToAdd: TimePickerState?,

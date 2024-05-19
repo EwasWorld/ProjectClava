@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.eywa.projectclava.main.common.IMissingContentNextStep
 import com.eywa.projectclava.main.common.MissingContentNextStep
 import com.eywa.projectclava.main.common.MissingContentNextStep.Companion.getFirstStep
 import com.eywa.projectclava.main.mainActivity.NavRoute
@@ -33,7 +34,7 @@ import com.eywa.projectclava.main.theme.Typography
 fun ClavaScreen(
         showNoContentPlaceholder: Boolean,
         noContentText: String,
-        missingContentNextStep: Iterable<MissingContentNextStep>? = null,
+        missingContentNextStep: Iterable<IMissingContentNextStep>? = null,
         navigateListener: ((NavRoute) -> Unit)? = null,
         headerContent: @Composable (() -> Unit)? = null,
         footerContent: @Composable (() -> Unit)? = null,
@@ -77,12 +78,12 @@ fun ClavaScreen(
                         content = listContent,
                         modifier = listModifier.padding(horizontal = 20.dp)
                 )
-                fabs?.invoke(
-                        Modifier
-                                .padding(bottom = 30.dp, start = 30.dp)
-                                .align(Alignment.BottomEnd)
-                )
             }
+            fabs?.invoke(
+                    Modifier
+                            .padding(bottom = 30.dp, start = 30.dp)
+                            .align(Alignment.BottomEnd)
+            )
         }
 
         AnimatedVisibility(
@@ -106,7 +107,7 @@ fun ClavaScreen(
 @Composable
 private fun NoContentPlaceholder(
         noContentText: String,
-        missingContentNextStep: Iterable<MissingContentNextStep>?,
+        missingContentNextStep: Iterable<IMissingContentNextStep>?,
         navigateListener: ((NavRoute) -> Unit)? = null,
 ) {
     val firstMissingContent = missingContentNextStep.getFirstStep()
@@ -115,7 +116,7 @@ private fun NoContentPlaceholder(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 20.dp)
+                    .padding(horizontal = 30.dp)
     ) {
         Text(
                 text = noContentText,
@@ -132,7 +133,7 @@ private fun NoContentPlaceholder(
             Spacer(modifier = Modifier.height(10.dp))
             Button(onClick = { navigateListener!!(firstMissingContent.buttonRoute) }) {
                 Text(
-                        text = "Let's do it!",
+                        text = firstMissingContent.buttonText,
                 )
             }
         }

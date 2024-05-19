@@ -3,14 +3,20 @@ package com.eywa.projectclava.main.common
 import com.eywa.projectclava.main.mainActivity.MainNavRoute
 import com.eywa.projectclava.main.mainActivity.NavRoute
 
+interface IMissingContentNextStep {
+    val nextStepsText: String
+    val buttonRoute: NavRoute
+    val buttonText: String
+}
+
 /**
  * When a screen is blank, this indicates what the user should do next to add content
  */
 enum class MissingContentNextStep(
-        val nextStepsText: String,
-        val buttonRoute: NavRoute,
+        override val nextStepsText: String,
+        override val buttonRoute: NavRoute,
         val isMatchStep: Boolean = false,
-) {
+): IMissingContentNextStep {
     ADD_PLAYERS(
             nextStepsText = "First we need to add some players",
             buttonRoute = MainNavRoute.ADD_PLAYER,
@@ -44,10 +50,16 @@ enum class MissingContentNextStep(
     )
     ;
 
+    override val buttonText = "Let's do it!"
+
     companion object {
-        fun Iterable<MissingContentNextStep>?.getFirstStep(): MissingContentNextStep? {
+        fun Iterable<IMissingContentNextStep>?.getFirstStep(): IMissingContentNextStep? {
             if (this == null || none()) return null
             if (count() == 1) return first()
+            if (any { it !is MissingContentNextStep }) return first()
+
+            @Suppress("UNCHECKED_CAST")
+            this as Iterable<MissingContentNextStep>
 
             return values().toSet()
                     // Everything that is present (not missing)
@@ -62,7 +74,7 @@ enum class MissingContentNextStep(
                     // E.g. if START_A_MATCH is done, return COMPLETE_A_MATCH
                     .maxByOrNull { it.ordinal }
                     ?.let { maxCompleted -> filter { it.ordinal > maxCompleted.ordinal }.minOf { it } }
-            // Otherwise just the first step
+                    // Otherwise just the first step
                     ?: minByOrNull { it.ordinal }
         }
     }

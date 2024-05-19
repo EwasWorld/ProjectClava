@@ -1,6 +1,11 @@
 package com.eywa.projectclava.main.features.screens.history.matches
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -11,23 +16,32 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.R
 import com.eywa.projectclava.main.common.GeneratableMatchState
+import com.eywa.projectclava.main.common.IMissingContentNextStep
 import com.eywa.projectclava.main.common.asDateString
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.common.stateSemanticsText
 import com.eywa.projectclava.main.features.screens.history.HistoryTabSwitcherItem
 import com.eywa.projectclava.main.features.screens.history.matches.MatchHistoryIntent.MatchClicked
 import com.eywa.projectclava.main.features.screens.history.matches.MatchHistoryIntent.Navigate
-import com.eywa.projectclava.main.features.ui.*
+import com.eywa.projectclava.main.features.screens.manage.SearchFab
+import com.eywa.projectclava.main.features.ui.ClavaIconInfo
+import com.eywa.projectclava.main.features.ui.ClavaScreen
+import com.eywa.projectclava.main.features.ui.MatchTimeRemainingText
+import com.eywa.projectclava.main.features.ui.SelectableListItem
+import com.eywa.projectclava.main.features.ui.SelectedItemAction
+import com.eywa.projectclava.main.features.ui.SelectedItemActions
 import com.eywa.projectclava.main.features.ui.addTimeDialog.AddTimeDialog
 import com.eywa.projectclava.main.features.ui.addTimeDialog.AddTimeDialogIntent
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialog
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogIntent
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogType
 import com.eywa.projectclava.main.features.ui.topTabSwitcher.TabSwitcher
+import com.eywa.projectclava.main.mainActivity.MainNavRoute
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.ModelState
 import com.eywa.projectclava.main.theme.Typography
-import java.util.*
+import java.util.Calendar
+import java.util.Locale
 
 
 @Composable
@@ -48,11 +62,39 @@ fun MatchHistoryScreen(
             listener = { listener(it.toMatchHistoryIntent()) },
     )
 
-    val finishedMatches = databaseState.matches.filter { it.isFinished }.sortedByDescending { it.state }
+    val finishedMatches = databaseState.matches
+            .filter { match ->
+                when {
+                    !match.isFinished -> false
+                    state.searchText.isNullOrBlank() -> true
+                    else -> {
+                        match.players.any()
+                                && match.playerNameString().contains(state.searchText, ignoreCase = true)
+                                && match.players.all { it.isPresent }
+                    }
+                }
+            }
+            .sortedByDescending { it.state }
+
+    val noContentMessage = when (state.searchText) {
+        null -> "No matches have been completed"
+        else -> "No matches found for player '${state.searchText}' against present players"
+    }
+    val nextStep = when (state.searchText) {
+        null -> databaseState.getMissingContent()
+        else -> listOf(
+                object : IMissingContentNextStep {
+                    override val nextStepsText = "Present players show up as non-grey on the manage screen"
+                    override val buttonRoute = MainNavRoute.ADD_PLAYER
+                    override val buttonText = "Manage Players"
+                }
+        )
+    }
+
     ClavaScreen(
             showNoContentPlaceholder = finishedMatches.isEmpty(),
-            noContentText = "No matches have been completed",
-            missingContentNextStep = databaseState.getMissingContent(),
+            noContentText = noContentMessage,
+            missingContentNextStep = nextStep,
             navigateListener = { listener(Navigate(it)) },
             footerContent = {
                 PreviousMatchesScreenFooter(
@@ -71,7 +113,18 @@ fun MatchHistoryScreen(
                         selectedItem = HistoryTabSwitcherItem.MATCHES,
                         navigateListener = { listener(Navigate(it)) },
                 )
-            }
+            },
+            fabs = { modifier ->
+                SearchFab(
+                        isExpanded = state.isSearchExpanded,
+                        textPlaceholder = "John Doe",
+                        typeContentDescription = "player",
+                        toggleExpanded = { listener(MatchHistoryIntent.ToggleSearch) },
+                        searchText = state.searchText ?: "",
+                        onValueChangedListener = { listener(MatchHistoryIntent.SearchTextChanged(it)) },
+                        modifier = modifier
+                )
+            },
     ) {
         items(finishedMatches.withIndex().toList()) { (index, match) ->
             val isSelected = state.selectedMatchId == match.id
@@ -162,6 +215,22 @@ fun MatchHistoryScreen_Preview() {
         ),
         defaultTimeToAdd = 2 * 60,
         state = MatchHistoryState(),
+        listener = {},
+    )
+}
+
+
+@Preview(showBackground = true)
+@Composable
+fun Empty_MatchHistoryScreen_Preview() {
+    val currentTime = Calendar.getInstance(Locale.getDefault())
+    MatchHistoryScreen(
+        overrunThreshold = 10,
+        databaseState = ModelState(
+            matches = generateMatches(4, currentTime, GeneratableMatchState.COMPLETE),
+        ),
+        defaultTimeToAdd = 2 * 60,
+        state = MatchHistoryState(searchText = "xxx"),
         listener = {},
     )
 }
