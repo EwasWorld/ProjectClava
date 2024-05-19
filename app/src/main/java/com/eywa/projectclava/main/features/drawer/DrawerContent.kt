@@ -2,15 +2,29 @@ package com.eywa.projectclava.main.features.drawer
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Switch
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -29,8 +43,9 @@ import com.eywa.projectclava.main.model.ModelState
 import com.eywa.projectclava.main.theme.DividerThickness
 import com.eywa.projectclava.main.theme.Typography
 import com.eywa.projectclava.main.theme.asClickableStyle
-import java.util.*
+import java.util.Calendar
 
+private const val PRIVACY_POLICY_URL = "https://github.com/EwasWorld/ProjectClava/blob/master/PRIVACY_POLICY.md"
 private val drawerTextStyle = Typography.h4
 
 // TODO Add a help page
@@ -275,6 +290,20 @@ fun DrawerContent(
             DrawerTextButton(text = "Delete all matches") { listener(DrawerIntent.DeleteAllMatches) }
             DrawerTextButton(text = "Clear settings") { listener(DrawerIntent.ClearDatastore) }
             DrawerTextButton(text = "Delete everything") { listener(DrawerIntent.DeleteAllData) }
+        }
+
+        DrawerDivider()
+        DrawerTextButton(text = "Open privacy policy in a browser") {
+            val webpage = Uri.parse(PRIVACY_POLICY_URL)
+            val intent = Intent(Intent.ACTION_VIEW, webpage)
+
+            // TODO Swap try/catch with `if (intent.resolveActivity(packageManager) != null)`
+            try {
+                context.startActivity(intent)
+            }
+            catch (e: ActivityNotFoundException) {
+                Toast.makeText(context, "No web browser found", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }
