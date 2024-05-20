@@ -33,7 +33,7 @@ class ClavaNotifications(val context: Context) {
         }
     }
 
-    fun createNotification(matchId: Int = 0, court: String) {
+    fun createNotification(matchId: Int = 0, courtName: String) {
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
@@ -50,7 +50,7 @@ class ClavaNotifications(val context: Context) {
         val builder = NotificationCompat.Builder(context, MATCH_COMPLETE_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("Match ended")
-            .setContentText("The match on court $court is about to end")
+            .setContentText("The match on $courtName is about to end")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
