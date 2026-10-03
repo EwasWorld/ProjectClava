@@ -1,9 +1,13 @@
 package com.eywa.projectclava.main.mainActivity
 
+import android.os.Build
 import android.os.Bundle
+import android.view.View
+import android.view.WindowInsets.Type
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,11 +39,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.toWindowInsetsCompat
 import androidx.navigation.compose.NavHost
@@ -55,6 +63,7 @@ import com.eywa.projectclava.main.mainActivity.viewModel.MainEffect
 import com.eywa.projectclava.main.mainActivity.viewModel.MainViewModel
 import com.eywa.projectclava.main.theme.ClavaColor
 import com.eywa.projectclava.main.theme.ProjectClavaTheme
+import com.eywa.projectclava.main.theme.Purple700
 import com.eywa.projectclava.main.theme.Typography
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -73,6 +82,9 @@ class MainActivity : ComponentActivity() {
 
     @OptIn(ExperimentalMaterialApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            enableEdgeToEdge()
+        }
         super.onCreate(savedInstanceState)
 
         check(navRoutes.map { it.route }.distinct().size == navRoutes.size) { "Duplicate NavRoute found" }
@@ -87,6 +99,12 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             ProjectClavaTheme {
+                setSystemBars(
+                    view = LocalView.current,
+                    statusBarColor = Purple700,
+                    navigationBarColor = Color.Black,
+                )
+
                 val currentTime by viewModel.currentTime.collectAsState(initial = Calendar.getInstance())
 
                 val effectState by viewModel.effects.collectAsState()
@@ -258,6 +276,31 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         viewModel.onResume()
+    }
+
+    private fun setSystemBars(
+        view: View,
+        statusBarColor: Color,
+        navigationBarColor: Color,
+    ) {
+        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+        WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = false
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            window.decorView.setOnApplyWindowInsetsListener { view, insets ->
+                val statusBarInsets = insets.getInsets(Type.statusBars())
+                view.setBackgroundColor(statusBarColor.toArgb())
+                val navigationBarInsets = insets.getInsets(Type.navigationBars())
+                view.setPadding(0, statusBarInsets.top, 0, navigationBarInsets.bottom)
+                insets
+            }
+        }
+        else {
+            @Suppress("DEPRECATION")
+            window.statusBarColor = statusBarColor.toArgb()
+            @Suppress("DEPRECATION")
+            window.navigationBarColor = navigationBarColor.toArgb()
+        }
     }
 }
 

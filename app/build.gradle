@@ -38,12 +38,12 @@ private String generateVersionName() {
 
 android {
     namespace 'com.eywa.projectclava'
-    compileSdk 34
+    compileSdk 36
 
     defaultConfig {
         applicationId "com.eywa.projectclava"
         minSdk project.ext.minimumSdkVersion
-        targetSdk 34
+        targetSdk 36
         versionCode generateVersionCode()
         versionName generateVersionName()
 
