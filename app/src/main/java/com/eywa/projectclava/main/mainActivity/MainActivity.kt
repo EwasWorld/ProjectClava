@@ -2,6 +2,7 @@ package com.eywa.projectclava.main.mainActivity
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.clickable
@@ -69,10 +70,6 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var navRoutes: Array<out NavRoute>
-
-    override fun onBackPressed() {
-        viewModel.handleIntent(MainEffect.BackPressed)
-    }
 
     @OptIn(ExperimentalMaterialApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -145,8 +142,6 @@ class MainActivity : ComponentActivity() {
                             }
                             MainEffect.OpenDrawer -> changeDrawerState(true)
                             MainEffect.CloseDrawer -> changeDrawerState(false)
-                            MainEffect.BackPressed ->
-                                if (drawerState.isOpen) changeDrawerState(false) else super.onBackPressed()
                         }
                         viewModel.handleIntent(EffectHandledIntent(it))
                     }
@@ -165,6 +160,10 @@ class MainActivity : ComponentActivity() {
                             showUpdateClubNightStartTimeDialog = false
                         }
                 )
+
+                BackHandler(drawerState.isOpen) {
+                    viewModel.handleIntent(MainEffect.CloseDrawer)
+                }
 
                 Scaffold(
                         backgroundColor = ClavaColor.Background,
