@@ -5,11 +5,6 @@ import com.eywa.projectclava.main.common.MissingContentNextStep.Companion.getFir
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/**
- * Example local unit test, which will execute on the development machine (host).
- *
- * See [testing documentation](http://d.android.com/tools/testing).
- */
 class MissingContentNextStepTests {
     @Test
     fun testMissingContentOrder_Simple() {
@@ -17,7 +12,7 @@ class MissingContentNextStepTests {
         assertEquals(null, listOf<MissingContentNextStep>().getFirstStep())
         assertEquals(
                 MissingContentNextStep.ADD_PLAYERS,
-                MissingContentNextStep.values().toSet().getFirstStep()
+                MissingContentNextStep.entries.toSet().getFirstStep()
         )
     }
 
@@ -25,15 +20,17 @@ class MissingContentNextStepTests {
     fun testMissingContentOrder_CompletedSteps() {
         assertEquals(
                 MissingContentNextStep.COMPLETE_A_MATCH,
-                MissingContentNextStep.values().toSet().minus(MissingContentNextStep.START_A_MATCH).getFirstStep()
+                MissingContentNextStep.entries.toSet().minus(MissingContentNextStep.START_A_MATCH).getFirstStep()
         )
     }
 
     @Test
     fun testMissingContentOrder_NoMatches() {
+        // Note this doesn't return ADD_PLAYERS because it's impossible to set up a match without any players existing,
+        // therefore the next step after "SETUP_A_MATCH" is "ADD_COURTS"
         assertEquals(
-                MissingContentNextStep.ADD_PLAYERS,
-                MissingContentNextStep.values().toSet().filter { !it.isMatchStep }.getFirstStep()
+                MissingContentNextStep.ADD_COURTS,
+                MissingContentNextStep.entries.toSet().filter { !it.isMatchStep }.getFirstStep()
         )
     }
 }
