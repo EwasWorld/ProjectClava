@@ -18,7 +18,7 @@ data class ModelState(
 
         if (matches.none()) {
             state.addAll(
-                    MissingContentNextStep.values()
+                    MissingContentNextStep.entries
                             .filter { it.isMatchStep && (maxStep == null || it.ordinal <= maxStep.ordinal) }
             )
             return state

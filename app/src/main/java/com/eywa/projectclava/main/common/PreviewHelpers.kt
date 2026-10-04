@@ -37,7 +37,7 @@ fun generateMatches(
 ): List<Match> {
     require(count > 0) { "Count should be > 0" }
 
-    val states = GeneratableMatchState.values().plus(GeneratableMatchState.NOT_STARTED)
+    val states = GeneratableMatchState.entries.plus(GeneratableMatchState.NOT_STARTED)
     var allPlayers = generatePlayers(2 * (count + count / 7 + if (count % 7 >= 2) 1 else 0))
     var courtNumber = 1
     return List(count) { index ->

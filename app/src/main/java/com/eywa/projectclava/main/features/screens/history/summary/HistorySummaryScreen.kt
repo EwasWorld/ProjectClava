@@ -56,7 +56,7 @@ fun HistorySummaryScreen(
             navigateListener = navigateListener,
             headerContent = {
                 TabSwitcher(
-                        items = HistoryTabSwitcherItem.values().toList(),
+                        items = HistoryTabSwitcherItem.entries,
                         selectedItem = HistoryTabSwitcherItem.SUMMARY,
                         navigateListener = { navigateListener(it) },
                 )

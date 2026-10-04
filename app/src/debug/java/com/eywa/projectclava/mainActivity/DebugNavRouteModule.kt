@@ -14,5 +14,5 @@ object DebugNavRouteModule {
     @Provides
     @IntoMap
     @StringKey("debug")
-    fun provideDebugNavRoutes(): Array<out NavRoute> = DebugNavRoute.values()
+    fun provideDebugNavRoutes(): Array<out NavRoute> = DebugNavRoute.entries.toTypedArray()
 }

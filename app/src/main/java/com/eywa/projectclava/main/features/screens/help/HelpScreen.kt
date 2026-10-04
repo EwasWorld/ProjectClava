@@ -2,7 +2,12 @@ package com.eywa.projectclava.main.features.screens.help
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -173,7 +178,7 @@ private fun HelpNavigationDialog(
         Column(
                 modifier = Modifier.verticalScroll(rememberScrollState())
         ) {
-            listOf(null).plus(MainNavRoute.values().filter { it.getHelpInfo() != null }).forEach {
+            listOf(null).plus(MainNavRoute.entries.filter { it.getHelpInfo() != null }).forEach {
                 Text(
                         text = (it?.getHelpInfo() ?: NAVIGATION_HELP_INFO).title,
                         style = Typography.body1.asClickableStyle(),

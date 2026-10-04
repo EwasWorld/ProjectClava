@@ -61,9 +61,9 @@ enum class MissingContentNextStep(
             @Suppress("UNCHECKED_CAST")
             this as Iterable<MissingContentNextStep>
 
-            return values().toSet()
+            return entries.toSet()
                     // Everything that is present (not missing)
-                    .minus(this)
+                    .minus(this.toSet())
                     .filter { state ->
                         state.isMatchStep
                                 // If we're on the queued matches screen,
@@ -72,10 +72,16 @@ enum class MissingContentNextStep(
                     }
                     // If there are matches, take the first missing state after the highest present state
                     // E.g. if START_A_MATCH is done, return COMPLETE_A_MATCH
-                    .maxByOrNull { it.ordinal }
-                    ?.let { maxCompleted -> filter { it.ordinal > maxCompleted.ordinal }.minOf { it } }
+                    .maxByOrNull {
+                        it.ordinal
+                    }
+                    ?.let { maxCompleted -> filter {
+                        it.ordinal > maxCompleted.ordinal }.minOf { it }
+                    }
                     // Otherwise just the first step
-                    ?: minByOrNull { it.ordinal }
+                    ?: minByOrNull {
+                        it.ordinal
+                    }
         }
     }
 }

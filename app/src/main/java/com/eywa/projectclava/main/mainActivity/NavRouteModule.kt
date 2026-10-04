@@ -14,7 +14,7 @@ object NavRouteModule {
     @Provides
     @IntoMap
     @StringKey("main")
-    fun provideMainNavRoutes(): Array<out NavRoute> = MainNavRoute.values()
+    fun provideMainNavRoutes(): Array<out NavRoute> = MainNavRoute.entries.toTypedArray()
 
     @Provides
     fun provideNavRoutes(

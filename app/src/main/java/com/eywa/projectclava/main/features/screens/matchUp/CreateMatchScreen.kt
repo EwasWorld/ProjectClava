@@ -318,5 +318,5 @@ data class CreateMatchScreenPreviewParam(
 
 private class CreateMatchScreenPreviewParamProvider :
         CollectionPreviewParameterProvider<CreateMatchScreenPreviewParam>(
-                GeneratableMatchState.values().map { CreateMatchScreenPreviewParam(it) }
+                GeneratableMatchState.entries.map { CreateMatchScreenPreviewParam(it) }
         )

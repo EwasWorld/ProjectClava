@@ -293,7 +293,7 @@ fun Parameterised_HelpScreen_Preview(
 }
 
 private class HelpScreenPreviewParamProvider : CollectionPreviewParameterProvider<NavRoute?>(
-        setOf(null).plus(MainNavRoute.values()).minus(
+        setOf(null).plus(MainNavRoute.entries).minus(
                 setOf(
                         MainNavRoute.ARCHIVED_PLAYERS,
                         MainNavRoute.HELP_SCREEN,

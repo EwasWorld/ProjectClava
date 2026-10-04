@@ -108,7 +108,7 @@ fun MatchHistoryScreen(
             },
             headerContent = {
                 TabSwitcher(
-                        items = HistoryTabSwitcherItem.values().toList(),
+                        items = HistoryTabSwitcherItem.entries,
                         selectedItem = HistoryTabSwitcherItem.MATCHES,
                         navigateListener = { listener(Navigate(it)) },
                 )

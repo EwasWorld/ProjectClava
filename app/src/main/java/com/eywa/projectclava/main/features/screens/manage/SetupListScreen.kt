@@ -165,7 +165,7 @@ fun <T : SetupListItem> SetupListScreen(
             },
             headerContent = {
                 TabSwitcher(
-                        items = SetupListTabSwitcherItem.values().toList(),
+                        items = SetupListTabSwitcherItem.entries,
                         selectedItem = setupListSettings.selectedTab,
                         navigateListener = { listener(Navigate(it)) },
                 )

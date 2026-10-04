@@ -2,7 +2,16 @@ package com.eywa.projectclava.main.features.ui.topTabSwitcher
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
@@ -123,7 +132,7 @@ fun <T : TabSwitcherItem> TabSwitcher(
 @Composable
 fun TabSwitcher_Preview() {
     TabSwitcher(
-            items = SetupListTabSwitcherItem.values().toList(),
+            items = SetupListTabSwitcherItem.entries,
             selectedItem = SetupListTabSwitcherItem.PLAYERS,
             navigateListener = {},
     )
