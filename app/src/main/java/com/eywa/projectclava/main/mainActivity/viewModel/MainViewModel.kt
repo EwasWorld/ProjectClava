@@ -18,20 +18,31 @@ import com.eywa.projectclava.main.features.screens.ScreenState
 import com.eywa.projectclava.main.features.screens.help.HelpState
 import com.eywa.projectclava.main.mainActivity.MainNavRoute
 import com.eywa.projectclava.main.mainActivity.NavRoute
-import com.eywa.projectclava.main.model.*
-import dagger.hilt.android.lifecycle.HiltViewModel
+import com.eywa.projectclava.main.model.MatchState
+import com.eywa.projectclava.main.model.ModelState
+import com.eywa.projectclava.main.model.asCourt
+import com.eywa.projectclava.main.model.asMatch
+import com.eywa.projectclava.main.model.asPlayer
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.*
-import javax.inject.Inject
+import java.util.Calendar
+import java.util.Locale
 
 
 fun <T> SharedFlow<T>.latest() = replayCache.first()
 
 
-@HiltViewModel
 class MainViewModel @Inject constructor(
     private val db: ClavaDatabase,
     private val clavaDatastore: ClavaDatastore,

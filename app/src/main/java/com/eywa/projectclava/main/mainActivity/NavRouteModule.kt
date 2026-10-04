@@ -1,15 +1,15 @@
 package com.eywa.projectclava.main.mainActivity
 
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
-import dagger.multibindings.IntoMap
-import dagger.multibindings.StringKey
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.StringKey
 
 
-@InstallIn(SingletonComponent::class)
-@Module
+@BindingContainer
+@ContributesTo(AppScope::class)
 object NavRouteModule {
     @Provides
     @IntoMap
@@ -18,6 +18,6 @@ object NavRouteModule {
 
     @Provides
     fun provideNavRoutes(
-            availableNavRoutes: Map<String, @JvmSuppressWildcards Array<out NavRoute>?>
-    ): Array<out NavRoute> = availableNavRoutes.flatMap { it.value?.toList() ?: listOf() }.toTypedArray()
+            availableNavRoutes: Map<String, Array<out NavRoute>>
+    ): Array<out NavRoute> = availableNavRoutes.flatMap { it.value.toList() }.toTypedArray()
 }

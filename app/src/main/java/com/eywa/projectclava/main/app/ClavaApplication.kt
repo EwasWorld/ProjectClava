@@ -1,7 +1,8 @@
 package com.eywa.projectclava.main.app
 
 import android.app.Application
-import dagger.hilt.android.HiltAndroidApp
+import dev.zacsweers.metro.createGraphFactory
 
-@HiltAndroidApp
-class ClavaApplication : Application()
+class ClavaApplication : Application() {
+    val appGraph: AppGraph by lazy { createGraphFactory<AppGraph.Factory>().create(this) }
+}

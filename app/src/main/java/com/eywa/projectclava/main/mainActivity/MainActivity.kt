@@ -50,10 +50,13 @@ import androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.toWindowInsetsCompat
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.eywa.projectclava.R
+import com.eywa.projectclava.main.app.appGraph
 import com.eywa.projectclava.main.features.drawer.DrawerContent
 import com.eywa.projectclava.main.features.drawer.DrawerIntent
 import com.eywa.projectclava.main.features.ui.ClavaBottomNav
@@ -65,23 +68,26 @@ import com.eywa.projectclava.main.theme.ClavaColor
 import com.eywa.projectclava.main.theme.ProjectClavaTheme
 import com.eywa.projectclava.main.theme.Purple700
 import com.eywa.projectclava.main.theme.Typography
-import dagger.hilt.android.AndroidEntryPoint
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.launch
 import java.util.Calendar
-import javax.inject.Inject
 
 /*
  * Time spent: 58 hrs
  */
-@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val viewModel: MainViewModel by viewModels()
+    // Using the helper metroViewModel() (from metrox-viewmodel / metrox-viewmodel-compose)
+    // is preferable but requires a lifecycle bump, which requires a minSdk of 23
+    private val viewModel: MainViewModel by viewModels {
+        viewModelFactory { initializer { appGraph.mainViewModel } }
+    }
 
     @Inject
     lateinit var navRoutes: Array<out NavRoute>
 
     @OptIn(ExperimentalMaterialApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
+        appGraph.inject(this)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
             enableEdgeToEdge()
         }

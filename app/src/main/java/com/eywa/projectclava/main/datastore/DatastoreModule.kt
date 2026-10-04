@@ -1,19 +1,18 @@
 package com.eywa.projectclava.main.datastore
 
 import android.content.Context
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 
-@Module
-@InstallIn(SingletonComponent::class)
+@BindingContainer
+@ContributesTo(AppScope::class)
 object DatastoreModule {
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideClavaDatastore(
-            @ApplicationContext context: Context
+            context: Context
     ): ClavaDatastore = ClavaDatastore(context)
 }

@@ -2,20 +2,19 @@ package com.eywa.projectclava.main.database
 
 import android.content.Context
 import androidx.room.Room
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 
-@Module
-@InstallIn(SingletonComponent::class)
+@BindingContainer
+@ContributesTo(AppScope::class)
 object DatabaseModule {
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideClavaDatabase(
-            @ApplicationContext context: Context
+            context: Context
     ): ClavaDatabase = Room
             .databaseBuilder(
                     context,
