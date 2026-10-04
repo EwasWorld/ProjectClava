@@ -2,9 +2,13 @@ package com.eywa.projectclava.main.datastore
 
 import android.content.Context
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.*
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import com.eywa.projectclava.main.common.asCalendar
+import com.eywa.projectclava.main.common.asInstant
 import kotlinx.coroutines.flow.map
 
 
@@ -27,7 +31,7 @@ class ClavaDatastore(context: Context) {
             state = state.copy(defaultTimeToAdd = it)
         }
         preferences[DatastoreKeys.CLUB_NIGHT_START_TIME]?.let {
-            state = state.copy(clubNightStartTime = it.asCalendar()!!, isDefaultClubNightStartTime = false)
+            state = state.copy(clubNightStartTime = it.asInstant()!!, isDefaultClubNightStartTime = false)
         }
         preferences[DatastoreKeys.PREPEND_COURT]?.let {
             state = state.copy(prependCourt = it)
@@ -42,16 +46,16 @@ class ClavaDatastore(context: Context) {
         when (action) {
             is DataStoreIntent.UpdateClubNightStartTime -> {
                 handle(
-                        DataStoreIntent.UpdateClubNightStartTimeCalendar(
-                                action.value.updateCalendar(currentState.clubNightStartTime)
+                        DataStoreIntent.UpdateClubNightStartTimeInstant(
+                                action.value.update(currentState.clubNightStartTime)
                         ),
                         currentState,
                 )
             }
             else -> dataStore.edit {
                 when (action) {
-                    is DataStoreIntent.UpdateClubNightStartTimeCalendar ->
-                        it[DatastoreKeys.CLUB_NIGHT_START_TIME] = action.value.timeInMillis
+                    is DataStoreIntent.UpdateClubNightStartTimeInstant ->
+                        it[DatastoreKeys.CLUB_NIGHT_START_TIME] = action.value.toEpochMilliseconds()
                     is DataStoreIntent.UpdateDefaultMatchTime ->
                         it[DatastoreKeys.DEFAULT_MATCH_TIME] = action.value
                     is DataStoreIntent.UpdateDefaultTimeToAdd ->

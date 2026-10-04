@@ -1,10 +1,16 @@
 package com.eywa.projectclava.main.database.match
 
-import androidx.room.*
+import androidx.room.ColumnInfo
+import androidx.room.Embedded
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Junction
+import androidx.room.PrimaryKey
+import androidx.room.Relation
 import com.eywa.projectclava.main.database.court.DatabaseCourt
 import com.eywa.projectclava.main.database.player.DatabasePlayer
 import com.eywa.projectclava.main.model.MatchState
-import java.util.*
+import kotlin.time.Instant
 
 @Entity(
         tableName = DatabaseMatch.TABLE_NAME,
@@ -28,7 +34,7 @@ data class DatabaseMatch(
         /**
          * All [MatchState]s have a date used for something
          */
-        val stateDate: Calendar,
+        val stateDate: Instant,
 
         /**
          * Used only by [MatchState.Paused]

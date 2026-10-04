@@ -1,14 +1,37 @@
 package com.eywa.projectclava.main.database
 
-import com.eywa.projectclava.main.database.DatabaseIntent.*
+import com.eywa.projectclava.main.database.DatabaseIntent.AddCourt
+import com.eywa.projectclava.main.database.DatabaseIntent.AddMatch
+import com.eywa.projectclava.main.database.DatabaseIntent.AddPlayer
+import com.eywa.projectclava.main.database.DatabaseIntent.AddTimeToMatch
+import com.eywa.projectclava.main.database.DatabaseIntent.ChangeMatchCourt
+import com.eywa.projectclava.main.database.DatabaseIntent.CompleteMatch
+import com.eywa.projectclava.main.database.DatabaseIntent.DeleteAllData
+import com.eywa.projectclava.main.database.DatabaseIntent.DeleteAllMatches
+import com.eywa.projectclava.main.database.DatabaseIntent.DeleteCourt
+import com.eywa.projectclava.main.database.DatabaseIntent.DeleteMatch
+import com.eywa.projectclava.main.database.DatabaseIntent.DeleteMatchById
+import com.eywa.projectclava.main.database.DatabaseIntent.DeletePlayer
+import com.eywa.projectclava.main.database.DatabaseIntent.PauseMatch
+import com.eywa.projectclava.main.database.DatabaseIntent.ResumeMatch
+import com.eywa.projectclava.main.database.DatabaseIntent.SoundHappened
+import com.eywa.projectclava.main.database.DatabaseIntent.StartMatch
+import com.eywa.projectclava.main.database.DatabaseIntent.UpdateCourt
+import com.eywa.projectclava.main.database.DatabaseIntent.UpdateMatch
+import com.eywa.projectclava.main.database.DatabaseIntent.UpdatePlayer
+import com.eywa.projectclava.main.database.DatabaseIntent.UpdatePlayers
 import com.eywa.projectclava.main.database.court.DatabaseCourt
 import com.eywa.projectclava.main.database.match.DatabaseMatchPlayer
 import com.eywa.projectclava.main.database.player.DatabasePlayer
 import com.eywa.projectclava.main.mainActivity.viewModel.CoreIntent
-import com.eywa.projectclava.main.model.*
+import com.eywa.projectclava.main.model.Court
+import com.eywa.projectclava.main.model.Match
+import com.eywa.projectclava.main.model.MatchState
+import com.eywa.projectclava.main.model.ModelState
+import com.eywa.projectclava.main.model.Player
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.*
+import kotlin.time.Instant
 
 
 sealed interface DatabaseIntent : CoreIntent {
@@ -53,7 +76,7 @@ sealed interface DatabaseIntent : CoreIntent {
     data class DeleteCourt(val court: Court) : CourtIntent
 
     suspend fun handle(
-            currentTime: Calendar,
+            currentTime: Instant,
             currentState: ModelState,
             db: ClavaDatabase,
             prependCourt: Boolean,
@@ -62,7 +85,7 @@ sealed interface DatabaseIntent : CoreIntent {
 
 private interface GlobalIntent : DatabaseIntent {
     override suspend fun handle(
-            currentTime: Calendar,
+            currentTime: Instant,
             currentState: ModelState,
             db: ClavaDatabase,
             prependCourt: Boolean
@@ -76,7 +99,7 @@ private interface GlobalIntent : DatabaseIntent {
 
 private interface MatchIntent : DatabaseIntent {
     override suspend fun handle(
-            currentTime: Calendar,
+            currentTime: Instant,
             currentState: ModelState,
             db: ClavaDatabase,
             prependCourt: Boolean,
@@ -127,7 +150,7 @@ private interface MatchIntent : DatabaseIntent {
 
 private interface PlayerIntent : DatabaseIntent {
     override suspend fun handle(
-            currentTime: Calendar,
+            currentTime: Instant,
             currentState: ModelState,
             db: ClavaDatabase,
             prependCourt: Boolean,
@@ -148,7 +171,7 @@ private interface PlayerIntent : DatabaseIntent {
 
 private interface CourtIntent : DatabaseIntent {
     override suspend fun handle(
-            currentTime: Calendar,
+            currentTime: Instant,
             currentState: ModelState,
             db: ClavaDatabase,
             prependCourt: Boolean,

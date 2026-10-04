@@ -2,14 +2,14 @@ package com.eywa.projectclava.main.datastore
 
 import com.eywa.projectclava.main.common.UpdateCalendarInfo
 import com.eywa.projectclava.main.mainActivity.viewModel.CoreIntent
-import java.util.*
+import kotlin.time.Instant
 
 /**
  * Handled in [ClavaDatastore]
  */
 sealed class DataStoreIntent : CoreIntent {
     data class UpdateClubNightStartTime(val value: UpdateCalendarInfo) : DataStoreIntent()
-    data class UpdateClubNightStartTimeCalendar(val value: Calendar) : DataStoreIntent()
+    data class UpdateClubNightStartTimeInstant(val value: Instant) : DataStoreIntent()
     data class UpdateOverrunIndicatorThreshold(val value: Int) : DataStoreIntent()
     data class UpdateDefaultMatchTime(val value: Int) : DataStoreIntent()
     data class UpdateDefaultTimeToAdd(val value: Int) : DataStoreIntent()

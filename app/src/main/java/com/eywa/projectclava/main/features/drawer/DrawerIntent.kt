@@ -9,12 +9,12 @@ import com.eywa.projectclava.main.mainActivity.viewModel.MainEffect
 import com.eywa.projectclava.main.mainActivity.viewModel.MainIntent
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.Player
-import java.util.*
+import kotlin.time.Instant
 
 sealed class DrawerIntent : MainIntent {
     object ClearDatastore : DrawerIntent()
     data class UpdateClubNightStartTime(val value: UpdateCalendarInfo) : DrawerIntent()
-    data class UpdateClubNightStartTimeCalendar(val value: Calendar) : DrawerIntent()
+    data class UpdateClubNightStartTimeInstant(val value: Instant) : DrawerIntent()
     data class UpdateOverrunIndicatorThreshold(val value: Int) : DrawerIntent()
     data class UpdateDefaultMatchTime(val value: Int) : DrawerIntent()
     data class UpdateDefaultTimeToAdd(val value: Int) : DrawerIntent()
@@ -38,7 +38,7 @@ sealed class DrawerIntent : MainIntent {
                     when (this) {
                         is Navigate -> MainEffect.Navigate(value)
                         is UpdateClubNightStartTime -> DataStoreIntent.UpdateClubNightStartTime(value)
-                        is UpdateClubNightStartTimeCalendar -> DataStoreIntent.UpdateClubNightStartTimeCalendar(value)
+                        is UpdateClubNightStartTimeInstant -> DataStoreIntent.UpdateClubNightStartTimeInstant(value)
                         is UpdateDefaultMatchTime -> DataStoreIntent.UpdateDefaultMatchTime(value)
                         is UpdateDefaultTimeToAdd -> DataStoreIntent.UpdateDefaultTimeToAdd(value)
                         is UpdateOverrunIndicatorThreshold -> DataStoreIntent.UpdateOverrunIndicatorThreshold(value)

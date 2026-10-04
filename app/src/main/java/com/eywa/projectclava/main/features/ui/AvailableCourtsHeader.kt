@@ -11,13 +11,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
 import androidx.compose.ui.unit.dp
-import com.eywa.projectclava.main.common.*
+import com.eywa.projectclava.main.common.GeneratableMatchState
+import com.eywa.projectclava.main.common.asTimeString
+import com.eywa.projectclava.main.common.generateCourts
+import com.eywa.projectclava.main.common.generateMatches
+import com.eywa.projectclava.main.common.sortByName
 import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.TimeRemaining
 import com.eywa.projectclava.main.model.getAvailable
 import com.eywa.projectclava.main.theme.Typography
-import java.util.*
+import kotlin.time.Clock
 
 @Composable
 fun AvailableCourtsHeader(
@@ -54,7 +58,7 @@ fun AvailableCourtsHeader(
 fun AvailableCourtsHeader_Preview(
         @PreviewParameter(AvailableCourtsHeaderPreviewParamProvider::class) params: AvailableCourtsHeaderPreviewParam
 ) {
-    val currentTime = Calendar.getInstance(Locale.getDefault())
+    val currentTime = Clock.System.now()
     AvailableCourtsHeader(
             courts = generateCourts(params.courtCount),
             matches = if (params.matchesCount > 0)

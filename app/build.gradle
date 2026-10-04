@@ -71,6 +71,8 @@ android {
         }
     }
     compileOptions {
+        // Required by kotlinx-datetime below API 26
+        coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
@@ -115,6 +117,10 @@ dependencies {
 
     // Bumping requires minSdk 23
     implementation "androidx.datastore:datastore-preferences:1.1.7"
+
+    // Using this instead of java.utils.Calendar, etc. to support KMP
+    implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.8.0"
+    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.5"
 }
 
 kotlin {

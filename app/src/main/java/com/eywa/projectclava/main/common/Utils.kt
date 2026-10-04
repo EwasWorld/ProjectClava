@@ -1,22 +1,41 @@
 package com.eywa.projectclava.main.common
 
-import android.os.Build
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.TimeRemaining
 import com.eywa.projectclava.main.theme.ClavaColor
-import java.text.SimpleDateFormat
-import java.util.*
-import java.util.concurrent.TimeUnit
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format
+import kotlinx.datetime.format.MonthNames
+import kotlinx.datetime.format.Padding
+import kotlinx.datetime.format.char
+import kotlinx.datetime.toLocalDateTime
 import kotlin.math.abs
+import kotlin.time.Instant
 
-private const val dateFormat = "d MMM yy"
-private const val timeFormat = "HH:mm"
+// d MMM yy
+private val dateFormat = LocalDateTime.Format {
+    day(Padding.NONE)
+    char(' ')
+    monthName(MonthNames.ENGLISH_ABBREVIATED)
+    char(' ')
+    yearTwoDigits(2000)
+}
 
-fun Calendar.asDateString(): String = SimpleDateFormat(dateFormat, Locale.getDefault()).format(this.time)
-fun Calendar.asTimeString(): String = SimpleDateFormat(timeFormat, Locale.getDefault()).format(this.time)
+// HH:mm
+private val timeFormat = LocalDateTime.Format {
+    hour()
+    char(':')
+    minute()
+}
+
+fun Instant.asLocalDateTime(): LocalDateTime = toLocalDateTime(TimeZone.currentSystemDefault())
+
+fun Instant.asDateString(): String = asLocalDateTime().format(dateFormat)
+fun Instant.asTimeString(): String = asLocalDateTime().format(timeFormat)
 
 fun Match.asColor(overrunThreshold: Int, getTimeRemaining: Match.() -> TimeRemaining?): Color? {
     if (isPaused) return ClavaColor.MatchPaused
@@ -40,31 +59,14 @@ fun asTimeString(minutes: Int?, seconds: Int?): String {
         abs(minutes) >= 60 * 24 -> "1 day+"
         // Over an hour
         abs(minutes) >= 60 -> {
-            val hours = TimeUnit.MINUTES.toHours(abs(minutes).toLong())
-            "" + hours + " hour" + (if (hours == 1L) "" else "s")
+            val hours = abs(minutes) / 60
+            "" + hours + " hour" + (if (hours == 1) "" else "s")
         }
         else -> "" + abs(minutes) + ":" + abs(seconds).toString().padStart(2, '0')
     }
 }
 
-fun Long?.asCalendar(): Calendar? = this?.let {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        Calendar.Builder().setInstant(it).build()
-    }
-    else {
-        val date = Date(it)
-        Calendar.getInstance(Locale.getDefault()).apply {
-            set(
-                    date.year + 1900,
-                    date.month,
-                    date.date,
-                    date.hours,
-                    date.minutes,
-                    date.seconds,
-            )
-        }
-    }
-}
+fun Long?.asInstant(): Instant? = this?.let { Instant.fromEpochMilliseconds(it) }
 
 /**
  * @return the value as an Integer (0 if there was a [NumberFormatException])

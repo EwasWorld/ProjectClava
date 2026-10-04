@@ -3,7 +3,6 @@ package com.eywa.projectclava.main.common
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.main.model.TimeRemaining
-import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
 fun Match?.stateSemanticsText(
@@ -35,8 +34,8 @@ fun asSemanticsTimeString(minutes: Int?, seconds: Int?): String {
         abs(minutes) >= 60 * 24 -> "more than 1 day"
         // Over an hour
         abs(minutes) >= 60 -> {
-            val hours = TimeUnit.MINUTES.toHours(abs(minutes).toLong())
-            "" + hours + " hour" + (if (hours == 1L) "" else "s")
+            val hours = abs(minutes) / 60
+            "" + hours + " hour" + (if (hours == 1) "" else "s")
         }
         else -> "" + abs(minutes) + "minutes " + abs(seconds).toString().padStart(2, '0') + "seconds"
     }

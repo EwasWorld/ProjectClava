@@ -12,7 +12,7 @@ import com.eywa.projectclava.main.mainActivity.viewModel.MainViewModel
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.ModelState
 import com.eywa.projectclava.main.model.TimeRemaining
-import java.util.*
+import kotlin.time.Instant
 
 enum class DebugNavRoute(override val route: String) : NavRoute {
     TEST_PAGE("test_page") {
@@ -21,7 +21,7 @@ enum class DebugNavRoute(override val route: String) : NavRoute {
         @Composable
         override fun ClavaNavigation(
                 navController: NavHostController,
-                currentTime: () -> Calendar,
+                currentTime: () -> Instant,
                 getTimeRemaining: Match.() -> TimeRemaining?,
                 viewModel: MainViewModel,
                 databaseState: ModelState,

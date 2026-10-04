@@ -1,7 +1,15 @@
 package com.eywa.projectclava.main.common
 
-import java.util.*
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.number
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Instant
 
+/**
+ * @param month 1-12
+ */
 data class UpdateCalendarInfo(
         val day: Int? = null,
         val month: Int? = null,
@@ -17,17 +25,21 @@ data class UpdateCalendarInfo(
     }
 
     /**
-     * @return a copy of [initial] with the non-null values in this object replacing those in [initial].
+     * @return a copy of [initial] with the non-null values in this object replacing those in [initial]
+     * (as seen in [timeZone]).
      * For example if only [day] is not null, [initial]'s day will be replaced with [day] and all other fields will be
      * retained
      */
-    fun updateCalendar(initial: Calendar): Calendar {
-        val newValue = initial.clone() as Calendar
-        day?.let { newValue.set(Calendar.DATE, day) }
-        month?.let { newValue.set(Calendar.MONTH, month) }
-        year?.let { newValue.set(Calendar.YEAR, year) }
-        hours?.let { newValue.set(Calendar.HOUR_OF_DAY, hours) }
-        minutes?.let { newValue.set(Calendar.MINUTE, minutes) }
-        return newValue
+    fun update(initial: Instant, timeZone: TimeZone = TimeZone.currentSystemDefault()): Instant {
+        val current = initial.toLocalDateTime(timeZone)
+        return LocalDateTime(
+                year ?: current.year,
+                month ?: current.month.number,
+                day ?: current.day,
+                hours ?: current.hour,
+                minutes ?: current.minute,
+                current.second,
+                current.nanosecond,
+        ).toInstant(timeZone)
     }
 }

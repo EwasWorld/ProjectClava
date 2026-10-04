@@ -80,8 +80,9 @@ import com.eywa.projectclava.main.model.Player
 import com.eywa.projectclava.main.model.TimeRemaining
 import com.eywa.projectclava.main.theme.ClavaColor
 import com.eywa.projectclava.main.theme.Typography
-import java.util.Calendar
-import java.util.Locale
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 
 
 @Composable
@@ -354,15 +355,15 @@ fun SearchFab(
 @Composable
 fun SetupListScreen_Preview() {
     val playersToGenerate = 15
-    val currentTime = Calendar.getInstance(Locale.getDefault())
+    val currentTime = Clock.System.now()
     val players = generatePlayers(playersToGenerate)
     val courts = generateCourts(6)
     val matches = listOf(
-            MatchState.OnCourt(currentTime.apply { add(Calendar.HOUR_OF_DAY, -1) }, courts[0]), // Disabled
-            MatchState.OnCourt(currentTime.apply { add(Calendar.HOUR_OF_DAY, -1) }, courts[1]),
+            MatchState.OnCourt(currentTime - 1.hours, courts[0]), // Disabled
+            MatchState.OnCourt(currentTime - 1.hours, courts[1]),
             null,
             null, // Disabled
-            MatchState.OnCourt(currentTime.apply { add(Calendar.MINUTE, 1) }, courts[2]),
+            MatchState.OnCourt(currentTime + 1.minutes, courts[2]),
             MatchState.Paused(5, currentTime)
     ).mapIndexed { index, matchState ->
         matchState?.let { Match(index, listOf(), matchState) }
@@ -389,7 +390,7 @@ fun SetupListScreen_Preview() {
 @Preview(showBackground = true)
 @Composable
 fun ExtraInfo_SetupListScreen_Preview() {
-    val currentTime = Calendar.getInstance(Locale.getDefault())
+    val currentTime = Clock.System.now()
     SetupCourtsScreen(
         overrunThreshold = 10,
         databaseState = ModelState(

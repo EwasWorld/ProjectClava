@@ -1,17 +1,25 @@
 package com.eywa.projectclava.main.database
 
-import androidx.room.*
+import androidx.room.AutoMigration
+import androidx.room.Database
+import androidx.room.RoomDatabase
+import androidx.room.TypeConverter
+import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.eywa.projectclava.main.common.asCalendar
+import com.eywa.projectclava.main.common.asInstant
 import com.eywa.projectclava.main.database.court.CourtDao
 import com.eywa.projectclava.main.database.court.CourtRepo
 import com.eywa.projectclava.main.database.court.DatabaseCourt
-import com.eywa.projectclava.main.database.match.*
+import com.eywa.projectclava.main.database.match.DatabaseMatch
+import com.eywa.projectclava.main.database.match.DatabaseMatchPlayer
+import com.eywa.projectclava.main.database.match.MatchDao
+import com.eywa.projectclava.main.database.match.MatchPlayerDao
+import com.eywa.projectclava.main.database.match.MatchRepo
 import com.eywa.projectclava.main.database.player.DatabasePlayer
 import com.eywa.projectclava.main.database.player.PlayerDao
 import com.eywa.projectclava.main.database.player.PlayerRepo
-import java.util.*
+import kotlin.time.Instant
 
 @Database(
     entities = [
@@ -41,11 +49,11 @@ abstract class ClavaDatabase : RoomDatabase() {
 
     class Converters {
         @TypeConverter
-        fun fromTimestamp(value: Long?): Calendar? = value.asCalendar()
+        fun fromTimestamp(value: Long?): Instant? = value.asInstant()
 
         @TypeConverter
-        fun dateToTimestamp(date: Calendar?): Long? {
-            return date?.timeInMillis
+        fun dateToTimestamp(date: Instant?): Long? {
+            return date?.toEpochMilliseconds()
         }
     }
 

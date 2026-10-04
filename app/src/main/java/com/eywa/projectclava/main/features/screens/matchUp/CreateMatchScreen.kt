@@ -1,6 +1,10 @@
 package com.eywa.projectclava.main.features.screens.matchUp
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Icon
@@ -20,10 +24,23 @@ import com.eywa.projectclava.main.common.GeneratableMatchState
 import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.common.generatePlayers
 import com.eywa.projectclava.main.common.stateSemanticsText
-import com.eywa.projectclava.main.features.ui.*
-import com.eywa.projectclava.main.model.*
+import com.eywa.projectclava.main.features.ui.AvailableCourtsHeader
+import com.eywa.projectclava.main.features.ui.ClavaIconInfo
+import com.eywa.projectclava.main.features.ui.ClavaScreen
+import com.eywa.projectclava.main.features.ui.MatchTimeRemainingText
+import com.eywa.projectclava.main.features.ui.SelectableListItem
+import com.eywa.projectclava.main.features.ui.SelectedItemAction
+import com.eywa.projectclava.main.features.ui.SelectedItemActions
+import com.eywa.projectclava.main.model.Match
+import com.eywa.projectclava.main.model.MatchState
+import com.eywa.projectclava.main.model.ModelState
+import com.eywa.projectclava.main.model.Player
+import com.eywa.projectclava.main.model.TimeRemaining
+import com.eywa.projectclava.main.model.getPlayerColouringMatch
+import com.eywa.projectclava.main.model.getPlayerMatches
 import com.eywa.projectclava.main.theme.Typography
-import java.util.*
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 // TODO Add button to randomly match up all players
 /**
@@ -35,13 +52,13 @@ fun CreateMatchScreen(
     overrunThreshold: Int,
     state: CreateMatchState,
     databaseState: ModelState,
-    clubNightStartTime: Calendar,
+    clubNightStartTime: Instant,
     getTimeRemaining: Match.() -> TimeRemaining?,
     listener: (CreateMatchIntent) -> Unit,
 ) {
     val playerMatches = databaseState.matches
             // Ignore matches from before club night started
-            .filter { !it.isFinished || it.getTime().after(clubNightStartTime) }
+            .filter { !it.isFinished || it.getTime() > clubNightStartTime }
             .getPlayerMatches()
     val selectedPlayers = state.selectedPlayers.mapNotNull { id -> databaseState.players.find { it.id == id } }
     val selectedPlayerNames = selectedPlayers.map { it.name }
@@ -194,7 +211,7 @@ private fun CreateMatchScreenFooter(
             )
         }
         else {
-            val sortedPlayers = Calendar.getInstance().let { currentTime ->
+            val sortedPlayers = Clock.System.now().let { currentTime ->
                 selectedPlayers
                         .map { it to playerMatches[it.name] }
                         // Show players who are already on court first
@@ -257,7 +274,7 @@ private fun CreateMatchScreenFooter(
 @Preview(showBackground = true)
 @Composable
 fun CreateMatchScreen_Preview() {
-    val currentTime = Calendar.getInstance(Locale.getDefault())
+    val currentTime = Clock.System.now()
     CreateMatchScreen(
         overrunThreshold = 10,
         state = CreateMatchState(
@@ -265,7 +282,7 @@ fun CreateMatchScreen_Preview() {
         ),
         databaseState = ModelState(
             players = generatePlayers(15),
-            matches = generateMatches(5, Calendar.getInstance(Locale.getDefault())),
+            matches = generateMatches(5, Clock.System.now()),
         ),
         clubNightStartTime = currentTime,
         getTimeRemaining = { state.getTimeLeft(currentTime) },
@@ -278,9 +295,9 @@ fun CreateMatchScreen_Preview() {
 fun Individual_CreateMatchScreen_Preview(
         @PreviewParameter(CreateMatchScreenPreviewParamProvider::class) params: CreateMatchScreenPreviewParam
 ) {
-    val currentTime = Calendar.getInstance(Locale.getDefault())
+    val currentTime = Clock.System.now()
     val players = generatePlayers(2)
-    val match = generateMatches(1, Calendar.getInstance(Locale.getDefault()), params.matchType)
+    val match = generateMatches(1, Clock.System.now(), params.matchType)
     CreateMatchScreen(
         overrunThreshold = 10,
         state = CreateMatchState(

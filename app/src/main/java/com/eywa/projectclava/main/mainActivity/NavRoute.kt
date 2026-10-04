@@ -8,7 +8,7 @@ import com.eywa.projectclava.main.mainActivity.viewModel.MainViewModel
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.ModelState
 import com.eywa.projectclava.main.model.TimeRemaining
-import java.util.*
+import kotlin.time.Instant
 
 interface NavRoute {
     val route: String
@@ -17,7 +17,7 @@ interface NavRoute {
     @Composable
     fun ClavaNavigation(
             navController: NavHostController,
-            currentTime: () -> Calendar,
+            currentTime: () -> Instant,
             getTimeRemaining: Match.() -> TimeRemaining?,
             viewModel: MainViewModel,
             databaseState: ModelState,

@@ -70,7 +70,8 @@ import com.eywa.projectclava.main.theme.Purple700
 import com.eywa.projectclava.main.theme.Typography
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.launch
-import java.util.Calendar
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.hours
 
 /*
  * Time spent: 58 hrs
@@ -111,7 +112,7 @@ class MainActivity : ComponentActivity() {
                     navigationBarColor = Color.Black,
                 )
 
-                val currentTime by viewModel.currentTime.collectAsState(initial = Calendar.getInstance())
+                val currentTime by viewModel.currentTime.collectAsState(initial = Clock.System.now())
 
                 val effectState by viewModel.effects.collectAsState()
                 val databaseState by viewModel.databaseState.collectAsState(initial = null)
@@ -144,13 +145,13 @@ class MainActivity : ComponentActivity() {
                     // If no match has happened in the last 8 hours, offer to update the cut-off
                     if (!preferences!!.isDefaultClubNightStartTime) {
                         val matchTimes = databaseState!!.matches.map { it.getTime() }
-                        val eightHrsAgo = (currentTime.clone() as Calendar).apply { add(Calendar.HOUR_OF_DAY, -8) }
+                        val eightHrsAgo = currentTime - 8.hours
 
                         if (
                         // If there's been no match activity in the past X hours
-                            matchTimes.none { it.after(eightHrsAgo) }
+                            matchTimes.none { it > eightHrsAgo }
                             // But there has been activity since club night started
-                            && matchTimes.any { it.after(preferences!!.clubNightStartTime) }
+                            && matchTimes.any { it > preferences!!.clubNightStartTime }
                         ) {
                             showUpdateClubNightStartTimeDialog = true
                         }
@@ -180,7 +181,7 @@ class MainActivity : ComponentActivity() {
                         isShown = showUpdateClubNightStartTimeDialog,
                         onCancel = { showUpdateClubNightStartTimeDialog = false },
                         onOk = {
-                            viewModel.handleIntent(DrawerIntent.UpdateClubNightStartTimeCalendar(currentTime))
+                            viewModel.handleIntent(DrawerIntent.UpdateClubNightStartTimeInstant(currentTime))
                             showUpdateClubNightStartTimeDialog = false
                         }
                 )

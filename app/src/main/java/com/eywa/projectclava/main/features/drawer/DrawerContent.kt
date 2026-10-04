@@ -32,6 +32,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.eywa.projectclava.main.common.UpdateCalendarInfo
 import com.eywa.projectclava.main.common.asDateString
+import com.eywa.projectclava.main.common.asLocalDateTime
 import com.eywa.projectclava.main.common.asTimeString
 import com.eywa.projectclava.main.datastore.DatastoreState
 import com.eywa.projectclava.main.features.ui.timePicker.TimePicker
@@ -43,7 +44,9 @@ import com.eywa.projectclava.main.model.ModelState
 import com.eywa.projectclava.main.theme.DividerThickness
 import com.eywa.projectclava.main.theme.Typography
 import com.eywa.projectclava.main.theme.asClickableStyle
-import java.util.Calendar
+import kotlinx.datetime.number
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 private const val PRIVACY_POLICY_URL = "https://github.com/EwasWorld/ProjectClava/blob/master/PRIVACY_POLICY.md"
 private val drawerTextStyle = Typography.h4
@@ -51,7 +54,7 @@ private val drawerTextStyle = Typography.h4
 // TODO Add a help page
 @Composable
 fun DrawerContent(
-        currentTime: () -> Calendar,
+        currentTime: () -> Instant,
         preferencesState: DatastoreState,
         databaseState: ModelState,
         isDrawerOpen: Boolean,
@@ -79,6 +82,7 @@ fun DrawerContent(
      */
     var expanderUniquenessIndex = 0
 
+    val clubNightStartTime = preferencesState.clubNightStartTime.asLocalDateTime()
     val timePicker by lazy {
         TimePickerDialog(
                 context,
@@ -92,8 +96,8 @@ fun DrawerContent(
                             )
                     )
                 },
-                preferencesState.clubNightStartTime.get(Calendar.HOUR_OF_DAY),
-                preferencesState.clubNightStartTime.get(Calendar.MINUTE),
+                clubNightStartTime.hour,
+                clubNightStartTime.minute,
                 true,
         )
     }
@@ -105,15 +109,16 @@ fun DrawerContent(
                             DrawerIntent.UpdateClubNightStartTime(
                                     UpdateCalendarInfo(
                                             day = day,
-                                            month = month,
+                                            // DatePickerDialog months are 0-indexed
+                                            month = month + 1,
                                             year = year,
                                     )
                             )
                     )
                 },
-                preferencesState.clubNightStartTime.get(Calendar.YEAR),
-                preferencesState.clubNightStartTime.get(Calendar.MONTH),
-                preferencesState.clubNightStartTime.get(Calendar.DATE),
+                clubNightStartTime.year,
+                clubNightStartTime.month.number - 1,
+                clubNightStartTime.day,
         )
     }
 
@@ -270,7 +275,7 @@ fun DrawerContent(
                         is MatchState.Paused -> listener(DrawerIntent.UpdateMatch(it.completeMatch(currentTime())))
                     }
                 }
-                listener(DrawerIntent.UpdateClubNightStartTimeCalendar(currentTime()))
+                listener(DrawerIntent.UpdateClubNightStartTimeInstant(currentTime()))
             }
             DrawerTextButton(text = "Mark all ongoing matches as complete") {
                 databaseState.matches.forEach {
@@ -384,7 +389,7 @@ fun DefaultTimePicker(
 @Preview(showBackground = true)
 @Composable
 fun DrawerContent_Preview() {
-    val currentTime = Calendar.getInstance()
+    val currentTime = Clock.System.now()
     DrawerContent(
             currentTime = { currentTime },
             preferencesState = DatastoreState(),

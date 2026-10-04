@@ -1,6 +1,11 @@
 package com.eywa.projectclava.main.features.screens.ongoing
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
@@ -19,16 +24,38 @@ import com.eywa.projectclava.R
 import com.eywa.projectclava.main.common.MissingContentNextStep
 import com.eywa.projectclava.main.common.generateCourts
 import com.eywa.projectclava.main.common.generateMatches
-import com.eywa.projectclava.main.features.screens.ongoing.OngoingMatchesIntent.*
-import com.eywa.projectclava.main.features.ui.*
+import com.eywa.projectclava.main.features.screens.ongoing.OngoingMatchesIntent.ChangeCourtDialogSubmit
+import com.eywa.projectclava.main.features.screens.ongoing.OngoingMatchesIntent.CloseCurrentDialog
+import com.eywa.projectclava.main.features.screens.ongoing.OngoingMatchesIntent.CompleteMatch
+import com.eywa.projectclava.main.features.screens.ongoing.OngoingMatchesIntent.CourtSelected
+import com.eywa.projectclava.main.features.screens.ongoing.OngoingMatchesIntent.MatchClicked
+import com.eywa.projectclava.main.features.screens.ongoing.OngoingMatchesIntent.Navigate
+import com.eywa.projectclava.main.features.screens.ongoing.OngoingMatchesIntent.OpenChangeCourtDialog
+import com.eywa.projectclava.main.features.screens.ongoing.OngoingMatchesIntent.OpenResumeDialog
+import com.eywa.projectclava.main.features.screens.ongoing.OngoingMatchesIntent.PauseMatch
+import com.eywa.projectclava.main.features.screens.ongoing.OngoingMatchesIntent.ResumeDialogSubmit
+import com.eywa.projectclava.main.features.screens.ongoing.OngoingMatchesIntent.ResumeTimeChanged
+import com.eywa.projectclava.main.features.ui.AvailableCourtsHeader
+import com.eywa.projectclava.main.features.ui.ClavaDialog
+import com.eywa.projectclava.main.features.ui.ClavaIconInfo
+import com.eywa.projectclava.main.features.ui.ClavaScreen
+import com.eywa.projectclava.main.features.ui.MatchTimeRemainingText
+import com.eywa.projectclava.main.features.ui.SelectCourtRadioButtons
+import com.eywa.projectclava.main.features.ui.SelectableListItem
+import com.eywa.projectclava.main.features.ui.SelectedItemAction
+import com.eywa.projectclava.main.features.ui.SelectedItemActions
 import com.eywa.projectclava.main.features.ui.addTimeDialog.AddTimeDialog
 import com.eywa.projectclava.main.features.ui.addTimeDialog.AddTimeDialogIntent
 import com.eywa.projectclava.main.features.ui.timePicker.TimePicker
 import com.eywa.projectclava.main.features.ui.timePicker.TimePickerState
-import com.eywa.projectclava.main.model.*
+import com.eywa.projectclava.main.model.Court
+import com.eywa.projectclava.main.model.Match
+import com.eywa.projectclava.main.model.ModelState
+import com.eywa.projectclava.main.model.TimeRemaining
+import com.eywa.projectclava.main.model.getAvailable
 import com.eywa.projectclava.main.theme.DividerThickness
 import com.eywa.projectclava.main.theme.Typography
-import java.util.*
+import kotlin.time.Clock
 
 @Composable
 fun OngoingMatchesScreen(
@@ -240,7 +267,7 @@ private fun CurrentMatchesScreenDialogs(
 fun OngoingMatchesScreen_Preview(
         @PreviewParameter(CurrentMatchesScreenPreviewParamProvider::class) params: CurrentMatchesScreenPreviewParam
 ) {
-    val currentTime = Calendar.getInstance(Locale.getDefault())
+    val currentTime = Clock.System.now()
     val matches = generateMatches(params.matchCount, currentTime)
     OngoingMatchesScreen(
         overrunThreshold = 10,

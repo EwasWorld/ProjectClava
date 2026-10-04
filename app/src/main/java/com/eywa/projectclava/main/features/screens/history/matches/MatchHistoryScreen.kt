@@ -40,8 +40,7 @@ import com.eywa.projectclava.main.mainActivity.MainNavRoute
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.ModelState
 import com.eywa.projectclava.main.theme.Typography
-import java.util.Calendar
-import java.util.Locale
+import kotlin.time.Clock
 
 
 @Composable
@@ -207,7 +206,7 @@ private fun PreviousMatchesScreenFooter(
 @Preview(showBackground = true)
 @Composable
 fun MatchHistoryScreen_Preview() {
-    val currentTime = Calendar.getInstance(Locale.getDefault())
+    val currentTime = Clock.System.now()
     MatchHistoryScreen(
         overrunThreshold = 10,
         databaseState = ModelState(
@@ -223,7 +222,7 @@ fun MatchHistoryScreen_Preview() {
 @Preview(showBackground = true)
 @Composable
 fun Empty_MatchHistoryScreen_Preview() {
-    val currentTime = Calendar.getInstance(Locale.getDefault())
+    val currentTime = Clock.System.now()
     MatchHistoryScreen(
         overrunThreshold = 10,
         databaseState = ModelState(

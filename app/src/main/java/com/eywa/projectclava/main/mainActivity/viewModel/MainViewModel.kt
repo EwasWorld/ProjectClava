@@ -36,8 +36,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.Calendar
-import java.util.Locale
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 
 fun <T> SharedFlow<T>.latest() = replayCache.first()
@@ -49,7 +49,7 @@ class MainViewModel @Inject constructor(
     private val clavaMediaPlayer: ClavaMediaPlayer,
     private val clavaNotifications: ClavaNotifications,
 ) : ViewModel() {
-    val currentTime = MutableSharedFlow<Calendar>(1)
+    val currentTime = MutableSharedFlow<Instant>(1)
     private var screenState by mutableStateOf(mapOf<NavRoute, ScreenState>())
 
     private val _effects: MutableStateFlow<MainEffect?> = MutableStateFlow(null)
@@ -85,7 +85,7 @@ class MainViewModel @Inject constructor(
 
         viewModelScope.launch(context = Dispatchers.Default) {
             while (true) {
-                currentTime.emit(Calendar.getInstance(Locale.getDefault()))
+                currentTime.emit(Clock.System.now())
                 delay(1000)
             }
         }

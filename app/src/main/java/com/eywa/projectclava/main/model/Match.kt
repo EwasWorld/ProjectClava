@@ -3,9 +3,8 @@ package com.eywa.projectclava.main.model
 import com.eywa.projectclava.main.database.match.DatabaseMatch
 import com.eywa.projectclava.main.database.match.DatabaseMatchFull
 import com.eywa.projectclava.main.features.ui.editNameDialog.NamedItem
-import java.util.*
-import java.util.concurrent.TimeUnit
-import kotlin.math.abs
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 /**
  * Map player to their matches
@@ -137,7 +136,7 @@ data class Match(
             ?: false,
     )
 
-    fun startMatch(currentTime: Calendar, court: Court, duration: Int? = null): Match {
+    fun startMatch(currentTime: Instant, court: Court, duration: Int? = null): Match {
         check(state is MatchState.NotStarted || state is MatchState.Paused) {
             "Match cannot be started - incorrect state"
         }
@@ -147,53 +146,40 @@ data class Match(
 
         return copy(
                 state = MatchState.OnCourt(
-                    matchEndTime = (currentTime.clone() as Calendar).apply {
-                        add(
-                            Calendar.SECOND,
-                            duration ?: (state as MatchState.Paused).remainingTimeSeconds.toInt()
-                        )
-                    },
+                    matchEndTime = currentTime +
+                            (duration ?: (state as MatchState.Paused).remainingTimeSeconds.toInt()).seconds,
                     court = court,
                     soundPlayed = false,
                 )
         )
     }
 
-    fun completeMatch(currentTime: Calendar) = copy(
+    fun completeMatch(currentTime: Instant) = copy(
             state = MatchState.Completed(
                     matchEndTime = if (state is MatchState.Paused) state.matchPausedAt else currentTime,
             )
     )
 
-    fun pauseMatch(currentTime: Calendar): Match {
+    fun pauseMatch(currentTime: Instant): Match {
         if (isPaused) return this
 
         check(state is MatchState.OnCourt) { "Match is not in progress" }
 
         return copy(
                 state = MatchState.Paused(
-                        remainingTimeSeconds = abs(
-                                TimeUnit.MILLISECONDS.toSeconds(
-                                        currentTime.timeInMillis - state.matchEndTime.timeInMillis
-                                )
-                        ),
+                        remainingTimeSeconds = (state.matchEndTime - currentTime).absoluteValue.inWholeSeconds,
                         matchPausedAt = currentTime,
                 )
         )
     }
 
-    fun resumeMatch(currentTime: Calendar, court: Court, resumeTime: Int): Match {
+    fun resumeMatch(currentTime: Instant, court: Court, resumeTime: Int): Match {
         if (!isPaused) return this
         state as MatchState.Paused
 
         return copy(
                 state = MatchState.OnCourt(
-                    matchEndTime = (currentTime.clone() as Calendar).apply {
-                        add(
-                            Calendar.SECOND,
-                            resumeTime
-                        )
-                    },
+                    matchEndTime = currentTime + resumeTime.seconds,
                     court = court,
                     soundPlayed = false,
                 )
@@ -204,18 +190,13 @@ data class Match(
      * If the match is overrunning, will add the time to the current time rather than the matchEndTime.
      * If the match is complete, it will become paused with [timeToAdd] seconds remaining.
      */
-    fun addTime(currentTime: Calendar, timeToAdd: Int) = when (state) {
+    fun addTime(currentTime: Instant, timeToAdd: Int) = when (state) {
         is MatchState.Paused -> copy(
                 state = state.copy(remainingTimeSeconds = state.remainingTimeSeconds + timeToAdd)
         )
         is MatchState.OnCourt -> {
-            val initialTime = if (state.matchEndTime.after(currentTime)) state.matchEndTime else currentTime
-            copy(
-                    state = state.copy(
-                            matchEndTime = (initialTime.clone() as Calendar)
-                                    .apply { add(Calendar.SECOND, timeToAdd) }
-                    )
-            )
+            val initialTime = maxOf(state.matchEndTime, currentTime)
+            copy(state = state.copy(matchEndTime = initialTime + timeToAdd.seconds))
         }
         is MatchState.Completed -> copy(
                 state = MatchState.Paused(
@@ -256,7 +237,7 @@ sealed class MatchState : Comparable<MatchState> {
     /**
      * Can be negative
      */
-    open fun getTimeLeft(currentTime: Calendar?): TimeRemaining? = null
+    open fun getTimeLeft(currentTime: Instant?): TimeRemaining? = null
 
     override fun compareTo(other: MatchState): Int {
         val classComparison = order.indexOfFirst { it.isInstance(this) }
@@ -272,7 +253,7 @@ sealed class MatchState : Comparable<MatchState> {
     abstract fun sameClassCompare(other: MatchState): Int
 
     data class NotStarted(
-            val createdAt: Calendar
+            val createdAt: Instant
     ) : MatchState() {
         override fun sameClassCompare(other: MatchState): Int {
             other as NotStarted
@@ -281,16 +262,12 @@ sealed class MatchState : Comparable<MatchState> {
     }
 
     data class OnCourt(
-        val matchEndTime: Calendar,
+        val matchEndTime: Instant,
         val court: Court,
         val soundPlayed: Boolean = false,
     ) : MatchState() {
-        override fun getTimeLeft(currentTime: Calendar?): TimeRemaining {
-            return TimeRemaining(
-                    TimeUnit.MILLISECONDS.toSeconds(
-                            matchEndTime.timeInMillis - currentTime!!.timeInMillis
-                    )
-            )
+        override fun getTimeLeft(currentTime: Instant?): TimeRemaining {
+            return TimeRemaining((matchEndTime - currentTime!!).inWholeSeconds)
         }
 
         override fun sameClassCompare(other: MatchState): Int {
@@ -301,9 +278,9 @@ sealed class MatchState : Comparable<MatchState> {
 
     data class Paused(
             val remainingTimeSeconds: Long,
-            val matchPausedAt: Calendar
+            val matchPausedAt: Instant
     ) : MatchState() {
-        override fun getTimeLeft(currentTime: Calendar?): TimeRemaining = TimeRemaining(remainingTimeSeconds)
+        override fun getTimeLeft(currentTime: Instant?): TimeRemaining = TimeRemaining(remainingTimeSeconds)
 
         override fun sameClassCompare(other: MatchState): Int {
             other as Paused
@@ -312,7 +289,7 @@ sealed class MatchState : Comparable<MatchState> {
     }
 
     data class Completed(
-            val matchEndTime: Calendar,
+            val matchEndTime: Instant,
     ) : MatchState() {
         override fun sameClassCompare(other: MatchState): Int {
             other as Completed

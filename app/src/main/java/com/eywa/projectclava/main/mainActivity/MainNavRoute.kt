@@ -20,8 +20,12 @@ import com.eywa.projectclava.main.features.screens.ongoing.OngoingMatchesState
 import com.eywa.projectclava.main.features.screens.queue.MatchQueueScreen
 import com.eywa.projectclava.main.features.screens.queue.MatchQueueState
 import com.eywa.projectclava.main.mainActivity.viewModel.MainViewModel
-import com.eywa.projectclava.main.model.*
-import java.util.*
+import com.eywa.projectclava.main.model.Court
+import com.eywa.projectclava.main.model.Match
+import com.eywa.projectclava.main.model.ModelState
+import com.eywa.projectclava.main.model.Player
+import com.eywa.projectclava.main.model.TimeRemaining
+import kotlin.time.Instant
 
 enum class MainNavRoute(override val route: String) : NavRoute {
     ADD_PLAYER("add_player") {
@@ -30,7 +34,7 @@ enum class MainNavRoute(override val route: String) : NavRoute {
         @Composable
         override fun ClavaNavigation(
                 navController: NavHostController,
-                currentTime: () -> Calendar,
+                currentTime: () -> Instant,
                 getTimeRemaining: Match.() -> TimeRemaining?,
                 viewModel: MainViewModel,
                 databaseState: ModelState,
@@ -55,7 +59,7 @@ enum class MainNavRoute(override val route: String) : NavRoute {
         @Composable
         override fun ClavaNavigation(
                 navController: NavHostController,
-                currentTime: () -> Calendar,
+                currentTime: () -> Instant,
                 getTimeRemaining: Match.() -> TimeRemaining?,
                 viewModel: MainViewModel,
                 databaseState: ModelState,
@@ -77,7 +81,7 @@ enum class MainNavRoute(override val route: String) : NavRoute {
         @Composable
         override fun ClavaNavigation(
                 navController: NavHostController,
-                currentTime: () -> Calendar,
+                currentTime: () -> Instant,
                 getTimeRemaining: Match.() -> TimeRemaining?,
                 viewModel: MainViewModel,
                 databaseState: ModelState,
@@ -103,7 +107,7 @@ enum class MainNavRoute(override val route: String) : NavRoute {
         @Composable
         override fun ClavaNavigation(
                 navController: NavHostController,
-                currentTime: () -> Calendar,
+                currentTime: () -> Instant,
                 getTimeRemaining: Match.() -> TimeRemaining?,
                 viewModel: MainViewModel,
                 databaseState: ModelState,
@@ -127,7 +131,7 @@ enum class MainNavRoute(override val route: String) : NavRoute {
         @Composable
         override fun ClavaNavigation(
                 navController: NavHostController,
-                currentTime: () -> Calendar,
+                currentTime: () -> Instant,
                 getTimeRemaining: Match.() -> TimeRemaining?,
                 viewModel: MainViewModel,
                 databaseState: ModelState,
@@ -151,7 +155,7 @@ enum class MainNavRoute(override val route: String) : NavRoute {
         @Composable
         override fun ClavaNavigation(
                 navController: NavHostController,
-                currentTime: () -> Calendar,
+                currentTime: () -> Instant,
                 getTimeRemaining: Match.() -> TimeRemaining?,
                 viewModel: MainViewModel,
                 databaseState: ModelState,
@@ -175,7 +179,7 @@ enum class MainNavRoute(override val route: String) : NavRoute {
         @Composable
         override fun ClavaNavigation(
                 navController: NavHostController,
-                currentTime: () -> Calendar,
+                currentTime: () -> Instant,
                 getTimeRemaining: Match.() -> TimeRemaining?,
                 viewModel: MainViewModel,
                 databaseState: ModelState,
@@ -198,7 +202,7 @@ enum class MainNavRoute(override val route: String) : NavRoute {
         @Composable
         override fun ClavaNavigation(
                 navController: NavHostController,
-                currentTime: () -> Calendar,
+                currentTime: () -> Instant,
                 getTimeRemaining: Match.() -> TimeRemaining?,
                 viewModel: MainViewModel,
                 databaseState: ModelState,
@@ -218,7 +222,7 @@ enum class MainNavRoute(override val route: String) : NavRoute {
         @Composable
         override fun ClavaNavigation(
                 navController: NavHostController,
-                currentTime: () -> Calendar,
+                currentTime: () -> Instant,
                 getTimeRemaining: Match.() -> TimeRemaining?,
                 viewModel: MainViewModel,
                 databaseState: ModelState,

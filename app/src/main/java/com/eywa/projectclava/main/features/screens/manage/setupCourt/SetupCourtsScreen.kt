@@ -14,8 +14,12 @@ import com.eywa.projectclava.main.common.generateMatches
 import com.eywa.projectclava.main.features.screens.manage.SetupListScreen
 import com.eywa.projectclava.main.features.screens.manage.SetupListState
 import com.eywa.projectclava.main.features.screens.manage.helperClasses.SetupListSettings
-import com.eywa.projectclava.main.model.*
-import java.util.*
+import com.eywa.projectclava.main.model.Court
+import com.eywa.projectclava.main.model.Match
+import com.eywa.projectclava.main.model.ModelState
+import com.eywa.projectclava.main.model.TimeRemaining
+import com.eywa.projectclava.main.model.getLatestMatchForCourt
+import kotlin.time.Clock
 
 
 @Composable
@@ -78,7 +82,7 @@ fun RowScope.ExtraContent(match: Match, getTimeRemaining: Match.() -> TimeRemain
 @Preview(showBackground = true)
 @Composable
 fun SetupCourtsScreen_Preview() {
-    val currentTime = Calendar.getInstance(Locale.getDefault())
+    val currentTime = Clock.System.now()
     SetupCourtsScreen(
         overrunThreshold = 10,
         state = SetupListState(),

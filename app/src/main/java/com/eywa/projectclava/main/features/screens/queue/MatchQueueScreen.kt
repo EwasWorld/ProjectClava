@@ -19,19 +19,43 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.datasource.CollectionPreviewParameterProvider
 import androidx.compose.ui.unit.dp
-import com.eywa.projectclava.main.common.*
-import com.eywa.projectclava.main.features.screens.queue.MatchQueueIntent.*
-import com.eywa.projectclava.main.features.ui.*
+import com.eywa.projectclava.main.common.GeneratableMatchState
+import com.eywa.projectclava.main.common.MissingContentNextStep
+import com.eywa.projectclava.main.common.asColor
+import com.eywa.projectclava.main.common.asTimeString
+import com.eywa.projectclava.main.common.generateCourts
+import com.eywa.projectclava.main.common.generateMatches
+import com.eywa.projectclava.main.features.screens.queue.MatchQueueIntent.CloseStartMatchDialog
+import com.eywa.projectclava.main.features.screens.queue.MatchQueueIntent.MatchClicked
+import com.eywa.projectclava.main.features.screens.queue.MatchQueueIntent.Navigate
+import com.eywa.projectclava.main.features.screens.queue.MatchQueueIntent.OpenStartMatchDialog
+import com.eywa.projectclava.main.features.screens.queue.MatchQueueIntent.StartMatchSubmitted
+import com.eywa.projectclava.main.features.screens.queue.MatchQueueIntent.UpdateSelectedCourt
+import com.eywa.projectclava.main.features.screens.queue.MatchQueueIntent.UpdateTimePicker
+import com.eywa.projectclava.main.features.ui.AvailableCourtsHeader
+import com.eywa.projectclava.main.features.ui.ClavaDialog
+import com.eywa.projectclava.main.features.ui.ClavaIconInfo
+import com.eywa.projectclava.main.features.ui.ClavaScreen
+import com.eywa.projectclava.main.features.ui.SelectCourtRadioButtons
+import com.eywa.projectclava.main.features.ui.SelectableListItem
+import com.eywa.projectclava.main.features.ui.SelectedItemAction
+import com.eywa.projectclava.main.features.ui.SelectedItemActions
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialog
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogIntent
 import com.eywa.projectclava.main.features.ui.confirmDialog.ConfirmDialogType
 import com.eywa.projectclava.main.features.ui.timePicker.TimePicker
 import com.eywa.projectclava.main.features.ui.timePicker.TimePickerState
-import com.eywa.projectclava.main.model.*
+import com.eywa.projectclava.main.model.Court
+import com.eywa.projectclava.main.model.Match
+import com.eywa.projectclava.main.model.MatchState
+import com.eywa.projectclava.main.model.ModelState
+import com.eywa.projectclava.main.model.TimeRemaining
+import com.eywa.projectclava.main.model.getAvailable
+import com.eywa.projectclava.main.model.getPlayerStatus
 import com.eywa.projectclava.main.theme.ClavaColor
 import com.eywa.projectclava.main.theme.DividerThickness
 import com.eywa.projectclava.main.theme.Typography
-import java.util.*
+import kotlin.time.Clock
 
 
 @Composable
@@ -276,7 +300,7 @@ private fun StartMatchDialog(
 fun MatchQueueScreen_Preview(
         @PreviewParameter(UpcomingMatchesScreenPreviewParamProvider::class) params: UpcomingMatchesScreenPreviewParam
 ) {
-    val currentTime = Calendar.getInstance(Locale.getDefault())
+    val currentTime = Clock.System.now()
     val matches = generateMatches(5, currentTime) + generateMatches(4, currentTime, GeneratableMatchState.NOT_STARTED)
 
     MatchQueueScreen(

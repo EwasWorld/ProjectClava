@@ -30,7 +30,8 @@ import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.ModelState
 import com.eywa.projectclava.main.theme.Typography
-import java.util.Calendar
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
 
 @Composable
 fun HistorySummaryScreen(
@@ -137,11 +138,11 @@ fun HistorySummaryScreen(
 @Preview(showBackground = true)
 @Composable
 fun HistorySummaryScreen_Preview() {
-    val currentTime = Calendar.getInstance()
+    val currentTime = Clock.System.now()
     val matches = (0..4).fold(listOf<Match>()) { acc, i ->
         acc + generateMatches(
                 count = 5,
-                currentTime = (currentTime.clone() as Calendar).apply { add(Calendar.DATE, i) },
+                currentTime = currentTime + i.days,
                 forceState = GeneratableMatchState.COMPLETE,
         )
     }

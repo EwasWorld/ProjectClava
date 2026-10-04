@@ -4,7 +4,9 @@ import com.eywa.projectclava.main.model.Court
 import com.eywa.projectclava.main.model.Match
 import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.main.model.Player
-import java.util.*
+import kotlin.random.Random
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 fun generatePlayers(count: Int): List<Player> {
     require(count > 0) { "Count should be > 0" }
@@ -29,7 +31,7 @@ fun generateCourts(count: Int) = List(count) { generateCourt(it + 1, it % 6 != 5
 
 fun generateMatches(
         count: Int,
-        currentTime: Calendar,
+        currentTime: Instant,
         forceState: GeneratableMatchState? = null,
         finishingSoonThresholdSeconds: Int = 120
 ): List<Match> {
@@ -60,20 +62,20 @@ fun generateMatches(
 fun generateMatchState(
         type: GeneratableMatchState,
         court: Court?,
-        currentTime: Calendar,
+        currentTime: Instant,
         finishingSoonThresholdSeconds: Int = 120,
 ): MatchState {
     val time = when (type) {
         GeneratableMatchState.COMPLETE -> -5
-        GeneratableMatchState.FINISHING_SOON -> (20 + Random().nextInt(finishingSoonThresholdSeconds - 25))
+        GeneratableMatchState.FINISHING_SOON -> (20 + Random.nextInt(finishingSoonThresholdSeconds - 25))
                 .coerceIn(20 until finishingSoonThresholdSeconds)
-        GeneratableMatchState.IN_PROGRESS -> finishingSoonThresholdSeconds + 1 + Random().nextInt(100)
+        GeneratableMatchState.IN_PROGRESS -> finishingSoonThresholdSeconds + 1 + Random.nextInt(100)
         else -> null
-    }?.let { (currentTime.clone() as Calendar).apply { add(Calendar.SECOND, it) } }
+    }?.let { currentTime + it.seconds }
 
     return when (type) {
         GeneratableMatchState.NOT_STARTED -> MatchState.NotStarted(currentTime)
-        GeneratableMatchState.PAUSED -> MatchState.Paused(Random().nextInt(60 * 10).toLong() + 20, currentTime)
+        GeneratableMatchState.PAUSED -> MatchState.Paused(Random.nextInt(60 * 10).toLong() + 20, currentTime)
         GeneratableMatchState.COMPLETE -> MatchState.Completed(time!!)
         else -> {
             MatchState.OnCourt(
