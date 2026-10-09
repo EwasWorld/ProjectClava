@@ -1,7 +1,5 @@
 package com.eywa.projectclava.main.features.drawer
 
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
@@ -20,6 +18,13 @@ import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Switch
 import androidx.compose.material.Text
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,12 +46,20 @@ import com.eywa.projectclava.main.mainActivity.MainNavRoute
 import com.eywa.projectclava.main.mainActivity.NavRoute
 import com.eywa.projectclava.main.model.MatchState
 import com.eywa.projectclava.main.model.ModelState
+import com.eywa.projectclava.main.theme.ClavaTheme
 import com.eywa.projectclava.main.theme.DividerThickness
 import com.eywa.projectclava.main.theme.Typography
 import com.eywa.projectclava.main.theme.asClickableStyle
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.number
+import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.Instant
+import androidx.compose.material3.Text as M3Text
+import androidx.compose.material3.TimePicker as M3TimePicker
 
 private const val PRIVACY_POLICY_URL = "https://github.com/EwasWorld/ProjectClava/blob/master/PRIVACY_POLICY.md"
 private val drawerTextStyle = Typography.h4
@@ -82,11 +95,15 @@ fun DrawerContent(
      */
     var expanderUniquenessIndex = 0
 
-    val clubNightStartTime = preferencesState.clubNightStartTime.asLocalDateTime()
-    val timePicker by lazy {
-        TimePickerDialog(
-                context,
-                { _, hours, minutes ->
+    var isTimePickerOpen by remember(isDrawerOpen) { mutableStateOf(false) }
+    var isDatePickerOpen by remember(isDrawerOpen) { mutableStateOf(false) }
+
+    if (isTimePickerOpen) {
+        ClubNightStartTimePicker(
+                initial = preferencesState.clubNightStartTime.asLocalDateTime(),
+                onDismiss = { isTimePickerOpen = false },
+                onConfirm = { hours, minutes ->
+                    isTimePickerOpen = false
                     listener(
                             DrawerIntent.UpdateClubNightStartTime(
                                     UpdateCalendarInfo(
@@ -96,29 +113,24 @@ fun DrawerContent(
                             )
                     )
                 },
-                clubNightStartTime.hour,
-                clubNightStartTime.minute,
-                true,
         )
     }
-    val datePicker by lazy {
-        DatePickerDialog(
-                context,
-                { _, year, month, day ->
+    if (isDatePickerOpen) {
+        ClubNightStartDatePicker(
+                initial = preferencesState.clubNightStartTime.asLocalDateTime().date,
+                onDismiss = { isDatePickerOpen = false },
+                onConfirm = { date ->
+                    isDatePickerOpen = false
                     listener(
                             DrawerIntent.UpdateClubNightStartTime(
                                     UpdateCalendarInfo(
-                                            day = day,
-                                            // DatePickerDialog months are 0-indexed
-                                            month = month + 1,
-                                            year = year,
+                                            day = date.day,
+                                            month = date.month.number,
+                                            year = date.year,
                                     )
                             )
                     )
                 },
-                clubNightStartTime.year,
-                clubNightStartTime.month.number - 1,
-                clubNightStartTime.day,
         )
     }
 
@@ -141,12 +153,12 @@ fun DrawerContent(
             Text(
                     text = preferencesState.clubNightStartTime.asTimeString(),
                     style = drawerTextStyle.asClickableStyle(),
-                    modifier = Modifier.clickable { timePicker.show() }
+                    modifier = Modifier.clickable { isTimePickerOpen = true }
             )
             Text(
                     text = preferencesState.clubNightStartTime.asDateString(),
                     style = drawerTextStyle.asClickableStyle(),
-                    modifier = Modifier.clickable { datePicker.show() }
+                    modifier = Modifier.clickable { isDatePickerOpen = true }
             )
             Text(
                     text = "Reset",
@@ -309,6 +321,68 @@ fun DrawerContent(
             catch (e: ActivityNotFoundException) {
                 Toast.makeText(context, "No web browser found", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ClubNightStartTimePicker(
+        initial: LocalDateTime,
+        onDismiss: () -> Unit,
+        onConfirm: (hours: Int, minutes: Int) -> Unit,
+) {
+    val state = rememberTimePickerState(
+            initialHour = initial.hour,
+            initialMinute = initial.minute,
+            is24Hour = true,
+    )
+    ClavaTheme {
+        AlertDialog(
+                onDismissRequest = onDismiss,
+                confirmButton = {
+                    TextButton(onClick = { onConfirm(state.hour, state.minute) }) { M3Text("OK") }
+                },
+                dismissButton = {
+                    TextButton(onClick = onDismiss) { M3Text("Cancel") }
+                },
+                text = { M3TimePicker(state = state) },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ClubNightStartDatePicker(
+        initial: LocalDate,
+        onDismiss: () -> Unit,
+        onConfirm: (LocalDate) -> Unit,
+) {
+    // Material3 DatePicker works in UTC millis at the start of the day
+    val state = rememberDatePickerState(
+            initialSelectedDateMillis = initial.atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds(),
+    )
+    ClavaTheme {
+        DatePickerDialog(
+                onDismissRequest = onDismiss,
+                confirmButton = {
+                    TextButton(
+                            onClick = {
+                                val millis = state.selectedDateMillis
+                                if (millis == null) {
+                                    onDismiss()
+                                }
+                                else {
+                                    onConfirm(Instant.fromEpochMilliseconds(millis).toLocalDateTime(TimeZone.UTC).date)
+                                }
+                            }
+                    ) { M3Text("OK") }
+                },
+                dismissButton = {
+                    TextButton(onClick = onDismiss) { M3Text("Cancel") }
+                },
+        ) {
+            DatePicker(state = state)
         }
     }
 }

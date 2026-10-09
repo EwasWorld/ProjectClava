@@ -4,7 +4,9 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.material3.MaterialTheme as M3MaterialTheme
 
 private val DarkColorPalette = darkColors(
         primary = Purple200,
@@ -41,5 +43,16 @@ fun ProjectClavaTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Comp
             typography = Typography,
             shapes = Shapes,
             content = content
+    )
+}
+
+/**
+ * Material3 theme matching [ProjectClavaTheme]
+ */
+@Composable
+fun ClavaTheme(content: @Composable () -> Unit) {
+    M3MaterialTheme(
+        colorScheme = lightColorScheme(primary = Purple500),
+        content = content,
     )
 }
