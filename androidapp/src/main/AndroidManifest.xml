@@ -13,10 +13,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ProjectClava"
         tools:targetApi="31"
-        android:name=".main.app.ClavaApplication"
+        android:name="com.eywa.projectclava.app.ClavaApplication"
         >
         <activity
-            android:name=".main.mainActivity.MainActivity"
+            android:name="com.eywa.projectclava.main.mainActivity.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.ProjectClava"
             android:windowSoftInputMode="adjustResize"
