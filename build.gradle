@@ -1,19 +1,7 @@
-buildscript {
-    ext {
-        // Bumping requires compileSdk 37
-        compose_ui_version = '1.11.4'
-        kotlin_version = '2.3.21'
-        agp_version = '9.4.1'
-        min_sdk = 23
-        compile_sdk = 36
-    }
-}
-
 plugins {
-    id 'com.android.application' version "$agp_version" apply false
-    id 'com.android.library' version "$agp_version" apply false
-    id 'org.jetbrains.kotlin.plugin.compose' version "$kotlin_version" apply false
-    // Must be compatible with kotlin_version: https://zacsweers.github.io/metro/latest/compatibility
-    id 'dev.zacsweers.metro' version "1.4.5" apply false
-    id 'com.google.devtools.ksp' version '2.3.4' apply false
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.android.library) apply false
+    alias(libs.plugins.kotlin.compose) apply false
+    alias(libs.plugins.metro) apply false
+    alias(libs.plugins.ksp) apply false
 }

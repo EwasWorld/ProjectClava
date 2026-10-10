@@ -1,0 +1,61 @@
+[versions]
+minSdk = "23"
+compileSdk = "36"
+targetSdk = "36"
+
+agp = "9.4.1"
+kotlin = "2.3.21"
+# Must be compatible with kotlin: https://zacsweers.github.io/metro/latest/compatibility
+metro = "1.4.5"
+ksp = "2.3.4"
+
+# Bumping requires compileSdk 37
+compose-ui = "1.11.4"
+# Bumping causes androidx.compose.material.icons package to not be recognised
+compose-material = "1.7.0"
+compose-material3 = "1.4.0"
+# Bumping requires compileSdk 37
+androidx-core = "1.18.0"
+# Bumping requires compileSdk 37
+androidx-lifecycle = "2.10.0"
+androidx-activity = "1.13.0"
+room = "2.8.5"
+# Bumping requires compileSdk 37
+# Note this lib is deprecated!
+navigation = "2.9.8"
+datastore = "1.2.1"
+kotlinx-datetime = "0.8.0"
+desugar-jdk-libs = "2.1.5"
+
+junit = "4.13.2"
+androidx-test-junit = "1.3.0"
+espresso = "3.7.0"
+
+[libraries]
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }
+androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "androidx-lifecycle" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
+compose-ui = { module = "androidx.compose.ui:ui", version.ref = "compose-ui" }
+compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose-ui" }
+compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose-ui" }
+compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "compose-ui" }
+compose-material = { module = "androidx.compose.material:material", version.ref = "compose-material" }
+compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "compose-material3" }
+room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation" }
+datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar-jdk-libs" }
+
+junit = { module = "junit:junit", version.ref = "junit" }
+androidx-test-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-test-junit" }
+androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espresso" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

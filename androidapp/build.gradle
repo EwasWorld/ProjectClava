@@ -6,14 +6,14 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
  */
 
 plugins {
-    id 'com.android.application'
-    id 'dev.zacsweers.metro'
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.metro)
 }
 
 /*
  * Versioning
  */
-ext.minimumSdkVersion = min_sdk // 2 digits
+ext.minimumSdkVersion = libs.versions.minSdk.get().toInteger() // 2 digits
 ext.versionMajor = 2 // 2 digits
 ext.versionMinor = 0 // 2 digits
 ext.versionPatch = 0 // 2 digits
@@ -42,12 +42,12 @@ private String generateVersionName() {
 
 android {
     namespace 'com.eywa.projectclava.app'
-    compileSdk compile_sdk
+    compileSdk libs.versions.compileSdk.get().toInteger()
 
     defaultConfig {
         applicationId "com.eywa.projectclava"
         minSdk project.ext.minimumSdkVersion
-        targetSdk 36
+        targetSdk libs.versions.targetSdk.get().toInteger()
         versionCode generateVersionCode()
         versionName generateVersionName()
 
@@ -83,10 +83,10 @@ android {
 dependencies {
     implementation project(':app')
 
-    androidTestImplementation 'androidx.test.ext:junit:1.3.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.7.0'
+    androidTestImplementation libs.androidx.test.junit
+    androidTestImplementation libs.androidx.test.espresso.core
 
-    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.5"
+    coreLibraryDesugaring libs.desugar.jdk.libs
 }
 
 kotlin {
