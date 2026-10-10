@@ -10,7 +10,7 @@ plugins {
 /*
  * Versioning
  */
-ext.minimumSdkVersion = 21 // 2 digits
+ext.minimumSdkVersion = 23 // 2 digits
 ext.versionMajor = 1 // 2 digits
 ext.versionMinor = 3 // 2 digits
 ext.versionPatch = 0 // 2 digits
@@ -87,12 +87,11 @@ android {
 }
 
 dependencies {
-    // Bumping requires minSdk 23
-    implementation 'androidx.core:core-ktx:1.17.0'
-    // Bumping requires minSdk 23
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.9.4'
-    // Bumping requires minSdk 23
-    implementation 'androidx.activity:activity-compose:1.11.0'
+    // Bumping requires compileSdk 37
+    implementation 'androidx.core:core-ktx:1.18.0'
+    // Bumping requires compileSdk 37
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.10.0'
+    implementation 'androidx.activity:activity-compose:1.13.0'
     implementation "androidx.compose.ui:ui:$compose_ui_version"
     implementation "androidx.compose.ui:ui-tooling-preview:$compose_ui_version"
     // Bumping causes androidx.compose.material.icons package to not be recognised
@@ -105,19 +104,17 @@ dependencies {
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_ui_version"
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_ui_version"
 
-    // Bumping requires minSdk 23
-    def room_version = "2.7.2"
+    def room_version = "2.8.5"
     implementation("androidx.room:room-runtime:$room_version")
     ksp "androidx.room:room-compiler:$room_version"
     implementation("androidx.room:room-ktx:$room_version")
 
-    // Bumping requires minSdk 23
+    // Bumping requires compileSdk 37
     // Note this lib is deprecated!
     def nav_version = "2.9.8"
     implementation("androidx.navigation:navigation-compose:$nav_version")
 
-    // Bumping requires minSdk 23
-    implementation "androidx.datastore:datastore-preferences:1.1.7"
+    implementation "androidx.datastore:datastore-preferences:1.2.1"
 
     // Using this instead of java.utils.Calendar, etc. to support KMP
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.8.0"

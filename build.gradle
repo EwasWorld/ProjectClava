@@ -1,7 +1,7 @@
 buildscript {
     ext {
-        // Bumping requires minSdk 23
-        compose_ui_version = '1.9.5'
+        // Bumping requires compileSdk 37
+        compose_ui_version = '1.11.4'
         kotlin_version = '2.3.21'
         agp_version = '9.4.1'
     }
